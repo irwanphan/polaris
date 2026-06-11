@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/app.dart';
 import 'package:polaris/core/logging/app_logger.dart';
+import 'package:polaris/features/life_countdown/application/providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Composition root.
 ///
@@ -18,6 +20,7 @@ Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final AppLogger logger = AppLogger.create();
+  final SharedPreferences preferences = await SharedPreferences.getInstance();
 
   FlutterError.onError = (FlutterErrorDetails details) {
     logger.error(
@@ -39,6 +42,7 @@ Future<void> bootstrap() async {
         ProviderScope(
           overrides: [
             appLoggerProvider.overrideWithValue(logger),
+            sharedPreferencesProvider.overrideWithValue(preferences),
           ],
           child: const PolarisApp(),
         ),

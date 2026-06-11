@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-12 by Cursor AI session — **M0 Foundation complete**
+> **Last updated:** 2026-06-12 by Cursor AI session — **M1 Life Countdown vertical slice complete**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-12, end of M0)
+## 2. Current Status (As of 2026-06-12, end of M1)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -80,31 +80,85 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     `FlutterError.onError` / `PlatformDispatcher.instance.onError`
     handlers wired to the logger, wraps `runApp` in
     `runZonedGuarded`, mounts `ProviderScope` with logger override.
-  - **Tests**: 14/14 passing.
-    - `test/unit/core/result/result_test.dart` — 6 tests on `Result`.
-    - `test/unit/core/extensions/date_x_test.dart` — 6 tests on
-      `DateTimeX` / `DurationX`.
-    - `test/widget_test.dart` — 2 widget tests covering launcher render
-      + navigation to a placeholder.
   - **`flutter analyze`**: zero issues with the new lint profile.
 
+- **M1 — Life Countdown vertical slice** shipped:
+  - **Domain** (pure Dart, framework-free):
+    - Value objects: `Sex`, `CountryCode` (validated, structurally equal),
+      `DateOfBirth` (rejects future + > 130 years).
+    - Entities: `LifeProfile` (with `copyWith` + structural equality),
+      `LifeEstimate` (derived fields: weeks / months / years /
+      percentLived / isCompleted).
+    - Abstract repositories: `LifeProfileRepository`,
+      `LifeExpectancyRepository` + `CountryOption` view-model.
+    - Use case: `ComputeLifeEstimate` (pure builder + `call` variant
+      that fetches expectancy from the repository).
+  - **Data**:
+    - Seed asset `assets/seed/life_expectancy.json` — 12 countries
+      (ID, SG, MY, JP, US, GB, DE, AU, IN, PH, TH, VN) + global
+      fallback, sourced from WHO GHO 2024 + BPS 2024.
+    - `LifeExpectancyAssetDataSource` (bundle loader + parser).
+    - `LifeExpectancyRepositoryImpl` (caches the parsed table; maps
+      `Sex.undisclosed` to the average of male/female).
+    - `LifeProfileRepositoryImpl` backed by `SharedPreferences`
+      (single JSON blob, key `polaris.life_profile.v1`). Drift
+      migration deferred to M2.
+    - `pubspec.yaml` registers `assets/seed/` as a Flutter asset.
+  - **Application** (Riverpod 3):
+    - `sharedPreferencesProvider` (overridden in `bootstrap.dart`).
+    - `lifeExpectancyAssetDataSourceProvider`,
+      `lifeExpectancyRepositoryProvider`,
+      `lifeProfileRepositoryProvider`,
+      `computeLifeEstimateProvider`.
+    - `LifeProfileController` (`AsyncNotifier<LifeProfile?>`) with
+      `completeOnboarding`, `setHideLifeCountdown`, `reset`.
+    - `LifeCountdownController` (`AsyncNotifier<LifeEstimate?>`) that
+      re-runs the estimator whenever the profile changes.
+    - `DisplayMode` enum: days / weeks / months / years / percent.
+  - **Presentation**:
+    - Reusable widgets: `CountdownDisplay`, `DisplayModeSegmented`,
+      `DisclaimerNote` (BRD §5.1 + risk R2 mitigation).
+    - `OnboardingPage`: date picker, sex segmented control
+      (female / male / prefer-not), country dropdown sourced from the
+      repository, validation + snack-bar error path.
+    - `LifeCountdownPage`: real screen with hero number, mode toggle,
+      "Estimated end date" + "Expectancy used" cards, disclaimer; a
+      1-minute `Timer.periodic` keeps the day count fresh while the
+      page is visible. Redirects to `/onboarding` when no profile
+      exists.
+  - **Router**: added `/onboarding`; `/life` redirects to
+    `/onboarding` when the profile is missing (handled at both the
+    GoRouter `redirect` level and inside the page for the async-load
+    edge case).
+  - **Bootstrap**: now awaits `SharedPreferences.getInstance()` and
+    overrides `sharedPreferencesProvider`.
+  - **Tests**: 34/34 passing.
+    - Domain: `country_code_test`, `date_of_birth_test`,
+      `compute_life_estimate_test` (5 cases incl. expired estimate,
+      newborn, repo failure forwarding, derived helpers).
+    - Data: `life_profile_repository_impl_test` (read null, save/read
+      round-trip, clear, overwrite — driven by
+      `SharedPreferences.setMockInitialValues`).
+    - Widget: launcher render, `/life` → onboarding redirect (no
+      profile), placeholder routes still render. Uses a fake
+      `LifeExpectancyRepository` to avoid bundling assets in tests.
+  - **`flutter analyze`**: still zero issues.
+
 ### In Progress
-- None — clean checkpoint at the end of M0.
+- None — clean checkpoint at the end of M1.
 
 ### Not Started (next on deck)
-- **M1 — Life Countdown vertical slice** (see `BRD §11`):
-  - Domain: `LifeProfile`, `LifeEstimate`, `ComputeRemainingDays` use
-    case (pure, fully unit-tested).
-  - Data: seed `life_expectancy.json` (WHO + BPS), Drift schema v1,
-    `LifeProfileRepository` impl.
-  - Application: `LifeCountdownController` (Riverpod `AsyncNotifier`).
-  - Presentation: onboarding (birth date + sex + country), countdown
-    page with day / week / month / percent toggles.
-  - Replace `LauncherPage` with a real `HomeShellPage` (bottom nav).
+- **M2 — Event Countdown** (see `BRD §11`):
+  - Drift schema v1: `LifeProfile` table (migrated from
+    SharedPreferences) + `Event` + `NotificationSchedule` tables.
+  - CRUD events; pin to widget flag; recurrence (none / yearly /
+    monthly / weekly).
+  - `flutter_local_notifications` integration + reminder scheduler
+    (T-7d / T-1d / T-1h, configurable).
+  - Replace `LauncherPage` with a `HomeShellPage` (bottom nav).
 - **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
   `flutter test --coverage` on push & PR (Handoff §4 Step 4).
-- Add `home_widget`, `workmanager`, `flutter_local_notifications` at
-  the milestone they're needed (M2 / M3).
+- Add `home_widget`, `workmanager` at M3.
 
 ---
 
@@ -183,17 +237,7 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 7. Add a placeholder home page that routes via `go_router` to confirm
    wiring.
 
-### Step 3 — First vertical slice: Life Countdown (M1)
-8. Build the `features/life_countdown/` slice end-to-end:
-   - `domain`: `LifeProfile`, `LifeEstimate`, `ComputeRemainingDays` use
-     case (pure functions, fully unit-tested).
-   - `data`: seed `life_expectancy.json` (start with WHO 2024 + BPS 2024
-     headline numbers for `ID`, fallback to a global average), Drift schema
-     v1, repository implementation.
-   - `application`: `LifeCountdownController` exposing `AsyncValue` state.
-   - `presentation`: onboarding page (birth date + sex + country),
-     countdown page with day / week / month / percent toggles.
-9. Add golden + widget tests for the countdown page.
+### Step 3 — First vertical slice: Life Countdown (M1) — DONE
 
 ### Step 4 — CI (M0, can run in parallel)
 10. Add `.github/workflows/ci.yml`:
@@ -204,6 +248,17 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 ### Step 5 — Subsequent milestones
 Follow `BRD §11` for M2 → M9. Each milestone should ship as its own PR
 series and update this Handoff document's `Current Status`.
+
+**Pointer for the next session**: start at **M2 — Event Countdown**.
+Recommended order:
+1. Introduce Drift schema v1 in `lib/data/database/` and migrate the
+   existing `LifeProfile` from SharedPreferences into a typed row.
+2. Add `Event` + `NotificationSchedule` tables; CRUD use cases.
+3. Wire `flutter_local_notifications` with `permission_handler`
+   prompts.
+4. Replace `LauncherPage` with a `HomeShellPage` (bottom navigation:
+   Life / Events / Lifestyle / Settings).
+5. Update widget + integration tests; keep `flutter analyze` clean.
 
 ---
 
@@ -284,3 +339,4 @@ When you (the next AI assistant) act on this project:
 | 2026-06-12 | Cursor AI session | Initial handoff draft (§§1–2 partial) |
 | 2026-06-12 | Cursor AI session | Completed §§2–8; aligned with BRD v0.2.0 |
 | 2026-06-12 | Cursor AI session | Shipped **M0 — Foundation**: dependencies, lints, folder structure, theme, router, composition root, shared widgets, placeholder pages, 14/14 tests passing, `flutter analyze` clean. Added D9. |
+| 2026-06-12 | Cursor AI session | Shipped **M1 — Life Countdown vertical slice**: domain (VOs + entities + use case), data (seed JSON + repositories), application (Riverpod AsyncNotifiers), presentation (onboarding + real countdown screen + reusable widgets), router redirect logic. 34/34 tests passing, `flutter analyze` clean. |

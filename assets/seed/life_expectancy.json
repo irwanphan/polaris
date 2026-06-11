@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "publishedAt": "2024-12-01",
+  "sources": {
+    "WHO-GHO-2024": "https://www.who.int/data/gho — Global Health Observatory, life expectancy at birth, 2024 release",
+    "BPS-2024": "https://www.bps.go.id — Angka Harapan Hidup, BPS, 2024"
+  },
+  "global": {
+    "source": "WHO-GHO-2024",
+    "male": 70.8,
+    "female": 76.0
+  },
+  "byCountry": [
+    {
+      "code": "ID",
+      "displayName": "Indonesia",
+      "source": "BPS-2024",
+      "male": 70.04,
+      "female": 73.97
+    },
+    {
+      "code": "SG",
+      "displayName": "Singapore",
+      "source": "WHO-GHO-2024",
+      "male": 81.7,
+      "female": 86.1
+    },
+    {
+      "code": "MY",
+      "displayName": "Malaysia",
+      "source": "WHO-GHO-2024",
+      "male": 73.4,
+      "female": 78.2
+    },
+    {
+      "code": "JP",
+      "displayName": "Japan",
+      "source": "WHO-GHO-2024",
+      "male": 81.5,
+      "female": 87.7
+    },
+    {
+      "code": "US",
+      "displayName": "United States",
+      "source": "WHO-GHO-2024",
+      "male": 75.8,
+      "female": 81.1
+    },
+    {
+      "code": "GB",
+      "displayName": "United Kingdom",
+      "source": "WHO-GHO-2024",
+      "male": 79.0,
+      "female": 82.9
+    },
+    {
+      "code": "DE",
+      "displayName": "Germany",
+      "source": "WHO-GHO-2024",
+      "male": 78.7,
+      "female": 83.4
+    },
+    {
+      "code": "AU",
+      "displayName": "Australia",
+      "source": "WHO-GHO-2024",
+      "male": 81.3,
+      "female": 85.4
+    },
+    {
+      "code": "IN",
+      "displayName": "India",
+      "source": "WHO-GHO-2024",
+      "male": 70.5,
+      "female": 73.6
+    },
+    {
+      "code": "PH",
+      "displayName": "Philippines",
+      "source": "WHO-GHO-2024",
+      "male": 67.4,
+      "female": 73.9
+    },
+    {
+      "code": "TH",
+      "displayName": "Thailand",
+      "source": "WHO-GHO-2024",
+      "male": 73.2,
+      "female": 80.7
+    },
+    {
+      "code": "VN",
+      "displayName": "Vietnam",
+      "source": "WHO-GHO-2024",
+      "male": 71.3,
+      "female": 79.1
+    }
+  ]
+}
