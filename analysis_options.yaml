@@ -1,28 +1,64 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
+# Static analysis configuration for Polaris.
 #
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
+# Layered on top of the recommended Flutter lint set. Rules below are
+# project-specific opinions that support the architecture rules described in
+# `docs/BRD Polaris.md §9.2` (dependency rule) and §9.3 (SOLID).
+#
+# Cross-feature imports (lib/features/<x>/ importing from lib/features/<y>/)
+# are NOT enforceable via built-in lints — they are a code-review rule.
+# Reviewers must reject PRs that introduce such imports.
 
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
-linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
-  rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Treat selected warnings as errors so they break CI.
+    invalid_annotation_target: ignore
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/generated_plugin_registrant.dart"
+    - "build/**"
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+linter:
+  rules:
+    # --- Imports ---------------------------------------------------------
+    always_use_package_imports: true     # forbid `import '../foo.dart'` style
+    avoid_relative_lib_imports: true
+    directives_ordering: true
+    prefer_relative_imports: false
+
+    # --- Style & readability --------------------------------------------
+    prefer_single_quotes: true
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    use_super_parameters: true
+    sort_constructors_first: true
+    sort_unnamed_constructors_first: true
+    unnecessary_lambdas: true
+    unnecessary_parenthesis: true
+
+    # --- Safety ---------------------------------------------------------
+    avoid_print: true                    # use the `logger` facade in core/
+    avoid_dynamic_calls: true
+    avoid_returning_null_for_void: true
+    avoid_slow_async_io: true
+    cancel_subscriptions: true
+    close_sinks: true
+    test_types_in_equals: true
+    throw_in_finally: true
+    unawaited_futures: true
+
+    # --- Documentation (encouraged, not enforced everywhere) ------------
+    public_member_api_docs: false

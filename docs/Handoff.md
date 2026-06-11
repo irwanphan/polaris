@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-12 by Cursor AI session
+> **Last updated:** 2026-06-12 by Cursor AI session — **M0 Foundation complete**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-12)
+## 2. Current Status (As of 2026-06-12, end of M0)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -31,35 +31,80 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 - PATH configured in `~/.zshrc` so `flutter` resolves to
   `/Users/irwanphan/TurbidDev/flutter/bin/flutter`.
 - Flutter project scaffolded at `~/TurbidDev/project-polaris/` via
-  `flutter create` with:
-  - `name: polaris`
-  - bundle / application ID: `com.phandarian.polaris`
-  - default Android + iOS runners
-- Git repository initialized and pushed to GitHub:
-  - Remote: `https://github.com/irwanphan/polaris.git`
-  - Branch: `main`
-  - Commits so far: `c487325 first commit`, `d72edcb project setup`
-- `pubspec.yaml` minimally configured (description, version `1.0.0+1`,
-  Dart SDK `^3.12.1`).
-- BRD `docs/BRD Polaris.md` drafted to **v0.2.0** (sections 1–16 complete,
-  including Architecture, Data Model, Roadmap, Risks, Acceptance Criteria,
-  Glossary).
-- This handoff document.
+  `flutter create` (`name: polaris`, bundle ID
+  `com.phandarian.polaris`).
+- Git repository initialized and pushed to GitHub
+  (`https://github.com/irwanphan/polaris.git`, branch `main`).
+- BRD `docs/BRD Polaris.md` drafted to **v0.2.0** (sections 1–16,
+  including Architecture, Data Model, Roadmap, Risks, Acceptance
+  Criteria, Glossary).
+- **M0 — Foundation** shipped:
+  - **Runtime deps** added: `flutter_riverpod ^3.3.2`,
+    `riverpod_annotation ^4.0.3`, `go_router ^17.3.0`, `drift ^2.34.0`,
+    `drift_flutter ^0.3.0`, `sqlite3_flutter_libs ^0.6.0+eol`,
+    `path_provider ^2.1.5`, `shared_preferences ^2.5.5`, `intl ^0.20.2`,
+    `logger ^2.7.0`, `freezed_annotation ^3.1.0`,
+    `json_annotation ^4.12.0`, `uuid ^4.5.3`.
+  - **Dev deps** added: `build_runner ^2.15.0`, `freezed ^3.2.6-dev.1`,
+    `json_serializable ^6.14.0`, `drift_dev ^2.34.0`,
+    `riverpod_generator ^4.0.4`, `mocktail ^1.0.5`,
+    `riverpod_lint ^3.1.4`.
+  - **Native plugins deferred**: `home_widget`, `workmanager`,
+    `flutter_local_notifications` will land in M2/M3 when their
+    milestones require platform setup.
+  - **Lints tightened** in `analysis_options.yaml`: strict-casts,
+    strict-inference, strict-raw-types, `avoid_relative_lib_imports`,
+    `always_use_package_imports`, `prefer_single_quotes`, `avoid_print`,
+    `unawaited_futures`, and a stricter `prefer_const_*` set.
+  - **`.gitignore`** updated to ignore generated files (`*.g.dart`,
+    `*.freezed.dart`, …) per Decision D1.
+  - **Folder structure** per `BRD §9.1` created under `lib/`:
+    - `app/` — `bootstrap.dart`, `app.dart`, `router.dart`,
+      `theme/{color_tokens, text_styles, app_theme}.dart`.
+    - `core/` — `result/result.dart`, `errors/failure.dart`,
+      `logging/app_logger.dart`, `extensions/date_x.dart`.
+    - `shared/widgets/` — `polaris_scaffold.dart`, `section_card.dart`,
+      `coming_soon_view.dart` (atomic, reusable, SOLID).
+    - `features/launcher/`, `features/life_countdown/`,
+      `features/event_countdown/`, `features/lifestyle/`,
+      `features/settings/` — each with `presentation/pages/` and a
+      thin placeholder page wired to a route.
+  - **Theme**: Tailwind-flavored token system — Midnight/Indigo +
+    Starlight/Amber + Slate neutrals, Material 3 ColorScheme for both
+    light & dark, semantic text styles (`displayXl`…`caption`),
+    spacing scale on a 4-px base, radius scale, elevation scale.
+  - **Routing**: `go_router` with named routes `/`, `/life`, `/events`,
+    `/lifestyle`, `/settings`. Router exposed via
+    `appRouterProvider`.
+  - **Composition root**: `bootstrap()` initializes binding, installs
+    `FlutterError.onError` / `PlatformDispatcher.instance.onError`
+    handlers wired to the logger, wraps `runApp` in
+    `runZonedGuarded`, mounts `ProviderScope` with logger override.
+  - **Tests**: 14/14 passing.
+    - `test/unit/core/result/result_test.dart` — 6 tests on `Result`.
+    - `test/unit/core/extensions/date_x_test.dart` — 6 tests on
+      `DateTimeX` / `DurationX`.
+    - `test/widget_test.dart` — 2 widget tests covering launcher render
+      + navigation to a placeholder.
+  - **`flutter analyze`**: zero issues with the new lint profile.
 
 ### In Progress
-- None — at a clean checkpoint, working tree is clean.
+- None — clean checkpoint at the end of M0.
 
 ### Not Started (next on deck)
-- Dependency wiring in `pubspec.yaml` (Riverpod, go_router, Drift, etc.).
-- Replace template `lib/main.dart` with the architecture described in
-  `BRD §9.1` (composition root + `core` + `shared` + first feature shell).
-- Lint hardening in `analysis_options.yaml` (enforce
-  `avoid_relative_lib_imports`, `prefer_const_constructors`,
-  custom rule against cross-feature imports).
-- Theme tokens + `MaterialApp.router` bootstrap.
-- CI workflow (`.github/workflows/ci.yml`) running `flutter analyze` +
-  `flutter test`.
-- First vertical slice: **Life Countdown** (M1 in `BRD §11`).
+- **M1 — Life Countdown vertical slice** (see `BRD §11`):
+  - Domain: `LifeProfile`, `LifeEstimate`, `ComputeRemainingDays` use
+    case (pure, fully unit-tested).
+  - Data: seed `life_expectancy.json` (WHO + BPS), Drift schema v1,
+    `LifeProfileRepository` impl.
+  - Application: `LifeCountdownController` (Riverpod `AsyncNotifier`).
+  - Presentation: onboarding (birth date + sex + country), countdown
+    page with day / week / month / percent toggles.
+  - Replace `LauncherPage` with a real `HomeShellPage` (bottom nav).
+- **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
+  `flutter test --coverage` on push & PR (Handoff §4 Step 4).
+- Add `home_widget`, `workmanager`, `flutter_local_notifications` at
+  the milestone they're needed (M2 / M3).
 
 ---
 
@@ -110,8 +155,9 @@ flutter run                # picks the first available device
 ## 4. Next Steps (for the next AI session)
 
 Work in this order. Each item maps to milestones in `BRD §11`.
+**Steps 1 & 2 are DONE** (see Current Status above); start at Step 3.
 
-### Step 1 — Dependencies & Lints (M0)
+### Step 1 — Dependencies & Lints (M0) — DONE
 1. Update `pubspec.yaml` to add (latest stable on pub.dev at the time of
    writing — let `flutter pub add` resolve versions):
    - Runtime: `flutter_riverpod`, `riverpod_annotation`, `go_router`,
@@ -128,7 +174,7 @@ Work in this order. Each item maps to milestones in `BRD §11`.
    the generated files (or add to `.gitignore` if the team prefers
    regeneration — decide in §5).
 
-### Step 2 — Composition root & Architecture skeleton (M0)
+### Step 2 — Composition root & Architecture skeleton (M0) — DONE
 4. Create folder structure per `BRD §9.1` (`app/`, `core/`, `shared/`,
    `data/`, `features/`).
 5. Implement `app/bootstrap.dart`, `app/app.dart`, `app/router.dart`,
@@ -176,6 +222,7 @@ recommendation is in **bold**; revisit when a real constraint appears.
 | D6 | Min iOS for MVP? | (a) 14, (b) 16 | **(a) 14** for app; require 16 only for Lock Screen Widget |
 | D7 | Bundled life-expectancy table — single source or merged? | (a) WHO only, (b) BPS only, (c) merged with `source` field | **(c) merged**, store source per row for transparency |
 | D8 | Branching model? | (a) trunk-based on `main`, (b) GitFlow | **(a) trunk-based** with short-lived feature branches |
+| D9 | Activate `riverpod_lint` analyzer plugin? | (a) yes (needs compatible `custom_lint`), (b) defer until ecosystem aligns | **(b) defer** — `riverpod_lint 3.1.4` requires `analyzer ^9.0.0` which conflicts with the latest published `custom_lint`; revisit at M3 |
 
 ---
 
@@ -236,3 +283,4 @@ When you (the next AI assistant) act on this project:
 |---|---|---|
 | 2026-06-12 | Cursor AI session | Initial handoff draft (§§1–2 partial) |
 | 2026-06-12 | Cursor AI session | Completed §§2–8; aligned with BRD v0.2.0 |
+| 2026-06-12 | Cursor AI session | Shipped **M0 — Foundation**: dependencies, lints, folder structure, theme, router, composition root, shared widgets, placeholder pages, 14/14 tests passing, `flutter analyze` clean. Added D9. |

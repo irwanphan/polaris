@@ -43,3 +43,23 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# --- Polaris additions ------------------------------------------------------
+# Code-generated files (BRD Decision D1: gitignore + regenerate via build step).
+# Regenerate with: `dart run build_runner build --delete-conflicting-outputs`.
+**/*.g.dart
+**/*.freezed.dart
+**/*.config.dart
+**/*.gr.dart
+**/*.mocks.dart
+
+# Coverage output (kept off VCS; CI uploads as artifact)
+/coverage/
+
+# Local environment overrides (if introduced later)
+.env
+.env.local
+*.local.dart
+
+# macOS Finder
+.DS_Store
