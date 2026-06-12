@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-12 by Cursor AI session — **M2 HomeShell + LifeProfile Drift migration complete**
+> **Last updated:** 2026-06-12 by Cursor AI session — **M2 Notifications scheduler complete (Android home-widget pending)**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-12, M2 progress: HomeShell + LifeProfile→Drift done)
+## 2. Current Status (As of 2026-06-12, M2 progress: HomeShell + LifeProfile→Drift + Notifications scheduler done)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -311,30 +311,125 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
       touch SharedPreferences or Drift for the life profile.
   - **`flutter analyze`**: still zero issues.
 
+- **M2 — Local notification scheduler** shipped:
+  - **New runtime deps** in `pubspec.yaml`:
+    `flutter_local_notifications ^19.4.2` (the plugin),
+    `timezone ^0.10.1` (TZ math), and `flutter_timezone ^4.1.2`
+    (host timezone lookup). `permission_handler` is *not* needed
+    because the plugin handles `POST_NOTIFICATIONS` and
+    `SCHEDULE_EXACT_ALARM` flow internally.
+  - **Android manifest** (`android/app/src/main/AndroidManifest.xml`)
+    declares `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`,
+    `USE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`, and
+    registers the plugin's `ScheduledNotificationReceiver`,
+    `ScheduledNotificationBootReceiver`, and
+    `ActionBroadcastReceiver` so reminders survive reboots.
+  - **NDK pinned** in `android/app/build.gradle.kts` to
+    `30.0.14904198` (the version already installed locally) so
+    the build doesn't try to download Flutter's default NDK
+    (~3 GB). Bump explicitly when Flutter raises the floor.
+  - **Drift schema v3** — `NotificationSchedulesTable` added with
+    `id` (auto-increment, doubles as the platform notification
+    id), `eventId`, `kind` (`t-7d` / `t-1d` / `t-1h`),
+    `scheduledForEpochMs`, `createdAtEpochMs`. `onUpgrade`
+    creates the new table for users coming from v1/v2.
+    Generated `app_database.g.dart` regenerated via
+    `dart run build_runner build`.
+  - **`NotificationsDao`** (`lib/data/database/daos/`) exposes
+    `insertReturningId`, `listForEvent`, `listAll`,
+    `deleteForEvent`, `deleteById`.
+  - **`NotificationDispatcher`** abstract interface
+    (`lib/core/notifications/notification_dispatcher.dart`) is
+    the platform-agnostic seam: `initialize`, `ensurePermission`,
+    `scheduleAt`, `cancel`, `cancelAll`. Lives in `core/`
+    because it has zero domain knowledge.
+  - **`FlutterLocalNotificationsDispatcher`** (same folder)
+    wraps the plugin: initializes the TZ database via
+    `flutter_timezone`, creates a single Android notification
+    channel ("Polaris reminders", high importance), routes
+    iOS/Darwin alert permission requests, and schedules with
+    `AndroidScheduleMode.exactAllowWhileIdle`.
+  - **`ReminderOffset`** value object
+    (`features/event_countdown/domain/value_objects/`) — enum
+    with `oneWeek`, `oneDay`, `oneHour` carrying `storageKey`,
+    `before` (`Duration`), and `humanLabel`. Single source of
+    truth for the offset matrix.
+  - **`NotificationScheduler`** service
+    (`features/event_countdown/application/notification_scheduler.dart`)
+    composes `NotificationDispatcher` + `NotificationsDao`:
+    - `rescheduleFor(event)` — cancels every prior schedule
+      for `event.id`, requests permission lazily, computes
+      `event.nextOccurrence(now)`, then iterates
+      `ReminderOffset.values`. Each offset that still lies in
+      the future is inserted into `NotificationSchedulesTable`
+      (auto-id) and that id is reused as the platform
+      notification id. Plugin failures roll back the DB row
+      so the bookkeeping table stays in sync with the OS.
+    - `cancelFor(eventId)` — cancels every platform
+      notification listed in the table and clears the rows.
+    - All failures are logged via `AppLogger.warn`/`info` and
+      swallowed; a notification glitch never blocks an event
+      save.
+  - **Provider tree** in
+    `features/event_countdown/application/providers.dart`:
+    - `notificationDispatcherProvider` — throws unimplemented
+      by default; overridden in `bootstrap.dart` with the
+      Flutter Local Notifications impl.
+    - `notificationSchedulerProvider` — composes the dispatcher
+      + the `NotificationsDao` from `appDatabaseProvider`.
+  - **`EventsController`** now takes a `NotificationScheduler`
+    and calls `rescheduleFor(event)` on every successful
+    `createEvent` / `updateEvent`, and `cancelFor(id)` on
+    every successful `deleteEvent`. `togglePin` does **not**
+    touch the scheduler — pinning is a UI affordance, not a
+    reminder change.
+  - **Bootstrap**: now initializes the dispatcher (TZ database
+    + plugin) once at startup, before mounting `ProviderScope`,
+    and overrides `notificationDispatcherProvider`. The
+    one-shot LifeProfile SP→Drift migration still runs first.
+  - **Tests**: 79/79 passing (up from 68).
+    - `notification_scheduler_test` — 11 cases via a hand-rolled
+      `_FakeDispatcher` + in-memory Drift:
+      schedules-all-three, skips past offsets, no-op when fully
+      past, DAO rows match dispatched ids, rescheduling is
+      idempotent (cancels prior + leaves no stale rows),
+      permission-denied is silent, yearly recurrence uses the
+      *next* occurrence (not the historical `targetAt`),
+      dispatcher exceptions roll back the DB row, plus
+      `cancelFor` happy path and unknown-id no-op. Also pins
+      `ReminderOffset` enum metadata.
+    - Widget tests gained a `_NoopNotificationDispatcher`
+      override so the events-page tests stay hermetic even
+      though they don't exercise the editor sheet today.
+  - **`flutter analyze`**: still zero issues.
+
 ### In Progress
-- None — clean checkpoint after HomeShell + LifeProfile Drift
-  migration.
+- None — clean checkpoint after the notification scheduler.
 
 ### Not Started (next on deck)
+- **Smoke test on emulator** is currently blocked: the local
+  disk is at 100% capacity (~2.5 GiB free) so neither the
+  Flutter Gradle build (~5–8 GiB intermediates) nor the
+  NDK 28.2 download (~3 GB) can finish. Once the disk has
+  ≥10 GiB free, run `flutter build apk --debug` (Gradle should
+  pick up the pinned NDK 30.0.14904198) and then
+  `flutter install -d emulator-5554` to verify channel
+  creation + first notification on the Android 15 emulator.
 - **M2 (remainder)** before declaring the milestone fully
   shipped (see `BRD §11`):
-  - **`NotificationSchedule` table + scheduler**: wire
-    `flutter_local_notifications` + `permission_handler`,
-    auto-schedule T-7d / T-1d / T-1h reminders relative to the
-    next occurrence; re-evaluate on every event
-    `upsert` / `delete` / `togglePin`. Bump schema to v3 with
-    a `notification_schedules` table keyed by `eventId` so
-    we can cancel platform notifications when events change.
   - **Pin to home-screen widget** (Android first, iOS Phase 2):
     bring in `home_widget`, register a Glance receiver in
     `android/`, and feed it the pinned event's countdown. The
     `togglePin` plumbing in `EventRepository` is already in
-    place; only the platform-side renderer is missing.
+    place; only the platform-side renderer is missing. Wire
+    `NotificationScheduler` to also re-render the widget when
+    a reminder fires (or on every event mutation).
 - **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
   `flutter test --coverage` on push & PR (Handoff §4 Step 4).
   Must include a `dart run build_runner build` step before tests.
 - Add `workmanager` for backgrounded notification re-evaluation
-  at M3.
+  at M3 (catches recurring events that the user never opens the
+  app to refresh).
 
 ---
 
@@ -369,7 +464,7 @@ flutter doctor -v          # all checked categories should be green
 flutter pub get            # resolve current pubspec
 dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed! (68+ tests)
+flutter test               # expect: All tests passed! (79+ tests)
 ```
 
 > The `build_runner build` step is mandatory after a fresh checkout
@@ -431,30 +526,25 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 Follow `BRD §11` for M2 → M9. Each milestone should ship as its own PR
 series and update this Handoff document's `Current Status`.
 
-**Pointer for the next session**: finish **M2 — Event
-Countdown** by adding notifications and the Android home-screen
-widget (HomeShell + LifeProfile→Drift already done).
+**Pointer for the next session**: only one production task is
+left in **M2 — Event Countdown** — the Android home-screen
+widget. Notification scheduling is already wired end-to-end.
 Recommended order:
-1. **Notification scheduler**: add `flutter_local_notifications` +
-   `permission_handler` to `pubspec.yaml`. Bump Drift schema to
-   v3 with a `notification_schedules` table keyed by `eventId`
-   that stores the platform notification ids we've created. Build
-   a `NotificationScheduler` service that the `EventsController`
-   invokes on every `create` / `update` / `delete` / `togglePin`:
-   - On create/update: cancel previous schedules for the event
-     (read from the new table), then schedule three new platform
-     notifications at T-7d / T-1d / T-1h relative to
-     `event.nextOccurrence(DateTime.now())` (yearly/monthly/weekly
-     events re-schedule themselves on next launch via a
-     `bootstrap()` hook).
-   - On delete / unpin: cancel all schedules for the event.
-   Prompt for permission lazily on the first save.
+1. **Free up disk space** (current dev machine is at 100%
+   capacity, ~2.5 GiB free). Then run
+   `flutter build apk --debug && flutter install -d emulator-5554`
+   to smoke-test the notification flow on a real device:
+   create an event one hour out, accept the
+   `POST_NOTIFICATIONS` prompt, lock the screen, and confirm
+   the T-1h reminder fires.
 2. **Home-screen widget (Android)**: `home_widget` plugin +
    AndroidManifest `<receiver>` + a Glance composable. Widget
-   reads the pinned event from Drift in a background isolate (use
-   `home_widget`'s `registerBackgroundCallback`). Re-render on
-   `togglePin` and on every notification firing so the day count
-   stays fresh.
+   reads the pinned event from Drift in a background isolate
+   (use `home_widget`'s `registerBackgroundCallback`).
+   Re-render on `togglePin`, on every event mutation, and on
+   every notification firing so the day count stays fresh. Wire
+   `NotificationScheduler` (or a new `WidgetUpdater` peer in
+   `core/`) into the same composition root.
 3. **`HomeShellPage` polish** (optional): consider adding a
    "Pinned event" hero card to the Life tab so the home screen
    feels coherent with the widget.
@@ -503,6 +593,10 @@ recommendation is in **bold**; revisit when a real constraint appears.
 | Life Countdown feature | `lib/features/life_countdown/` |
 | Event Countdown feature | `lib/features/event_countdown/` |
 | LifeProfile SP→Drift migration | `lib/features/life_countdown/data/migrations/life_profile_sp_to_drift.dart` |
+| Notification dispatcher (interface) | `lib/core/notifications/notification_dispatcher.dart` |
+| Notification dispatcher (impl) | `lib/core/notifications/flutter_local_notifications_dispatcher.dart` |
+| Notification scheduler (per-event) | `lib/features/event_countdown/application/notification_scheduler.dart` |
+| Reminder offsets VO | `lib/features/event_countdown/domain/value_objects/reminder_offset.dart` |
 | Seed assets | `assets/seed/` |
 | Test root | `test/` |
 
@@ -551,3 +645,6 @@ When you (the next AI assistant) act on this project:
 | 2026-06-12 | Cursor AI session | Completed §§2–8; aligned with BRD v0.2.0 |
 | 2026-06-12 | Cursor AI session | Shipped **M0 — Foundation**: dependencies, lints, folder structure, theme, router, composition root, shared widgets, placeholder pages, 14/14 tests passing, `flutter analyze` clean. Added D9. |
 | 2026-06-12 | Cursor AI session | Shipped **M1 — Life Countdown vertical slice**: domain (VOs + entities + use case), data (seed JSON + repositories), application (Riverpod AsyncNotifiers), presentation (onboarding + real countdown screen + reusable widgets), router redirect logic. 34/34 tests passing, `flutter analyze` clean. |
+| 2026-06-12 | Cursor AI session | Shipped **M2 — Event Countdown CRUD slice**: Drift v1 + EventsDao, domain entities + recurrence math, repository with `Result`-wrapped failures, `EventsController` (create/update/delete/togglePin), real Event Countdown page + editor sheet. 57/57 tests passing, `flutter analyze` clean. |
+| 2026-06-12 | Cursor AI session | Shipped **M2 — HomeShell + LifeProfile→Drift**: bottom-nav `StatefulShellRoute`, `LifeProfilesTable` (schema v2) + DAO + Drift repository, one-shot SP→Drift migration in `bootstrap()`. 68/68 tests passing, `flutter analyze` clean. |
+| 2026-06-12 | Cursor AI session | Shipped **M2 — Notification scheduler**: `flutter_local_notifications` + TZ deps, Android manifest receivers + permissions, NDK pinned to 30.0.14904198, Drift v3 with `NotificationSchedulesTable`, `NotificationDispatcher` interface + Flutter Local Notifications impl in `core/`, per-event `NotificationScheduler` (T-7d/T-1d/T-1h) wired into `EventsController`, dispatcher init in bootstrap. 79/79 tests passing, `flutter analyze` clean. On-device smoke test deferred — local disk at 100%. |

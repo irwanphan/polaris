@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:polaris/app/app.dart';
 import 'package:polaris/core/errors/failure.dart';
 import 'package:polaris/core/logging/app_logger.dart';
+import 'package:polaris/core/notifications/notification_dispatcher.dart';
 import 'package:polaris/core/result/result.dart';
 import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
@@ -87,6 +88,29 @@ class _InMemoryEventRepository implements EventRepository {
   }
 }
 
+class _NoopNotificationDispatcher implements NotificationDispatcher {
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<bool> ensurePermission() async => false;
+
+  @override
+  Future<void> scheduleAt({
+    required int id,
+    required DateTime when,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {}
+
+  @override
+  Future<void> cancel(int id) async {}
+
+  @override
+  Future<void> cancelAll() async {}
+}
+
 class _InMemoryLifeProfileRepository implements LifeProfileRepository {
   _InMemoryLifeProfileRepository([this._profile]);
 
@@ -138,6 +162,8 @@ Future<ProviderScope> _bootApp({LifeProfile? profile}) async {
           .overrideWithValue(_InMemoryEventRepository()),
       lifeProfileRepositoryProvider
           .overrideWithValue(_InMemoryLifeProfileRepository(profile)),
+      notificationDispatcherProvider
+          .overrideWithValue(_NoopNotificationDispatcher()),
     ],
     child: const PolarisApp(),
   );

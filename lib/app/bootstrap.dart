@@ -5,8 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/app.dart';
 import 'package:polaris/core/logging/app_logger.dart';
+import 'package:polaris/core/notifications/flutter_local_notifications_dispatcher.dart';
+import 'package:polaris/core/notifications/notification_dispatcher.dart';
 import 'package:polaris/data/database/app_database.dart';
 import 'package:polaris/data/database/providers.dart';
+import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/life_countdown/application/providers.dart';
 import 'package:polaris/features/life_countdown/data/migrations/life_profile_sp_to_drift.dart';
 import 'package:polaris/features/life_countdown/data/repositories/life_profile_drift_repository.dart';
@@ -37,6 +40,13 @@ Future<void> bootstrap() async {
     logger: logger,
   ).run();
 
+  // Initialise the local-notifications plugin up-front so per-event
+  // scheduling later in the session doesn't pay the timezone / channel
+  // setup cost.
+  final NotificationDispatcher notifications =
+      FlutterLocalNotificationsDispatcher(logger: logger);
+  await notifications.initialize();
+
   FlutterError.onError = (FlutterErrorDetails details) {
     logger.error(
       'Uncaught Flutter error',
@@ -59,6 +69,7 @@ Future<void> bootstrap() async {
             appLoggerProvider.overrideWithValue(logger),
             sharedPreferencesProvider.overrideWithValue(preferences),
             appDatabaseProvider.overrideWithValue(database),
+            notificationDispatcherProvider.overrideWithValue(notifications),
           ],
           child: const PolarisApp(),
         ),

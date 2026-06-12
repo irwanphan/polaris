@@ -7,7 +7,11 @@ plugins {
 android {
     namespace = "com.phandarian.polaris"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Pinned to the NDK that is already installed locally so the build
+    // doesn't try to download a different version (~3 GB). Bump this when
+    // Flutter raises the floor — see `flutter.ndkVersion` in the Flutter
+    // SDK for the upstream default.
+    ndkVersion = "30.0.14904198"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

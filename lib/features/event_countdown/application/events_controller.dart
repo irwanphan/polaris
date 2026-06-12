@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/core/result/result.dart';
+import 'package:polaris/features/event_countdown/application/notification_scheduler.dart';
 import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/repositories/event_repository.dart';
@@ -9,10 +10,15 @@ import 'package:polaris/features/event_countdown/domain/value_objects/recurrence
 ///
 /// Reactive reads are exposed via [eventsStreamProvider] — the controller
 /// only owns write operations so the read path stays a pure pull stream.
+///
+/// Side effects (notification scheduling) are dispatched after the
+/// repository write succeeds. A scheduling failure is logged inside the
+/// scheduler and never propagates — the event always persists.
 class EventsController {
-  const EventsController(this._repository);
+  const EventsController(this._repository, this._scheduler);
 
   final EventRepository _repository;
+  final NotificationScheduler _scheduler;
 
   Future<Result<Event, Object>> createEvent({
     required String title,
@@ -31,6 +37,9 @@ class EventsController {
       recurrence: recurrence,
     );
     final result = await _repository.upsert(event);
+    if (result.isOk) {
+      await _scheduler.rescheduleFor(event);
+    }
     return result.fold(
       onOk: (_) => Result<Event, Object>.ok(event),
       onErr: Result<Event, Object>.err,
@@ -59,6 +68,9 @@ class EventsController {
       updatedAt: DateTime.now(),
     );
     final result = await _repository.upsert(updated);
+    if (result.isOk) {
+      await _scheduler.rescheduleFor(updated);
+    }
     return result.fold(
       onOk: (_) => Result<Event, Object>.ok(updated),
       onErr: Result<Event, Object>.err,
@@ -67,6 +79,9 @@ class EventsController {
 
   Future<Result<void, Object>> deleteEvent(String id) async {
     final result = await _repository.delete(id);
+    if (result.isOk) {
+      await _scheduler.cancelFor(id);
+    }
     return result.fold(
       onOk: (_) => const Result<void, Object>.ok(null),
       onErr: Result<void, Object>.err,
@@ -96,5 +111,8 @@ class EventsController {
 
 final Provider<EventsController> eventsControllerProvider =
     Provider<EventsController>(
-  (ref) => EventsController(ref.watch(eventRepositoryProvider)),
+  (ref) => EventsController(
+    ref.watch(eventRepositoryProvider),
+    ref.watch(notificationSchedulerProvider),
+  ),
 );

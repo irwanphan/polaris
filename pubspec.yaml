@@ -47,6 +47,9 @@ dependencies:
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
   uuid: ^4.5.3
+  flutter_local_notifications: ^22.0.0
+  timezone: ^0.11.0
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:
