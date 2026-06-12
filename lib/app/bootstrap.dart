@@ -6,8 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/app.dart';
 import 'package:polaris/core/logging/app_logger.dart';
 import 'package:polaris/data/database/app_database.dart';
-import 'package:polaris/features/event_countdown/application/providers.dart';
+import 'package:polaris/data/database/providers.dart';
 import 'package:polaris/features/life_countdown/application/providers.dart';
+import 'package:polaris/features/life_countdown/data/migrations/life_profile_sp_to_drift.dart';
+import 'package:polaris/features/life_countdown/data/repositories/life_profile_drift_repository.dart';
+import 'package:polaris/features/life_countdown/data/repositories/life_profile_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Composition root.
@@ -24,6 +27,15 @@ Future<void> bootstrap() async {
   final AppLogger logger = AppLogger.create();
   final SharedPreferences preferences = await SharedPreferences.getInstance();
   final AppDatabase database = AppDatabase();
+
+  // One-shot migration: move any M1 SharedPreferences profile into the
+  // Drift store introduced in M2. Safe to call every boot — the
+  // migrator is idempotent.
+  await LifeProfileSpToDriftMigration(
+    legacyRepository: LifeProfileRepositoryImpl(preferences),
+    targetRepository: LifeProfileDriftRepository(database.lifeProfilesDao),
+    logger: logger,
+  ).run();
 
   FlutterError.onError = (FlutterErrorDetails details) {
     logger.error(

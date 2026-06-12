@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-12 by Cursor AI session — **M2 Event Countdown CRUD slice complete**
+> **Last updated:** 2026-06-12 by Cursor AI session — **M2 HomeShell + LifeProfile Drift migration complete**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-12, end of M2 CRUD slice)
+## 2. Current Status (As of 2026-06-12, M2 progress: HomeShell + LifeProfile→Drift done)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -239,28 +239,97 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
       DAO is fully exercised in the data unit test instead).
   - **`flutter analyze`**: still zero issues.
 
+- **M2 — HomeShell navigation + LifeProfile → Drift** shipped:
+  - **`HomeShellPage`** (`lib/features/home/presentation/pages/`)
+    wraps a `StatefulNavigationShell` and renders a Material 3
+    `NavigationBar` with four tabs: **Life / Events / Lifestyle /
+    Settings**. Tapping the active tab resets the branch to its
+    root, mimicking the Twitter / Instagram gesture.
+  - **Router** rewritten in `lib/app/router.dart` to use
+    `StatefulShellRoute.indexedStack` with four
+    `StatefulShellBranch`es (one per tab). Each tab keeps its
+    own back-stack, scroll position, and Riverpod scopes when the
+    user switches away and back. Deep links like `/events` switch
+    the active tab. `/onboarding` stays outside the shell so the
+    first-run flow is full-screen.
+  - **`LauncherPage`** removed (`lib/features/launcher/` deleted).
+    It served only as M0 wiring scaffolding; the HomeShell
+    replaces it for production use.
+  - **Initial location** changed from `/` (launcher) to `/life`.
+    The existing redirect rule (no profile → `/onboarding`) still
+    applies and now triggers on first launch.
+  - **`LifeProfilesTable`** added to Drift schema (singleton row,
+    `id = 1` enforced):
+    - Table: `lib/data/database/tables/life_profiles_table.dart`.
+    - DAO: `lib/data/database/daos/life_profiles_dao.dart` with
+      `read`, `upsert` (id pinned to 1), and `clear`.
+    - `AppDatabase.schemaVersion` bumped from **1 → 2** with an
+      `onUpgrade` handler that creates the new table on devices
+      that already had the v1 events table. Fresh installs use
+      `onCreate.createAll()` as before.
+  - **`appDatabaseProvider`** moved from
+    `features/event_countdown/application/providers.dart` to
+    `lib/data/database/providers.dart` so it can be referenced
+    by multiple features without violating the "no
+    cross-feature imports" rule (`BRD §9.2`).
+  - **`LifeProfileDriftRepository`** (new) implements the same
+    `LifeProfileRepository` interface as the M1 SharedPreferences
+    impl. Mapping rules match `EventRepositoryImpl`: timestamps as
+    UTC milliseconds, enums via `storageKey`. All failures wrapped
+    in `Result.err(StorageFailure)`.
+  - **`lifeProfileRepositoryProvider`** default switched to the
+    Drift implementation. The SP-backed
+    `LifeProfileRepositoryImpl` is retained as the legacy reader
+    for the one-shot migration only — no production read path
+    touches it anymore.
+  - **One-shot SP → Drift migration**
+    (`features/life_countdown/data/migrations/life_profile_sp_to_drift.dart`):
+    - `LifeProfileSpToDriftMigration.run()` is idempotent: returns
+      `false` (no-op) if the Drift store already has a profile or
+      if the SP store is empty; otherwise it copies the profile
+      into Drift and clears the SP key. Save failures keep the
+      legacy data intact for next-boot retry.
+    - Bootstrap awaits this migration before mounting
+      `ProviderScope`, so the first launch after upgrading is
+      indistinguishable from any subsequent launch.
+  - **Tests**: 68/68 passing (up from 57).
+    - `life_profile_drift_repository_test` — 5 cases via
+      `AppDatabase.forTesting(NativeDatabase.memory())`:
+      empty-read, save+read round-trip, singleton-row overwrite,
+      clear, `hideLifeCountdown` both values round-trip.
+    - `life_profile_sp_to_drift_test` — 5 cases via in-memory
+      fakes: no-op empty source, no-op when target populated,
+      successful migration clears source, save failure
+      preserves source, idempotent on second run.
+    - Widget tests rewritten for the new shell:
+      "Boots into onboarding when no profile exists",
+      "HomeShell renders bottom nav with 4 tabs", and one
+      test per tab (Events / Lifestyle / Settings). The
+      `lifeProfileRepositoryProvider` is now overridden with
+      `_InMemoryLifeProfileRepository` (seeded from a sample
+      `LifeProfile` directly), so widget tests no longer
+      touch SharedPreferences or Drift for the life profile.
+  - **`flutter analyze`**: still zero issues.
+
 ### In Progress
-- None — clean checkpoint at the end of the M2 CRUD slice.
+- None — clean checkpoint after HomeShell + LifeProfile Drift
+  migration.
 
 ### Not Started (next on deck)
-- **M2 (remainder)** before declaring the milestone fully shipped
-  (see `BRD §11`):
+- **M2 (remainder)** before declaring the milestone fully
+  shipped (see `BRD §11`):
   - **`NotificationSchedule` table + scheduler**: wire
     `flutter_local_notifications` + `permission_handler`,
     auto-schedule T-7d / T-1d / T-1h reminders relative to the
-    next occurrence; re-evaluate on every `upsert` /
-    `delete` / `togglePin`.
+    next occurrence; re-evaluate on every event
+    `upsert` / `delete` / `togglePin`. Bump schema to v3 with
+    a `notification_schedules` table keyed by `eventId` so
+    we can cancel platform notifications when events change.
   - **Pin to home-screen widget** (Android first, iOS Phase 2):
     bring in `home_widget`, register a Glance receiver in
-    `android/`, and feed it the pinned event's countdown.
-  - **`HomeShellPage` with bottom nav** (Life / Events /
-    Lifestyle / Settings) replacing `LauncherPage`. This is the
-    new "home" once events have first-class navigation.
-  - **`LifeProfile` Drift migration**: move from SharedPreferences
-    into a `LifeProfileTable` with a one-shot migration on first
-    launch (read SP → insert row → clear SP key). Defer until
-    after the rest of M2 lands so we don't break the current
-    Life slice mid-stream.
+    `android/`, and feed it the pinned event's countdown. The
+    `togglePin` plumbing in `EventRepository` is already in
+    place; only the platform-side renderer is missing.
 - **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
   `flutter test --coverage` on push & PR (Handoff §4 Step 4).
   Must include a `dart run build_runner build` step before tests.
@@ -300,7 +369,7 @@ flutter doctor -v          # all checked categories should be green
 flutter pub get            # resolve current pubspec
 dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed! (57+ tests)
+flutter test               # expect: All tests passed! (68+ tests)
 ```
 
 > The `build_runner build` step is mandatory after a fresh checkout
@@ -362,31 +431,34 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 Follow `BRD §11` for M2 → M9. Each milestone should ship as its own PR
 series and update this Handoff document's `Current Status`.
 
-**Pointer for the next session**: continue **M2 — Event
-Countdown** (CRUD already done). Recommended order:
+**Pointer for the next session**: finish **M2 — Event
+Countdown** by adding notifications and the Android home-screen
+widget (HomeShell + LifeProfile→Drift already done).
+Recommended order:
 1. **Notification scheduler**: add `flutter_local_notifications` +
-   `permission_handler`. Build a `NotificationScheduler` service
-   that the `EventsController` invokes on every
-   `create` / `update` / `delete` / `togglePin`. Persist the
-   resulting platform notification IDs in a new
-   `NotificationSchedule` Drift table so we can cancel them later.
-   Prompt for permission lazily (first reminder save).
+   `permission_handler` to `pubspec.yaml`. Bump Drift schema to
+   v3 with a `notification_schedules` table keyed by `eventId`
+   that stores the platform notification ids we've created. Build
+   a `NotificationScheduler` service that the `EventsController`
+   invokes on every `create` / `update` / `delete` / `togglePin`:
+   - On create/update: cancel previous schedules for the event
+     (read from the new table), then schedule three new platform
+     notifications at T-7d / T-1d / T-1h relative to
+     `event.nextOccurrence(DateTime.now())` (yearly/monthly/weekly
+     events re-schedule themselves on next launch via a
+     `bootstrap()` hook).
+   - On delete / unpin: cancel all schedules for the event.
+   Prompt for permission lazily on the first save.
 2. **Home-screen widget (Android)**: `home_widget` plugin +
    AndroidManifest `<receiver>` + a Glance composable. Widget
-   reads from the same Drift database via a background isolate
-   helper. Re-render on `togglePin`.
-3. **`HomeShellPage` with bottom nav** (Life / Events / Lifestyle /
-   Settings). Move `LauncherPage` content into a
-   "Quick links" tab or remove entirely. Update the router so `/`
-   lands on `HomeShell` with the previous route preserved per
-   tab.
-4. **`LifeProfile` Drift migration** — last to ship in M2 so other
-   work isn't blocked. Steps: add `LifeProfileTable`, write a
-   `LifeProfileRepositoryImpl` Drift variant, add a one-shot
-   migration in `bootstrap()` (read SP → insert → delete SP key),
-   then swap the provider override. Keep both repos behind the
-   abstract interface so this is a pure DI change.
-5. Keep `flutter analyze` clean; add tests alongside each item.
+   reads the pinned event from Drift in a background isolate (use
+   `home_widget`'s `registerBackgroundCallback`). Re-render on
+   `togglePin` and on every notification firing so the day count
+   stays fresh.
+3. **`HomeShellPage` polish** (optional): consider adding a
+   "Pinned event" hero card to the Life tab so the home screen
+   feels coherent with the widget.
+4. Keep `flutter analyze` clean; add tests alongside each item.
 
 ---
 
@@ -422,11 +494,15 @@ recommendation is in **bold**; revisit when a real constraint appears.
 | iOS Runner | `ios/Runner/` |
 | Entry point | `lib/main.dart` → calls `bootstrap()` |
 | Composition root | `lib/app/bootstrap.dart` |
+| Router (StatefulShellRoute) | `lib/app/router.dart` |
+| HomeShell (bottom nav) | `lib/features/home/presentation/pages/home_shell_page.dart` |
 | Drift database | `lib/data/database/app_database.dart` |
+| Drift database provider | `lib/data/database/providers.dart` |
 | Drift tables | `lib/data/database/tables/` |
 | Drift DAOs | `lib/data/database/daos/` |
 | Life Countdown feature | `lib/features/life_countdown/` |
 | Event Countdown feature | `lib/features/event_countdown/` |
+| LifeProfile SP→Drift migration | `lib/features/life_countdown/data/migrations/life_profile_sp_to_drift.dart` |
 | Seed assets | `assets/seed/` |
 | Test root | `test/` |
 

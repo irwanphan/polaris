@@ -10,8 +10,11 @@ import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/repositories/event_repository.dart';
 import 'package:polaris/features/life_countdown/application/providers.dart';
+import 'package:polaris/features/life_countdown/domain/entities/life_profile.dart';
 import 'package:polaris/features/life_countdown/domain/repositories/life_expectancy_repository.dart';
+import 'package:polaris/features/life_countdown/domain/repositories/life_profile_repository.dart';
 import 'package:polaris/features/life_countdown/domain/value_objects/country_code.dart';
+import 'package:polaris/features/life_countdown/domain/value_objects/date_of_birth.dart';
 import 'package:polaris/features/life_countdown/domain/value_objects/sex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -84,8 +87,46 @@ class _InMemoryEventRepository implements EventRepository {
   }
 }
 
-Future<ProviderScope> _bootApp({Map<String, Object>? prefs}) async {
-  SharedPreferences.setMockInitialValues(prefs ?? <String, Object>{});
+class _InMemoryLifeProfileRepository implements LifeProfileRepository {
+  _InMemoryLifeProfileRepository([this._profile]);
+
+  LifeProfile? _profile;
+
+  @override
+  Future<Result<LifeProfile?, Failure>> read() async => Result.ok(_profile);
+
+  @override
+  Future<Result<void, Failure>> save(LifeProfile profile) async {
+    _profile = profile;
+    return const Result.ok(null);
+  }
+
+  @override
+  Future<Result<void, Failure>> clear() async {
+    _profile = null;
+    return const Result.ok(null);
+  }
+}
+
+/// Builds a valid [LifeProfile]. Used so tests can boot directly into
+/// the HomeShell (no profile → router redirects to `/onboarding`).
+LifeProfile _sampleProfile() {
+  final DateTime now = DateTime(2026, 6, 12);
+  return LifeProfile(
+    dateOfBirth: DateOfBirth.tryFromDateTime(
+      DateTime(1995, 5, 15),
+      today: now,
+    ).valueOrNull!,
+    sex: Sex.undisclosed,
+    countryCode: CountryCode.tryParse('ID').valueOrNull!,
+    hideLifeCountdown: false,
+    createdAt: now,
+    updatedAt: now,
+  );
+}
+
+Future<ProviderScope> _bootApp({LifeProfile? profile}) async {
+  SharedPreferences.setMockInitialValues(<String, Object>{});
   final SharedPreferences sp = await SharedPreferences.getInstance();
   return ProviderScope(
     overrides: [
@@ -95,32 +136,17 @@ Future<ProviderScope> _bootApp({Map<String, Object>? prefs}) async {
           .overrideWithValue(_FakeExpectancyRepo()),
       eventRepositoryProvider
           .overrideWithValue(_InMemoryEventRepository()),
+      lifeProfileRepositoryProvider
+          .overrideWithValue(_InMemoryLifeProfileRepository(profile)),
     ],
     child: const PolarisApp(),
   );
 }
 
 void main() {
-  testWidgets('Launcher renders title and all destinations',
+  testWidgets('Boots into onboarding when no profile exists',
       (WidgetTester tester) async {
     await tester.pumpWidget(await _bootApp());
-    await tester.pumpAndSettle();
-
-    expect(find.text('Polaris'), findsOneWidget);
-    expect(find.text('Your countdown companion'), findsOneWidget);
-    expect(find.text('Sisa Hariku'), findsOneWidget);
-    expect(find.text('Events'), findsOneWidget);
-    expect(find.text('Lifestyle'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
-  });
-
-  testWidgets(
-      'Tapping Sisa Hariku with no profile redirects to onboarding',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(await _bootApp());
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Sisa Hariku'));
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome to Polaris'), findsOneWidget);
@@ -128,9 +154,24 @@ void main() {
     expect(find.text('Start countdown'), findsOneWidget);
   });
 
-  testWidgets('Events page shows empty state when nothing is stored',
+  testWidgets('HomeShell renders the bottom navigation with all 4 tabs',
       (WidgetTester tester) async {
-    await tester.pumpWidget(await _bootApp());
+    await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
+    await tester.pumpAndSettle();
+
+    // Tab labels appear in the NavigationBar.
+    expect(find.text('Life'), findsOneWidget);
+    expect(find.text('Events'), findsOneWidget);
+    expect(find.text('Lifestyle'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+
+    // Life tab is active by default; AppBar shows the localized title.
+    expect(find.text('Sisa Hariku'), findsOneWidget);
+  });
+
+  testWidgets('Tapping the Events tab shows the empty state',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Events'));
@@ -140,14 +181,26 @@ void main() {
     expect(find.text('New event'), findsOneWidget);
   });
 
-  testWidgets('Lifestyle and Settings placeholder pages still render',
+  testWidgets('Tapping the Lifestyle tab shows the placeholder',
       (WidgetTester tester) async {
-    await tester.pumpWidget(await _bootApp());
+    await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Lifestyle'));
     await tester.pumpAndSettle();
+
     expect(find.text('Lifestyle Logging'), findsOneWidget);
     expect(find.text('Planned for M4'), findsOneWidget);
+  });
+
+  testWidgets('Tapping the Settings tab shows the placeholder',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsWidgets);
   });
 }
