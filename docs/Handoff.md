@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-12 by Cursor AI session — **M1 Life Countdown vertical slice complete**
+> **Last updated:** 2026-06-12 by Cursor AI session — **M2 Event Countdown CRUD slice complete**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-12, end of M1)
+## 2. Current Status (As of 2026-06-12, end of M2 CRUD slice)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -144,21 +144,128 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
       `LifeExpectancyRepository` to avoid bundling assets in tests.
   - **`flutter analyze`**: still zero issues.
 
+- **M2 — Event Countdown (CRUD slice)** shipped:
+  - **Drift foundation** in `lib/data/database/`:
+    - `app_database.dart` — `@DriftDatabase(tables: [EventsTable],
+      daos: [EventsDao])`, schema v1, opened via
+      `drift_flutter`'s `driftDatabase(name: 'polaris')` helper. A
+      `forTesting(executor)` constructor allows in-memory tests.
+    - `tables/events_table.dart` — `EventsTable` with the columns
+      from `BRD §10` (`id`, `title`, `targetAtEpochMs`, `colorHex`,
+      `iconKey`, `note?`, `recurrence`, `isPinnedToWidget`,
+      `createdAtEpochMs`, `updatedAtEpochMs`). Times stored as UTC
+      milliseconds; enums stored as their `storageKey`.
+    - `daos/events_dao.dart` — `EventsDao` with a reactive
+      `watchAll()` (sorted by `targetAtEpochMs` ascending),
+      `getById`, `upsert` (insert-or-replace), `deleteById`, and
+      an atomic `pinExclusive(id?)` that clears any existing pin
+      and (optionally) sets exactly one.
+  - **Build runner**: `dart run build_runner build` regenerates
+    `*.g.dart` (still git-ignored per D1). Generated outputs:
+    `app_database.g.dart`, `daos/events_dao.g.dart`. Must run after
+    a fresh checkout before `flutter test`.
+  - **Domain** (`features/event_countdown/domain/`):
+    - `value_objects/recurrence.dart` — `Recurrence` enum (none /
+      yearly / monthly / weekly) with stable `storageKey` and UI
+      `label`, plus `fromStorageKey` decoder.
+    - `entities/event.dart` — immutable `Event` with `copyWith`
+      (note: passing `null` keeps the existing value; construct a
+      new `Event` to clear), `Event.create` factory (uuid v4 +
+      synced `createdAt`/`updatedAt`), and `nextOccurrence(now)` /
+      `daysUntil(now)` helpers. Recurrence math handles Feb 29 →
+      Feb 28 and "day 31 → last day of month" edge cases.
+    - `repositories/event_repository.dart` — abstract interface:
+      `watchAll`, `getById`, `upsert`, `delete`, `pinExclusive`.
+  - **Data** (`features/event_countdown/data/`):
+    - `repositories/event_repository_impl.dart` —
+      `EventRepositoryImpl` wraps the DAO, maps `EventRow` ↔
+      `Event` (UTC ms ↔ local `DateTime`, `Recurrence.storageKey`
+      ↔ enum), and wraps every call in `Result.ok / Result.err`
+      with a `StorageFailure` carrying cause + stack trace.
+  - **Application** (`features/event_countdown/application/`):
+    - `providers.dart`:
+      - `appDatabaseProvider` — overridden in `bootstrap.dart` with
+        the real `AppDatabase()`; thrown unimplemented otherwise so
+        tests must supply their own.
+      - `eventRepositoryProvider` — provides the Drift-backed
+        repo; widget tests override this with an in-memory fake.
+      - `eventsStreamProvider` — `StreamProvider<List<Event>>`
+        backed by `repository.watchAll()`.
+    - `events_controller.dart` — `EventsController` (Riverpod
+      `Provider`) owns the write commands:
+      `createEvent`, `updateEvent`, `deleteEvent`, `togglePin`. All
+      string inputs are trimmed; empty notes normalize to `null`.
+      Returns `Result<…, Object>` so the UI can surface failures.
+  - **Bootstrap**: now opens `AppDatabase()` and overrides
+    `appDatabaseProvider` alongside the logger and shared-prefs
+    overrides.
+  - **Presentation** (`features/event_countdown/presentation/`):
+    - `widgets/event_card.dart` — accent-colored countdown badge
+      (`N days`), pinned indicator, sub-line with date + recurrence
+      label, popup menu for **Pin / Unpin** and **Delete**. Built
+      on the existing `SectionCard` (composition over inheritance).
+    - `widgets/event_editor_sheet.dart` — modal bottom sheet that
+      handles both **Create** and **Edit** flows: title (required,
+      max 200), datetime picker (date → time), recurrence
+      dropdown, optional note (max 500), and a 6-swatch accent
+      color picker. Calls `EventsController.createEvent` or
+      `updateEvent`; surfaces `Result` errors via SnackBar.
+    - `pages/event_countdown_page.dart` — real implementation
+      (replaces the M0 placeholder): `eventsStreamProvider`
+      → loading / error / data, list of `EventCard`s, FAB
+      "New event", empty state with iconography + copy, delete
+      confirmation dialog.
+  - **Router**: no change — the existing `/events` route now lands
+    on the real page since we overwrote the placeholder.
+  - **Tests**: 57/57 passing (up from 34).
+    - Domain: `event_test` — 12 cases covering `daysUntil` (future
+      / today / past), yearly (roll-forward, leap-year fallback),
+      monthly (roll-forward, day-31 fallback), weekly (same-week
+      vs next-week), `copyWith` preserves immutables, `Event.create`
+      factory stamps timestamps and generates a UUID.
+    - Data: `event_repository_impl_test` — 10 cases using
+      `AppDatabase.forTesting(NativeDatabase.memory())`: empty
+      stream, upsert + watch, replace-by-id, getById hit/miss,
+      delete, `pinExclusive` exclusive set, `pinExclusive(null)`
+      clears all, ordering by `targetAt`, note round-trip
+      including `null`.
+    - Widget: existing tests adjusted + new "Events page shows
+      empty state when nothing is stored". Widget tests inject an
+      in-memory `EventRepository` fake via
+      `eventRepositoryProvider.overrideWithValue(...)` to bypass
+      Drift (Drift's stream queries leak a 0-duration timer when
+      the `ProviderScope` disposes, which trips
+      `flutter_test`'s "no pending timers" invariant — the real
+      DAO is fully exercised in the data unit test instead).
+  - **`flutter analyze`**: still zero issues.
+
 ### In Progress
-- None — clean checkpoint at the end of M1.
+- None — clean checkpoint at the end of the M2 CRUD slice.
 
 ### Not Started (next on deck)
-- **M2 — Event Countdown** (see `BRD §11`):
-  - Drift schema v1: `LifeProfile` table (migrated from
-    SharedPreferences) + `Event` + `NotificationSchedule` tables.
-  - CRUD events; pin to widget flag; recurrence (none / yearly /
-    monthly / weekly).
-  - `flutter_local_notifications` integration + reminder scheduler
-    (T-7d / T-1d / T-1h, configurable).
-  - Replace `LauncherPage` with a `HomeShellPage` (bottom nav).
+- **M2 (remainder)** before declaring the milestone fully shipped
+  (see `BRD §11`):
+  - **`NotificationSchedule` table + scheduler**: wire
+    `flutter_local_notifications` + `permission_handler`,
+    auto-schedule T-7d / T-1d / T-1h reminders relative to the
+    next occurrence; re-evaluate on every `upsert` /
+    `delete` / `togglePin`.
+  - **Pin to home-screen widget** (Android first, iOS Phase 2):
+    bring in `home_widget`, register a Glance receiver in
+    `android/`, and feed it the pinned event's countdown.
+  - **`HomeShellPage` with bottom nav** (Life / Events /
+    Lifestyle / Settings) replacing `LauncherPage`. This is the
+    new "home" once events have first-class navigation.
+  - **`LifeProfile` Drift migration**: move from SharedPreferences
+    into a `LifeProfileTable` with a one-shot migration on first
+    launch (read SP → insert row → clear SP key). Defer until
+    after the rest of M2 lands so we don't break the current
+    Life slice mid-stream.
 - **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
   `flutter test --coverage` on push & PR (Handoff §4 Step 4).
-- Add `home_widget`, `workmanager` at M3.
+  Must include a `dart run build_runner build` step before tests.
+- Add `workmanager` for backgrounded notification re-evaluation
+  at M3.
 
 ---
 
@@ -190,10 +297,16 @@ Reload with `source ~/.zshrc` (or open a new terminal).
 cd ~/TurbidDev/project-polaris
 flutter --version          # expect: Flutter 3.44.1 • channel stable
 flutter doctor -v          # all checked categories should be green
-flutter pub get            # resolve current pubspec (passes with defaults)
+flutter pub get            # resolve current pubspec
+dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed!
+flutter test               # expect: All tests passed! (57+ tests)
 ```
+
+> The `build_runner build` step is mandatory after a fresh checkout
+> because we git-ignore generated files (Decision D1). Re-run it
+> after editing any Drift table, Freezed class, or Riverpod
+> annotation.
 
 ### 3.4 Run the app (sanity)
 ```sh
@@ -249,16 +362,31 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 Follow `BRD §11` for M2 → M9. Each milestone should ship as its own PR
 series and update this Handoff document's `Current Status`.
 
-**Pointer for the next session**: start at **M2 — Event Countdown**.
-Recommended order:
-1. Introduce Drift schema v1 in `lib/data/database/` and migrate the
-   existing `LifeProfile` from SharedPreferences into a typed row.
-2. Add `Event` + `NotificationSchedule` tables; CRUD use cases.
-3. Wire `flutter_local_notifications` with `permission_handler`
-   prompts.
-4. Replace `LauncherPage` with a `HomeShellPage` (bottom navigation:
-   Life / Events / Lifestyle / Settings).
-5. Update widget + integration tests; keep `flutter analyze` clean.
+**Pointer for the next session**: continue **M2 — Event
+Countdown** (CRUD already done). Recommended order:
+1. **Notification scheduler**: add `flutter_local_notifications` +
+   `permission_handler`. Build a `NotificationScheduler` service
+   that the `EventsController` invokes on every
+   `create` / `update` / `delete` / `togglePin`. Persist the
+   resulting platform notification IDs in a new
+   `NotificationSchedule` Drift table so we can cancel them later.
+   Prompt for permission lazily (first reminder save).
+2. **Home-screen widget (Android)**: `home_widget` plugin +
+   AndroidManifest `<receiver>` + a Glance composable. Widget
+   reads from the same Drift database via a background isolate
+   helper. Re-render on `togglePin`.
+3. **`HomeShellPage` with bottom nav** (Life / Events / Lifestyle /
+   Settings). Move `LauncherPage` content into a
+   "Quick links" tab or remove entirely. Update the router so `/`
+   lands on `HomeShell` with the previous route preserved per
+   tab.
+4. **`LifeProfile` Drift migration** — last to ship in M2 so other
+   work isn't blocked. Steps: add `LifeProfileTable`, write a
+   `LifeProfileRepositoryImpl` Drift variant, add a one-shot
+   migration in `bootstrap()` (read SP → insert → delete SP key),
+   then swap the provider override. Keep both repos behind the
+   abstract interface so this is a pure DI change.
+5. Keep `flutter analyze` clean; add tests alongside each item.
 
 ---
 
@@ -292,7 +420,14 @@ recommendation is in **bold**; revisit when a real constraint appears.
 | Android manifest | `android/app/src/main/AndroidManifest.xml` |
 | Android Kotlin source | `android/app/src/main/kotlin/com/phandarian/polaris/` |
 | iOS Runner | `ios/Runner/` |
-| Entry point | `lib/main.dart` (currently template) |
+| Entry point | `lib/main.dart` → calls `bootstrap()` |
+| Composition root | `lib/app/bootstrap.dart` |
+| Drift database | `lib/data/database/app_database.dart` |
+| Drift tables | `lib/data/database/tables/` |
+| Drift DAOs | `lib/data/database/daos/` |
+| Life Countdown feature | `lib/features/life_countdown/` |
+| Event Countdown feature | `lib/features/event_countdown/` |
+| Seed assets | `assets/seed/` |
 | Test root | `test/` |
 
 ### External links
