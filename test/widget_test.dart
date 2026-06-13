@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:polaris/app/app.dart';
@@ -19,6 +20,9 @@ import 'package:polaris/features/life_countdown/domain/repositories/life_profile
 import 'package:polaris/features/life_countdown/domain/value_objects/country_code.dart';
 import 'package:polaris/features/life_countdown/domain/value_objects/date_of_birth.dart';
 import 'package:polaris/features/life_countdown/domain/value_objects/sex.dart';
+import 'package:polaris/features/lifestyle/application/providers.dart';
+import 'package:polaris/features/lifestyle/domain/entities/lifestyle_log.dart';
+import 'package:polaris/features/lifestyle/domain/repositories/lifestyle_log_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeExpectancyRepo implements LifeExpectancyRepository {
@@ -122,6 +126,51 @@ class _NoopNotificationDispatcher implements NotificationDispatcher {
   Future<void> cancelAll() async {}
 }
 
+/// In-memory lifestyle log repository — same rationale as
+/// [_InMemoryEventRepository]: avoid pulling Drift into widget tests.
+class _InMemoryLifestyleLogRepository implements LifestyleLogRepository {
+  final List<LifestyleLog> _logs = <LifestyleLog>[];
+  final StreamController<List<LifestyleLog>> _controller =
+      StreamController<List<LifestyleLog>>.broadcast();
+
+  @override
+  Stream<List<LifestyleLog>> watchBetween({
+    required DateTime from,
+    required DateTime to,
+  }) async* {
+    yield _within(from, to);
+    yield* _controller.stream.map((_) => _within(from, to));
+  }
+
+  @override
+  Future<Result<List<LifestyleLog>, Failure>> listBetween({
+    required DateTime from,
+    required DateTime to,
+  }) async => Result.ok(_within(from, to));
+
+  @override
+  Future<Result<void, Failure>> upsert(LifestyleLog log) async {
+    _logs.removeWhere((l) => l.id == log.id);
+    _logs.add(log);
+    _controller.add(List<LifestyleLog>.unmodifiable(_logs));
+    return const Result.ok(null);
+  }
+
+  @override
+  Future<Result<void, Failure>> delete(String id) async {
+    _logs.removeWhere((l) => l.id == id);
+    _controller.add(List<LifestyleLog>.unmodifiable(_logs));
+    return const Result.ok(null);
+  }
+
+  List<LifestyleLog> _within(DateTime from, DateTime to) {
+    return _logs
+        .where((l) => !l.loggedAt.isBefore(from) && !l.loggedAt.isAfter(to))
+        .toList(growable: false)
+      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+  }
+}
+
 class _InMemoryLifeProfileRepository implements LifeProfileRepository {
   _InMemoryLifeProfileRepository([this._profile]);
 
@@ -178,6 +227,9 @@ Future<ProviderScope> _bootApp({LifeProfile? profile}) async {
       widget_providers.homeWidgetUpdaterProvider.overrideWithValue(
         _NoopHomeWidgetUpdater(),
       ),
+      lifestyleLogRepositoryProvider.overrideWithValue(
+        _InMemoryLifestyleLogRepository(),
+      ),
     ],
     child: const PolarisApp(),
   );
@@ -224,7 +276,7 @@ void main() {
     expect(find.text('New event'), findsOneWidget);
   });
 
-  testWidgets('Tapping the Lifestyle tab shows the placeholder', (
+  testWidgets('Tapping the Lifestyle tab shows the today summary + FAB', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
@@ -233,8 +285,24 @@ void main() {
     await tester.tap(find.text('Lifestyle'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Lifestyle Logging'), findsOneWidget);
-    expect(find.text('Planned for M4'), findsOneWidget);
+    // Four category cards from LogCategory.values render in the grid.
+    expect(find.text('Water'), findsOneWidget);
+    expect(find.text('Sleep'), findsOneWidget);
+    expect(find.text('Exercise'), findsOneWidget);
+    expect(find.text('Mood'), findsOneWidget);
+
+    // FAB for the quick log is always visible.
+    expect(find.text('Quick log'), findsOneWidget);
+
+    // History section sits below the fold in the 800x600 test viewport;
+    // scroll the CustomScrollView until its header is in view, then assert.
+    await tester.dragUntilVisible(
+      find.text('Last 7 days'),
+      find.byType(CustomScrollView),
+      const Offset(0, -200),
+    );
+    expect(find.text('Last 7 days'), findsOneWidget);
+    expect(find.text('No entries in the last 7 days.'), findsOneWidget);
   });
 
   testWidgets('Tapping the Settings tab shows the placeholder', (

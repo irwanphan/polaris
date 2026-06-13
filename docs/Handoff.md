@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-13 by Cursor AI session — **M2 fully shipped + CI (GitHub Actions) shipped**
+> **Last updated:** 2026-06-13 by Cursor AI session — **M4 (Lifestyle Logging) shipped** on top of M0/M1/M2 + CI
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-13, **M2 + CI shipped**)
+## 2. Current Status (As of 2026-06-13, **M0–M2 + CI + M4 shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -517,13 +517,120 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     (`dart format .`) — 50 files re-formatted to satisfy the
     new gate. All 89 tests still pass.
 
+- **M4 — Lifestyle Logging** shipped:
+  - **Drift schema v3 → v4**: new `lifestyle_logs` table
+    (`tables/lifestyle_logs_table.dart`) — one row per
+    observation, `value REAL` so the same column type handles
+    integer categories (water/exercise/mood) and decimal
+    categories (sleep), UTC-ms timestamps for `loggedAt` and
+    `createdAt`. Generated code regenerated; `schemaVersion`
+    bumped to 4 with a single-line `onUpgrade` step
+    (`m.createTable(lifestyleLogsTable)`).
+  - **`LifestyleLogsDao`** exposes the typed reactive surface:
+    `watchBetween(fromEpochMs, toEpochMs)` for the today /
+    history streams, `listBetween` for one-shot reads,
+    `upsert` (insertOnConflictUpdate by id), `deleteById`.
+    All range bounds are inclusive on both ends so callers
+    pass the local-midnight window they want.
+  - **Domain** (`features/lifestyle/domain/`):
+    - `LogAggregation` enum — `cumulative` (sum across the
+      day: water glasses, exercise minutes) vs `snapshot`
+      (latest entry wins: sleep hours, today's mood). The UI
+      switches affordance + rollup math based on this flag.
+    - `LogCategory` enum carries its display metadata —
+      `storageKey` (wire-stable, never rename without a
+      migration), `label`, `unit`, `aggregation`, `minValue`,
+      `maxValue`, `defaultStep`, `isInteger`. Categories
+      shipped: **water** (0–30 glasses, cumulative),
+      **sleep** (0–24 hours, snapshot), **exercise** (0–600
+      minutes, cumulative), **mood** (1–5, snapshot).
+      `isValid()` and `fromStorageKey()` keep validation +
+      forward-compat parsing in the same place.
+    - `LifestyleLog` entity (immutable, `copyWith`,
+      structural equality). `LifestyleLog.create()` factory
+      stamps a fresh uuid + `loggedAt`/`createdAt = now` and
+      trims notes.
+    - `LifestyleLogRepository` abstract interface — range
+      queries expressed in local `DateTime` (data layer
+      converts to/from UTC at the boundary, mirroring
+      `EventRepository`).
+  - **Data**: `LifestyleLogRepositoryImpl` translates between
+    Drift rows and domain objects, including the
+    storageKey ↔ enum mapping. Rows with an unknown
+    storageKey are silently dropped from reads — keeps the
+    app forward-compatible if a newer schema is rolled back.
+  - **Application** (Riverpod): `lifestyleLogRepositoryProvider`
+    (Drift-backed), `lifestyleControllerProvider` (write-side
+    `log()` + `delete()` with validation + structured logging
+    via `AppLogger`), `todayLogsStreamProvider` (local
+    midnight window), `weekLogsStreamProvider` (rolling 7-day
+    window). The two stream providers drive the today
+    dashboard and the history list respectively.
+  - **Presentation** — `LifestylePage` replaces the M0
+    placeholder:
+    - `CategorySummaryCard` — one tile per `LogCategory`
+      (2×2 grid), shows the rolled-up value + unit + entries
+      today + add affordance. Tap to open the quick-log sheet
+      pre-selected to that category.
+    - `QuickLogSheet` — modal bottom sheet with
+      `ChoiceChip`s for category, numeric input gated by
+      `LogCategory.isValid()` + `TextInputType` /
+      `inputFormatters` matching `isInteger`, optional note.
+      Save uses `LifestyleController.log()` and surfaces
+      failures via SnackBar.
+    - `LogHistoryTile` — last-7-days entries with swipe-to-
+      delete (delegated to the page so the swipe gesture
+      pops a confirm dialog before mutating).
+    - `category_icons.dart` — static `iconFor(LogCategory)`
+      switch mapper so the domain layer stays Flutter-free
+      while UI call sites still satisfy const-`IconData`
+      constraints.
+    - `rollupByCategory()` is a top-level pure function next
+      to the page so it can be unit-tested without a widget
+      tree (returns `Map<LogCategory, CategoryRollupView>`).
+  - **Tests** — 110/110 passing (up from 89):
+    - `log_category_test`: storageKey uniqueness +
+      round-trip, validation per category (water rejects
+      fractions / out-of-range, sleep accepts halves, mood
+      `[1..5]` integers, exercise `[0..600]`), aggregation
+      kind mapping.
+    - `lifestyle_log_repository_impl_test`: empty start,
+      upsert + watch, replace-by-id, range exclusion,
+      newest-first ordering, listBetween parity,
+      delete, note round-trip including null.
+    - `rollup_by_category_test`: cumulative sums, snapshot
+      latest-wins, decimal vs integer formatting, mixed
+      categories aggregate independently.
+    - `widget_test.dart`: in-memory
+      `_InMemoryLifestyleLogRepository`; lifestyle tab test
+      asserts the 4 category cards + Quick log FAB above the
+      fold, then `dragUntilVisible` to verify "Last 7 days"
+      + empty-state copy.
+  - **`flutter analyze`**: still zero issues.
+  - **APK build verified**: debug APK builds, installs on
+    `emulator-5554`, app boots through the fresh-install
+    `onCreate` path and the v3→v4 `onUpgrade` migration
+    without crashes (logcat clean — only a benign HWUI EGL
+    notice).
+
 ### In Progress
-- None — M2 closed, CI live. Awaiting manual widget smoke
-  test on device (user-driven step below).
+- None — M4 closed. Manual smoke tests below are still
+  user-driven (no blockers).
 
 ### Pending Manual Verification (user-driven)
-- **Add the widget to the Android home screen** to verify the
-  end-to-end wire:
+- **Lifestyle end-to-end on device**:
+  1. Open Polaris → Lifestyle tab.
+  2. Tap a category card (e.g. Water) → quick-log sheet
+     opens pre-selected to that category.
+  3. Save a value → today summary card updates with the new
+     total + entries count.
+  4. Pull-to-refresh: streams already auto-refresh, the
+     gesture is just an explicit affordance.
+  5. Scroll down to **Last 7 days**, swipe a row right →
+     confirm dialog → delete; row disappears from list and
+     today summary recalculates.
+- **Add the widget to the Android home screen** (carry-over
+  from M2):
   1. On the running emulator, long-press the home screen →
      **Widgets** → scroll to **polaris** → drag the
      "Pinned event countdown" tile to the home screen.
@@ -539,16 +646,27 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
   `POST_NOTIFICATIONS`, lock screen, wait for T-1h reminder.
 
 ### Not Started (next on deck)
-- **M4 — Lifestyle Logging** (per `BRD §11`): daily-log entry
-  sheet, history view, Drift schema bump for `lifestyle_logs`
-  table.
-- **M5 — Recommendation Engine v1**: rule-based engine, home
-  insight card, ≥6 starter rules.
-- Future polish: migrate the widget to **Glance Compose** for
-  Android 12+ visuals, deep-link the widget tap to the pinned
-  event's detail page (currently lands on root), add
-  `workmanager` for background notification re-evaluation
-  (M3-ish — catches recurring events the user never opens).
+- **M5 — Recommendation Engine v1**: rule-based engine that
+  consumes `weekLogsStreamProvider` (or a new
+  `last30DaysLogsStreamProvider`) and emits an insight feed
+  on the Life or Lifestyle landing — ≥6 starter rules
+  (water target, sleep regularity, exercise streak, mood
+  trend, etc.). Now unblocked by the lifestyle data shipped
+  in M4.
+- **M6 — Polish & beta**: a11y pass, l10n (ID+EN — most
+  copy is still hard-coded English aside from "Sisa Hariku"),
+  golden tests for `EventCard` / `LifeCountdownPage` /
+  `CategorySummaryCard`, internal Play Store track.
+- **Lifestyle polish (deferred from M4 scope)**: per-category
+  charts (e.g. last-7-days water bars, sleep trendline) —
+  fold into M6 or a dedicated minor milestone. HealthKit /
+  Health Connect sync remains Phase 2 per BRD §5.3.
+- Future widget polish: migrate the widget to **Glance
+  Compose** for Android 12+ visuals, deep-link the widget
+  tap to the pinned event's detail page (currently lands on
+  root), add `workmanager` for background notification
+  re-evaluation (catches recurring events the user never
+  opens).
 
 ---
 
@@ -583,7 +701,7 @@ flutter doctor -v          # all checked categories should be green
 flutter pub get            # resolve current pubspec
 dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed! (89+ tests)
+flutter test               # expect: All tests passed! (110+ tests)
 ```
 
 > The `build_runner build` step is mandatory after a fresh checkout
