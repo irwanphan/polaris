@@ -25,44 +25,54 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Keep dependency wiring here — never deep in feature code — so the
 /// Dependency Inversion principle stays enforced.
 Future<void> bootstrap() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Everything — including `ensureInitialized` and `runApp` — must
+  // happen in the *same* zone so Flutter's binding zone check passes.
+  // See https://docs.flutter.dev/testing/errors#errors-not-caught-by-flutter
+  // for the rationale.
+  await runZonedGuarded<Future<void>>(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  final AppLogger logger = AppLogger.create();
-  final SharedPreferences preferences = await SharedPreferences.getInstance();
-  final AppDatabase database = AppDatabase();
+      final AppLogger logger = AppLogger.create();
+      final SharedPreferences preferences =
+          await SharedPreferences.getInstance();
+      final AppDatabase database = AppDatabase();
 
-  // One-shot migration: move any M1 SharedPreferences profile into the
-  // Drift store introduced in M2. Safe to call every boot — the
-  // migrator is idempotent.
-  await LifeProfileSpToDriftMigration(
-    legacyRepository: LifeProfileRepositoryImpl(preferences),
-    targetRepository: LifeProfileDriftRepository(database.lifeProfilesDao),
-    logger: logger,
-  ).run();
+      // One-shot migration: move any M1 SharedPreferences profile into
+      // the Drift store introduced in M2. Safe to call every boot —
+      // the migrator is idempotent.
+      await LifeProfileSpToDriftMigration(
+        legacyRepository: LifeProfileRepositoryImpl(preferences),
+        targetRepository: LifeProfileDriftRepository(database.lifeProfilesDao),
+        logger: logger,
+      ).run();
 
-  // Initialise the local-notifications plugin up-front so per-event
-  // scheduling later in the session doesn't pay the timezone / channel
-  // setup cost.
-  final NotificationDispatcher notifications =
-      FlutterLocalNotificationsDispatcher(logger: logger);
-  await notifications.initialize();
+      // Initialise the local-notifications plugin up-front so per-event
+      // scheduling later in the session doesn't pay the timezone /
+      // channel setup cost.
+      final NotificationDispatcher notifications =
+          FlutterLocalNotificationsDispatcher(logger: logger);
+      await notifications.initialize();
 
-  FlutterError.onError = (FlutterErrorDetails details) {
-    logger.error(
-      'Uncaught Flutter error',
-      error: details.exception,
-      stackTrace: details.stack,
-    );
-    FlutterError.presentError(details);
-  };
+      FlutterError.onError = (FlutterErrorDetails details) {
+        logger.error(
+          'Uncaught Flutter error',
+          error: details.exception,
+          stackTrace: details.stack,
+        );
+        FlutterError.presentError(details);
+      };
 
-  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    logger.error('Uncaught platform error', error: error, stackTrace: stack);
-    return true;
-  };
+      PlatformDispatcher.instance.onError =
+          (Object error, StackTrace stack) {
+        logger.error(
+          'Uncaught platform error',
+          error: error,
+          stackTrace: stack,
+        );
+        return true;
+      };
 
-  runZonedGuarded<void>(
-    () {
       runApp(
         ProviderScope(
           overrides: [
@@ -76,7 +86,11 @@ Future<void> bootstrap() async {
       );
     },
     (Object error, StackTrace stack) {
-      logger.error('Uncaught zone error', error: error, stackTrace: stack);
+      // Last-resort handler. The logger may not have been constructed
+      // yet (e.g. if `AppLogger.create()` itself threw), so fall back
+      // to `debugPrint` here rather than depending on a captured
+      // logger reference.
+      debugPrint('Uncaught zone error: $error\n$stack');
     },
   );
 }

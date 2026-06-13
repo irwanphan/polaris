@@ -324,10 +324,23 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     registers the plugin's `ScheduledNotificationReceiver`,
     `ScheduledNotificationBootReceiver`, and
     `ActionBroadcastReceiver` so reminders survive reboots.
-  - **NDK pinned** in `android/app/build.gradle.kts` to
-    `30.0.14904198` (the version already installed locally) so
-    the build doesn't try to download Flutter's default NDK
-    (~3 GB). Bump explicitly when Flutter raises the floor.
+  - **NDK pinned** to `30.0.14904198` (the version already
+    installed locally) so the build doesn't try to download
+    Flutter's default NDK (~3 GB). Set in **two** places:
+    - `android/app/build.gradle.kts` for `:app`.
+    - `android/build.gradle.kts` for every `:plugin` subproject
+      via a `subprojects { plugins.withId("com.android.library")
+      { extensions.configure<LibraryExtension>("android") {
+      ndkVersion = "30.0.14904198" } } }` block — without this
+      transitive plugins like `jni` / `jni_flutter` (pulled in
+      by `flutter_timezone`) re-ask for Flutter's default NDK
+      and break the build. Bump in lockstep when Flutter raises
+      the floor.
+  - **Core library desugaring** enabled in
+    `android/app/build.gradle.kts` (`isCoreLibraryDesugaringEnabled
+    = true` + `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")`).
+    Required by `flutter_local_notifications` ≥ 18 so
+    `java.time` works on `minSdk < 26`.
   - **Drift schema v3** — `NotificationSchedulesTable` added with
     `id` (auto-increment, doubles as the platform notification
     id), `eventId`, `kind` (`t-7d` / `t-1d` / `t-1h`),
@@ -407,14 +420,19 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 - None — clean checkpoint after the notification scheduler.
 
 ### Not Started (next on deck)
-- **Smoke test on emulator** is currently blocked: the local
-  disk is at 100% capacity (~2.5 GiB free) so neither the
-  Flutter Gradle build (~5–8 GiB intermediates) nor the
-  NDK 28.2 download (~3 GB) can finish. Once the disk has
-  ≥10 GiB free, run `flutter build apk --debug` (Gradle should
-  pick up the pinned NDK 30.0.14904198) and then
-  `flutter install -d emulator-5554` to verify channel
-  creation + first notification on the Android 15 emulator.
+- **Smoke test on emulator** — `flutter build apk --debug`
+  now succeeds (debug APK at
+  `build/app/outputs/flutter-apk/app-debug.apk`, ~11 min cold
+  build because Gradle had to install CMake 3.22.1 and
+  desugar tooling). Pending step: with the emulator running,
+  `flutter install -d emulator-5554` (or `flutter run -d
+  emulator-5554`) and then exercise:
+  1. Boot into onboarding, complete it.
+  2. Create an event one hour out.
+  3. Accept the `POST_NOTIFICATIONS` prompt.
+  4. Lock the screen and wait for the T-1h reminder.
+  5. Reboot the emulator and confirm the schedule survives
+     (`ScheduledNotificationBootReceiver`).
 - **M2 (remainder)** before declaring the milestone fully
   shipped (see `BRD §11`):
   - **Pin to home-screen widget** (Android first, iOS Phase 2):
@@ -530,13 +548,15 @@ series and update this Handoff document's `Current Status`.
 left in **M2 — Event Countdown** — the Android home-screen
 widget. Notification scheduling is already wired end-to-end.
 Recommended order:
-1. **Free up disk space** (current dev machine is at 100%
-   capacity, ~2.5 GiB free). Then run
-   `flutter build apk --debug && flutter install -d emulator-5554`
-   to smoke-test the notification flow on a real device:
-   create an event one hour out, accept the
-   `POST_NOTIFICATIONS` prompt, lock the screen, and confirm
-   the T-1h reminder fires.
+1. **Smoke-test on the Android emulator**. Build now works:
+   `flutter build apk --debug` produces
+   `build/app/outputs/flutter-apk/app-debug.apk`. With the
+   emulator running, `flutter install -d emulator-5554` (or
+   just `flutter run -d emulator-5554`). Then create an event
+   one hour out, accept the `POST_NOTIFICATIONS` prompt, lock
+   the screen, and confirm the T-1h reminder fires. Also
+   reboot the emulator to confirm
+   `ScheduledNotificationBootReceiver` re-arms the schedule.
 2. **Home-screen widget (Android)**: `home_widget` plugin +
    AndroidManifest `<receiver>` + a Glance composable. Widget
    reads the pinned event from Drift in a background isolate
@@ -648,3 +668,4 @@ When you (the next AI assistant) act on this project:
 | 2026-06-12 | Cursor AI session | Shipped **M2 — Event Countdown CRUD slice**: Drift v1 + EventsDao, domain entities + recurrence math, repository with `Result`-wrapped failures, `EventsController` (create/update/delete/togglePin), real Event Countdown page + editor sheet. 57/57 tests passing, `flutter analyze` clean. |
 | 2026-06-12 | Cursor AI session | Shipped **M2 — HomeShell + LifeProfile→Drift**: bottom-nav `StatefulShellRoute`, `LifeProfilesTable` (schema v2) + DAO + Drift repository, one-shot SP→Drift migration in `bootstrap()`. 68/68 tests passing, `flutter analyze` clean. |
 | 2026-06-12 | Cursor AI session | Shipped **M2 — Notification scheduler**: `flutter_local_notifications` + TZ deps, Android manifest receivers + permissions, NDK pinned to 30.0.14904198, Drift v3 with `NotificationSchedulesTable`, `NotificationDispatcher` interface + Flutter Local Notifications impl in `core/`, per-event `NotificationScheduler` (T-7d/T-1d/T-1h) wired into `EventsController`, dispatcher init in bootstrap. 79/79 tests passing, `flutter analyze` clean. On-device smoke test deferred — local disk at 100%. |
+| 2026-06-12 | Cursor AI session | **Android build fixes**: (a) NDK override applied to *all* `:plugin` subprojects via `android/build.gradle.kts` (transitive plugins like `jni` from `flutter_timezone` were re-asking for Flutter's default NDK); (b) core library desugaring enabled (`isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs:2.1.4`) — required by `flutter_local_notifications` ≥ 18. `flutter build apk --debug` now succeeds. |
