@@ -13,6 +13,7 @@ import 'package:polaris/features/life_countdown/presentation/widgets/countdown_d
 import 'package:polaris/features/life_countdown/presentation/widgets/disclaimer_note.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/display_mode_segmented.dart';
 import 'package:polaris/features/recommendations/presentation/widgets/insights_section.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 import 'package:polaris/shared/widgets/polaris_scaffold.dart';
 import 'package:polaris/shared/widgets/section_card.dart';
 
@@ -51,12 +52,13 @@ class _LifeCountdownPageState extends ConsumerState<LifeCountdownPage> {
       lifeCountdownControllerProvider,
     );
 
+    final AppL l = AppL.of(context);
     return PolarisScaffold(
-      appBar: AppBar(title: const Text('Sisa Hariku')),
+      appBar: AppBar(title: Text(l.lifeTitle)),
       body: estimate.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, _) =>
-            Center(child: Text('Failed to compute estimate: $e')),
+            Center(child: Text(l.lifeFailedToCompute(e.toString()))),
         data: (LifeEstimate? value) {
           if (value == null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -91,7 +93,10 @@ class _Loaded extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final DateFormat dateFmt = DateFormat.yMMMMd();
+    final AppL l = AppL.of(context);
+    final DateFormat dateFmt = DateFormat.yMMMMd(
+      Localizations.localeOf(context).toString(),
+    );
 
     return ListView(
       children: <Widget>[
@@ -109,7 +114,7 @@ class _Loaded extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Estimated end date', style: theme.textTheme.labelLarge),
+              Text(l.lifeEstimatedEndDate, style: theme.textTheme.labelLarge),
               const SizedBox(height: Spacing.x1),
               Text(
                 dateFmt.format(estimate.estimatedEndDate),
@@ -124,10 +129,12 @@ class _Loaded extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Expectancy used', style: theme.textTheme.labelLarge),
+              Text(l.lifeExpectancyUsed, style: theme.textTheme.labelLarge),
               const SizedBox(height: Spacing.x1),
               Text(
-                '${estimate.expectancyYears.toStringAsFixed(1)} years',
+                l.lifeExpectancyYears(
+                  estimate.expectancyYears.toStringAsFixed(1),
+                ),
                 style: theme.textTheme.bodyLarge,
               ),
             ],

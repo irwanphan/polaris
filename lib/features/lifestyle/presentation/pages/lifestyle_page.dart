@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/lifestyle/application/lifestyle_controller.dart';
 import 'package:polaris/features/lifestyle/application/providers.dart';
 import 'package:polaris/features/lifestyle/domain/entities/lifestyle_log.dart';
@@ -8,6 +9,7 @@ import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dar
 import 'package:polaris/features/lifestyle/presentation/widgets/category_summary_card.dart';
 import 'package:polaris/features/lifestyle/presentation/widgets/log_history_tile.dart';
 import 'package:polaris/features/lifestyle/presentation/widgets/quick_log_sheet.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 import 'package:polaris/shared/widgets/polaris_scaffold.dart';
 
 /// M4 home for lifestyle logging.
@@ -32,12 +34,13 @@ class LifestylePage extends ConsumerWidget {
       weekLogsStreamProvider,
     );
 
+    final AppL l = AppL.of(context);
     return PolarisScaffold(
-      appBar: AppBar(title: const Text('Lifestyle')),
+      appBar: AppBar(title: Text(l.navLifestyle)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => QuickLogSheet.show(context),
         icon: const Icon(Icons.add),
-        label: const Text('Quick log'),
+        label: Text(l.lifestyleQuickLog),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -79,7 +82,7 @@ class _TodaySummary extends StatelessWidget {
       ),
       error: (Object e, _) => Padding(
         padding: const EdgeInsets.all(Spacing.x4),
-        child: Text('Failed to load today: $e'),
+        child: Text(AppL.of(context).lifestyleLoadFailed(e.toString())),
       ),
       data: (List<LifestyleLog> logs) {
         final Map<LogCategory, CategoryRollupView> rollups = rollupByCategory(
@@ -159,14 +162,18 @@ class _HistoryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
     return Row(
       children: <Widget>[
-        Text('Last 7 days', style: theme.textTheme.titleMedium),
+        Text(l.lifestyleHistoryHeader, style: theme.textTheme.titleMedium),
         const Spacer(),
-        Text(
-          'Swipe a row to delete',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        Flexible(
+          child: Text(
+            l.lifestyleHistoryHelper,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.end,
           ),
         ),
       ],
@@ -191,7 +198,7 @@ class _HistorySliver extends ConsumerWidget {
       error: (Object e, _) => SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.all(Spacing.x4),
-          child: Text('Failed to load history: $e'),
+          child: Text(AppL.of(context).lifestyleLoadFailed(e.toString())),
         ),
       ),
       data: (List<LifestyleLog> logs) {
@@ -218,22 +225,30 @@ class _HistorySliver extends ConsumerWidget {
     WidgetRef ref,
     LifestyleLog log,
   ) async {
+    final AppL l = AppL.of(context);
+    final String categoryLabel = logCategoryLabel(
+      context,
+      log.category,
+    ).toLowerCase();
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Delete entry?'),
-        content: Text('Remove this ${log.category.label.toLowerCase()} log?'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (BuildContext ctx) {
+        final AppL dl = AppL.of(ctx);
+        return AlertDialog(
+          title: Text(dl.lifestyleDeleteConfirmTitle),
+          content: Text(dl.lifestyleDeleteConfirmBody(categoryLabel)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(dl.commonCancel),
+            ),
+            FilledButton.tonal(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(dl.commonDelete),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -241,7 +256,11 @@ class _HistorySliver extends ConsumerWidget {
     if (!context.mounted) return;
     if (result.isErr) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: ${result.failureOrNull}')),
+        SnackBar(
+          content: Text(
+            l.lifestyleDeleteFailed(result.failureOrNull.toString()),
+          ),
+        ),
       );
     }
   }
@@ -253,6 +272,7 @@ class _HistoryEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
     return Padding(
       padding: const EdgeInsets.all(Spacing.x4),
       child: Container(
@@ -268,7 +288,7 @@ class _HistoryEmpty extends StatelessWidget {
             Icon(Icons.history, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: Spacing.x2),
             Text(
-              'No entries in the last 7 days.',
+              l.lifestyleHistoryEmpty,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -276,7 +296,7 @@ class _HistoryEmpty extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.x1),
             Text(
-              'Tap "Quick log" to record your first entry.',
+              l.lifestyleHistoryEmptyHint,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

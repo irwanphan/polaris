@@ -1,0 +1,10 @@
+# Test runner configuration. Declared tags are validated against the
+# `@Tags([...])` annotations on individual test files so a typo on
+# either side surfaces as an error instead of a silent skip.
+tags:
+  # Golden tests render to PNGs and compare byte-for-byte. They are
+  # font/AA-renderer-sensitive and only stable on the host platform
+  # where they were generated (currently macOS — see docs/Handoff.md
+  # §6 "Goldens"). CI excludes this tag; see `.github/workflows/ci.yml`.
+  golden:
+    skip: false

@@ -6,6 +6,7 @@ import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/presentation/widgets/event_card.dart';
 import 'package:polaris/features/event_countdown/presentation/widgets/event_editor_sheet.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 import 'package:polaris/shared/widgets/polaris_scaffold.dart';
 
 class EventCountdownPage extends ConsumerWidget {
@@ -15,17 +16,19 @@ class EventCountdownPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Event>> events = ref.watch(eventsStreamProvider);
     final DateTime now = DateTime.now();
+    final AppL l = AppL.of(context);
 
     return PolarisScaffold(
-      appBar: AppBar(title: const Text('Events')),
+      appBar: AppBar(title: Text(l.navEvents)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => EventEditorSheet.show(context),
         icon: const Icon(Icons.add),
-        label: const Text('New event'),
+        label: Text(l.eventsNewEvent),
       ),
       body: events.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object e, _) => Center(child: Text('Failed to load: $e')),
+        error: (Object e, _) =>
+            Center(child: Text(l.lifestyleLoadFailed(e.toString()))),
         data: (List<Event> list) {
           if (list.isEmpty) return const _EmptyState();
           return _EventsList(events: list, now: now);
@@ -65,13 +68,16 @@ class _EventsList extends ConsumerWidget {
     WidgetRef ref,
     Event event,
   ) async {
+    final AppL l = AppL.of(context);
     final result = await ref
         .read(eventsControllerProvider)
         .togglePin(id: event.id, isCurrentlyPinned: event.isPinnedToWidget);
     if (!context.mounted) return;
     if (result.isErr) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pin failed: ${result.failureOrNull}')),
+        SnackBar(
+          content: Text(l.eventsPinFailed(result.failureOrNull.toString())),
+        ),
       );
     }
   }
@@ -81,22 +87,26 @@ class _EventsList extends ConsumerWidget {
     WidgetRef ref,
     Event event,
   ) async {
+    final AppL l = AppL.of(context);
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: const Text('Delete event?'),
-        content: Text('"${event.title}" will be removed.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (BuildContext ctx) {
+        final AppL dl = AppL.of(ctx);
+        return AlertDialog(
+          title: Text(dl.eventsDeleteConfirmTitle),
+          content: Text(dl.eventsDeleteConfirmBody(event.title)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(dl.commonCancel),
+            ),
+            FilledButton.tonal(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(dl.commonDelete),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -106,7 +116,9 @@ class _EventsList extends ConsumerWidget {
     if (!context.mounted) return;
     if (result.isErr) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: ${result.failureOrNull}')),
+        SnackBar(
+          content: Text(l.eventsDeleteFailed(result.failureOrNull.toString())),
+        ),
       );
     }
   }
@@ -118,6 +130,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 320),
@@ -131,14 +144,13 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.x4),
             Text(
-              'No events yet',
+              l.eventsEmptyTitle,
               style: theme.textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: Spacing.x2),
             Text(
-              'Tap "New event" to add a birthday, deadline, or trip — '
-              'then pin one to your home-screen widget.',
+              l.eventsEmptyBody,
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

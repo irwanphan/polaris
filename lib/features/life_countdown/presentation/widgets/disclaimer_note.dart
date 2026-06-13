@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// Tone-conscious disclaimer attached to every life-countdown surface.
 ///
@@ -7,10 +8,6 @@ import 'package:polaris/app/theme/color_tokens.dart';
 /// prediction") and risk R2 in `BRD §13`.
 class DisclaimerNote extends StatelessWidget {
   const DisclaimerNote({super.key});
-
-  static const String _text =
-      'Estimation only — based on public life-expectancy tables (WHO, BPS). '
-      'Not a medical prediction.';
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +23,7 @@ class DisclaimerNote extends StatelessWidget {
         const SizedBox(width: Spacing.x2),
         Expanded(
           child: Text(
-            _text,
+            AppL.of(context).onboardingDisclaimer,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,

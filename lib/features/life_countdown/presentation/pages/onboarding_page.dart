@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:polaris/app/router.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/life_countdown/application/life_profile_controller.dart';
 import 'package:polaris/features/life_countdown/application/providers.dart';
 import 'package:polaris/features/life_countdown/domain/repositories/life_expectancy_repository.dart';
@@ -11,6 +12,7 @@ import 'package:polaris/features/life_countdown/domain/value_objects/country_cod
 import 'package:polaris/features/life_countdown/domain/value_objects/date_of_birth.dart';
 import 'package:polaris/features/life_countdown/domain/value_objects/sex.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/disclaimer_note.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 import 'package:polaris/shared/widgets/polaris_scaffold.dart';
 
 final FutureProvider<List<CountryOption>> _countriesProvider =
@@ -49,7 +51,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       initialDate: initial,
       firstDate: first,
       lastDate: now,
-      helpText: 'Select your birth date',
+      helpText: AppL.of(context).onboardingBirthDate,
     );
     if (picked != null) {
       setState(() {
@@ -60,9 +62,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   }
 
   Future<void> _submit() async {
+    final AppL l = AppL.of(context);
     final DateTime? birth = _birthDate;
     if (birth == null) {
-      setState(() => _birthDateError = 'Please pick your birth date.');
+      setState(() => _birthDateError = l.onboardingBirthDate);
       return;
     }
     final dobResult = DateOfBirth.tryFromDateTime(birth);
@@ -88,30 +91,27 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       loading: () {},
       error: (Object e, _) => ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not save profile: $e'))),
+      ).showSnackBar(SnackBar(content: Text(l.eventsSaveFailed(e.toString())))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
     final AsyncValue<List<CountryOption>> countries = ref.watch(
       _countriesProvider,
     );
 
     return PolarisScaffold(
-      appBar: AppBar(title: const Text('Welcome to Polaris')),
+      appBar: AppBar(title: Text(l.onboardingWelcome)),
       body: ListView(
         children: <Widget>[
-          Text('Set up your countdown', style: theme.textTheme.headlineSmall),
+          Text(l.onboardingSetup, style: theme.textTheme.headlineSmall),
           const SizedBox(height: Spacing.x2),
-          Text(
-            'These details stay on your device. They are used to estimate '
-            'your remaining time using public life-expectancy tables.',
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text(l.onboardingDescription, style: theme.textTheme.bodyMedium),
           const SizedBox(height: Spacing.x6),
-          const _FieldLabel(label: 'Birth date'),
+          _FieldLabel(label: l.onboardingBirthDate),
           const SizedBox(height: Spacing.x2),
           InkWell(
             onTap: _pickBirthDate,
@@ -119,32 +119,43 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             child: InputDecorator(
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.cake_outlined),
-                hintText: 'Pick your birth date',
+                hintText: l.onboardingBirthDate,
                 errorText: _birthDateError,
               ),
               child: Text(
                 _birthDate == null
                     ? ' '
-                    : DateFormat.yMMMMd().format(_birthDate!),
+                    : DateFormat.yMMMMd(
+                        Localizations.localeOf(context).toString(),
+                      ).format(_birthDate!),
                 style: theme.textTheme.bodyLarge,
               ),
             ),
           ),
           const SizedBox(height: Spacing.x6),
-          const _FieldLabel(label: 'Biological sex'),
+          _FieldLabel(label: l.onboardingSex),
           const SizedBox(height: Spacing.x2),
           SegmentedButton<Sex>(
-            segments: const <ButtonSegment<Sex>>[
-              ButtonSegment(value: Sex.female, label: Text('Female')),
-              ButtonSegment(value: Sex.male, label: Text('Male')),
-              ButtonSegment(value: Sex.undisclosed, label: Text('Prefer not')),
+            segments: <ButtonSegment<Sex>>[
+              ButtonSegment(
+                value: Sex.female,
+                label: Text(sexLabel(context, Sex.female)),
+              ),
+              ButtonSegment(
+                value: Sex.male,
+                label: Text(sexLabel(context, Sex.male)),
+              ),
+              ButtonSegment(
+                value: Sex.undisclosed,
+                label: Text(sexLabel(context, Sex.undisclosed)),
+              ),
             ],
             selected: <Sex>{_sex},
             showSelectedIcon: false,
             onSelectionChanged: (set) => setState(() => _sex = set.first),
           ),
           const SizedBox(height: Spacing.x6),
-          const _FieldLabel(label: 'Country'),
+          _FieldLabel(label: l.onboardingCountry),
           const SizedBox(height: Spacing.x2),
           countries.when(
             data: (List<CountryOption> options) {
@@ -166,13 +177,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               );
             },
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, _) => Text('Failed to load countries: $e'),
+            error: (Object e, _) => Text(l.lifestyleLoadFailed(e.toString())),
           ),
           const SizedBox(height: Spacing.x8),
           FilledButton.icon(
             onPressed: _submitting ? null : _submit,
             icon: const Icon(Icons.arrow_forward),
-            label: Text(_submitting ? 'Saving…' : 'Start countdown'),
+            label: Text(_submitting ? l.commonSaving : l.onboardingStart),
           ),
           const SizedBox(height: Spacing.x6),
           const DisclaimerNote(),

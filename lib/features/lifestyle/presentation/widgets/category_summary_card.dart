@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dart';
 import 'package:polaris/features/lifestyle/presentation/widgets/category_icons.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// Visual summary card for one [LogCategory] on the today dashboard.
 ///
@@ -70,16 +72,18 @@ class CategorySummaryCard extends StatelessWidget {
                   const SizedBox(width: Spacing.x3),
                   Expanded(
                     child: Text(
-                      category.label,
+                      logCategoryLabel(context, category),
                       style: theme.textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(
-                    Icons.add_circle,
-                    size: 22,
-                    color: cs.primary.withValues(alpha: 0.85),
+                  ExcludeSemantics(
+                    child: Icon(
+                      Icons.add_circle,
+                      size: 22,
+                      color: cs.primary.withValues(alpha: 0.85),
+                    ),
                   ),
                 ],
               ),
@@ -95,7 +99,7 @@ class CategorySummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: Spacing.x1),
               Text(
-                category.unit,
+                logCategoryUnit(context, category),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
@@ -103,9 +107,7 @@ class CategorySummaryCard extends StatelessWidget {
               if (entriesCount != null && entriesCount! > 0) ...<Widget>[
                 const SizedBox(height: Spacing.x2),
                 Text(
-                  entriesCount == 1
-                      ? '1 entry today'
-                      : '$entriesCount entries today',
+                  AppL.of(context).lifestyleEntriesToday(entriesCount!),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/lifestyle/application/lifestyle_controller.dart';
 import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dart';
 import 'package:polaris/features/lifestyle/presentation/widgets/category_icons.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// Modal bottom sheet for adding one [LifestyleLog] entry.
 ///
@@ -64,15 +66,18 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
   }
 
   Future<void> _submit() async {
+    final AppL l = AppL.of(context);
     final double? parsed = double.tryParse(_valueCtrl.text.trim());
     if (parsed == null) {
-      setState(() => _valueError = 'Enter a number.');
+      setState(() => _valueError = l.lifestyleQuickLogValueRequired);
       return;
     }
     if (!_category.isValid(parsed)) {
       setState(
-        () => _valueError =
-            'Must be ${_formatRange(_category)} ${_category.unit}.',
+        () => _valueError = l.lifestyleQuickLogValueOutOfRange(
+          _formatRange(_category),
+          logCategoryUnit(context, _category),
+        ),
       );
       return;
     }
@@ -93,7 +98,9 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
       Navigator.of(context).pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save: ${result.failureOrNull}')),
+        SnackBar(
+          content: Text(l.lifestyleSaveFailed(result.failureOrNull.toString())),
+        ),
       );
     }
   }
@@ -107,6 +114,8 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
+    final String unit = logCategoryUnit(context, _category);
     final EdgeInsets keyboardInset = EdgeInsets.only(
       bottom: MediaQuery.of(context).viewInsets.bottom,
     );
@@ -124,9 +133,12 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Quick log', style: theme.textTheme.titleLarge),
+            Text(l.lifestyleQuickLog, style: theme.textTheme.titleLarge),
             const SizedBox(height: Spacing.x4),
-            Text('Category', style: theme.textTheme.labelLarge),
+            Text(
+              l.lifestyleQuickLogCategory,
+              style: theme.textTheme.labelLarge,
+            ),
             const SizedBox(height: Spacing.x2),
             Wrap(
               spacing: Spacing.x2,
@@ -135,7 +147,7 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
                 for (final LogCategory c in LogCategory.values)
                   ChoiceChip(
                     selected: c == _category,
-                    label: Text(c.label),
+                    label: Text(logCategoryLabel(context, c)),
                     avatar: Icon(iconFor(c), size: 18),
                     onSelected: (bool s) {
                       if (s) _onCategoryChanged(c);
@@ -157,11 +169,11 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
               decoration: InputDecoration(
-                labelText: 'Value',
-                helperText: '${_formatRange(_category)} ${_category.unit}',
+                labelText: l.lifestyleQuickLogValue,
+                helperText: '${_formatRange(_category)} $unit',
                 errorText: _valueError,
                 prefixIcon: Icon(iconFor(_category)),
-                suffixText: _category.unit,
+                suffixText: unit,
               ),
             ),
             const SizedBox(height: Spacing.x3),
@@ -171,9 +183,9 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
               maxLines: 3,
               maxLength: 200,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Note (optional)',
-                prefixIcon: Icon(Icons.notes),
+              decoration: InputDecoration(
+                labelText: l.lifestyleNoteOptional,
+                prefixIcon: const Icon(Icons.notes),
               ),
             ),
             const SizedBox(height: Spacing.x6),
@@ -184,14 +196,14 @@ class _QuickLogSheetState extends ConsumerState<QuickLogSheet> {
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(l.commonCancel),
                   ),
                 ),
                 const SizedBox(width: Spacing.x3),
                 Expanded(
                   child: FilledButton(
                     onPressed: _submitting ? null : _submit,
-                    child: Text(_submitting ? 'Saving…' : 'Save'),
+                    child: Text(_submitting ? l.commonSaving : l.commonSave),
                   ),
                 ),
               ],

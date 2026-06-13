@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/value_objects/recurrence.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 import 'package:polaris/shared/widgets/section_card.dart';
 
 /// One event in the list. Renders countdown badge + title + sub-line +
@@ -27,16 +29,18 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
     final Color accent = _parseColor(event.colorHex, theme.colorScheme.primary);
     final DateTime next = event.nextOccurrence(now);
     final int days = event.daysUntil(now);
-    final String subLine = _buildSubLine(next, days);
+    final String subLine = _buildSubLine(context, next, days);
 
     return SectionCard(
       onTap: onTap,
       leading: _CountdownBadge(days: days, accent: accent),
       trailing: PopupMenuButton<_EventAction>(
         icon: const Icon(Icons.more_vert),
+        tooltip: l.eventsActionsMenuLabel,
         onSelected: (action) {
           switch (action) {
             case _EventAction.pin:
@@ -45,32 +49,39 @@ class EventCard extends StatelessWidget {
               onDelete();
           }
         },
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<_EventAction>>[
-          PopupMenuItem<_EventAction>(
-            value: _EventAction.pin,
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  event.isPinnedToWidget
-                      ? Icons.push_pin
-                      : Icons.push_pin_outlined,
-                ),
-                const SizedBox(width: Spacing.x2),
-                Text(event.isPinnedToWidget ? 'Unpin' : 'Pin to widget'),
-              ],
+        itemBuilder: (BuildContext context) {
+          final AppL m = AppL.of(context);
+          return <PopupMenuEntry<_EventAction>>[
+            PopupMenuItem<_EventAction>(
+              value: _EventAction.pin,
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    event.isPinnedToWidget
+                        ? Icons.push_pin
+                        : Icons.push_pin_outlined,
+                  ),
+                  const SizedBox(width: Spacing.x2),
+                  Text(
+                    event.isPinnedToWidget
+                        ? m.eventsActionUnpin
+                        : m.eventsActionPin,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const PopupMenuItem<_EventAction>(
-            value: _EventAction.delete,
-            child: Row(
-              children: <Widget>[
-                Icon(Icons.delete_outline),
-                SizedBox(width: Spacing.x2),
-                Text('Delete'),
-              ],
+            PopupMenuItem<_EventAction>(
+              value: _EventAction.delete,
+              child: Row(
+                children: <Widget>[
+                  const Icon(Icons.delete_outline),
+                  const SizedBox(width: Spacing.x2),
+                  Text(m.eventsActionDelete),
+                ],
+              ),
             ),
-          ),
-        ],
+          ];
+        },
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,10 +89,13 @@ class EventCard extends StatelessWidget {
           Row(
             children: <Widget>[
               if (event.isPinnedToWidget) ...<Widget>[
-                Icon(
-                  Icons.push_pin,
-                  size: 14,
-                  color: theme.colorScheme.secondary,
+                Semantics(
+                  label: l.eventsPinnedSemanticLabel,
+                  child: Icon(
+                    Icons.push_pin,
+                    size: 14,
+                    color: theme.colorScheme.secondary,
+                  ),
                 ),
                 const SizedBox(width: Spacing.x1),
               ],
@@ -102,17 +116,19 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  String _buildSubLine(DateTime next, int days) {
-    final String dateLabel = DateFormat.yMMMMd().format(next);
-    final String recurrenceLabel = event.recurrence == Recurrence.none
+  String _buildSubLine(BuildContext context, DateTime next, int days) {
+    final AppL l = AppL.of(context);
+    final String localeTag = Localizations.localeOf(context).toString();
+    final String dateLabel = DateFormat.yMMMMd(localeTag).format(next);
+    final String recurrenceSuffix = event.recurrence == Recurrence.none
         ? ''
-        : ' · ${event.recurrence.label}';
+        : ' · ${recurrenceLabel(context, event.recurrence)}';
     final String daysLabel = switch (days) {
-      0 => 'Today',
-      1 => 'Tomorrow',
-      _ => 'in $days days',
+      0 => l.eventsCountdownToday,
+      1 => l.eventsCountdownTomorrow,
+      _ => l.eventsCountdownDays(days),
     };
-    return '$dateLabel · $daysLabel$recurrenceLabel';
+    return '$dateLabel · $daysLabel$recurrenceSuffix';
   }
 
   static Color _parseColor(String hex, Color fallback) {
@@ -135,34 +151,38 @@ class _CountdownBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(Radii.lg),
-        border: Border.all(color: accent.withValues(alpha: 0.4)),
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            '$days',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-              height: 1,
+    return Semantics(
+      label: AppL.of(context).eventsCountdownBadgeSemanticLabel(days),
+      excludeSemantics: true,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(Radii.lg),
+          border: Border.all(color: accent.withValues(alpha: 0.4)),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              '$days',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w700,
+                height: 1,
+              ),
             ),
-          ),
-          Text(
-            'days',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: accent,
-              letterSpacing: 0.8,
+            Text(
+              AppL.of(context).lifeDisplayDays.toLowerCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: accent,
+                letterSpacing: 0.8,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

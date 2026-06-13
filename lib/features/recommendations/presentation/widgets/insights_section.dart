@@ -5,6 +5,7 @@ import 'package:polaris/app/theme/color_tokens.dart';
 import 'package:polaris/features/recommendations/application/providers.dart';
 import 'package:polaris/features/recommendations/domain/entities/insight.dart';
 import 'package:polaris/features/recommendations/presentation/widgets/insight_card.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// Drop-in section that renders the top N insights for the current
 /// snapshot.
@@ -48,7 +49,7 @@ class InsightsSection extends ConsumerWidget {
                   ),
                   const SizedBox(width: Spacing.x2),
                   Text(
-                    'Insights for you',
+                    AppL.of(context).insightsSectionTitle,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

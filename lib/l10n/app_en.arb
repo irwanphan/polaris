@@ -1,0 +1,195 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Polaris",
+  "@appTitle": {"description": "Application name shown in the OS task switcher and splash."},
+
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonSaving": "Saving…",
+  "commonDelete": "Delete",
+  "commonOk": "OK",
+  "commonRetry": "Retry",
+
+  "navLife": "Life",
+  "navEvents": "Events",
+  "navLifestyle": "Lifestyle",
+  "navSettings": "Settings",
+
+  "onboardingWelcome": "Welcome to Polaris",
+  "onboardingSetup": "Set up your countdown",
+  "onboardingDescription": "These details stay on your device. They are used to estimate your remaining time using public life-expectancy tables.",
+  "onboardingBirthDate": "Birth date",
+  "onboardingSex": "Biological sex",
+  "onboardingCountry": "Country",
+  "onboardingStart": "Start countdown",
+  "onboardingDisclaimer": "Estimation only — based on public life-expectancy tables (WHO, BPS). Not a medical prediction.",
+  "sexFemale": "Female",
+  "sexMale": "Male",
+  "sexUndisclosed": "Prefer not",
+
+  "lifeTitle": "Sisa Hariku",
+  "@lifeTitle": {"description": "Indonesian phrase meaning 'My Remaining Days' — used as the screen title in both locales to preserve brand identity."},
+  "lifeDisplayDays": "Days",
+  "lifeDisplayWeeks": "Weeks",
+  "lifeDisplayMonths": "Months",
+  "lifeDisplayYears": "Years",
+  "lifeDisplayPercent": "%",
+  "lifeAlreadyLived": "{count, plural, =1{1 day already lived} other{{formatted} days already lived}}",
+  "@lifeAlreadyLived": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "formatted": {"type": "String"}
+    }
+  },
+  "lifeEstimatedEndDate": "Estimated end date",
+  "lifeExpectancyUsed": "Expectancy used",
+  "lifeExpectancyYears": "{years} years",
+  "@lifeExpectancyYears": {
+    "placeholders": {"years": {"type": "String"}}
+  },
+  "lifeFailedToCompute": "Failed to compute estimate: {error}",
+  "@lifeFailedToCompute": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "lifeUnitDays": "DAYS REMAINING",
+  "lifeUnitWeeks": "WEEKS REMAINING",
+  "lifeUnitMonths": "MONTHS REMAINING",
+  "lifeUnitYears": "YEARS REMAINING",
+  "lifeUnitPercent": "LIVED",
+
+  "eventsNewEvent": "New event",
+  "eventsEmptyTitle": "No events yet",
+  "eventsEmptyBody": "Tap \"New event\" to add a birthday, deadline, or trip — then pin one to your home-screen widget.",
+  "eventsEditTitle": "Edit event",
+  "eventsNewTitle": "New event",
+  "eventsFieldTitle": "Title",
+  "eventsFieldTitleRequired": "Title is required.",
+  "eventsFieldWhen": "When",
+  "eventsFieldRepeats": "Repeats",
+  "eventsFieldNote": "Note (optional)",
+  "eventsAccentColor": "Accent color",
+  "eventsDeleteConfirmTitle": "Delete event?",
+  "eventsDeleteConfirmBody": "\"{title}\" will be removed.",
+  "@eventsDeleteConfirmBody": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "eventsPinFailed": "Pin failed: {error}",
+  "@eventsPinFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "eventsDeleteFailed": "Delete failed: {error}",
+  "@eventsDeleteFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "eventsSaveFailed": "Could not save: {error}",
+  "@eventsSaveFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "eventsCountdownToday": "Today",
+  "eventsCountdownTomorrow": "Tomorrow",
+  "eventsCountdownDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@eventsCountdownDays": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "eventsCountdownPast": "Past",
+  "eventsActionPin": "Pin",
+  "eventsActionUnpin": "Unpin",
+  "eventsActionDelete": "Delete",
+  "eventsActionsMenuLabel": "More actions",
+  "eventsPinnedSemanticLabel": "Pinned to widget",
+  "eventsCountdownBadgeSemanticLabel": "{days, plural, =0{Today} =1{1 day remaining} other{{days} days remaining}}",
+  "@eventsCountdownBadgeSemanticLabel": {
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "lifeCountdownSemanticLabel": "{value} {unit}",
+  "@lifeCountdownSemanticLabel": {
+    "placeholders": {
+      "value": {"type": "String"},
+      "unit": {"type": "String"}
+    }
+  },
+  "recurrenceNone": "Does not repeat",
+  "recurrenceYearly": "Yearly",
+  "recurrenceMonthly": "Monthly",
+  "recurrenceWeekly": "Weekly",
+
+  "lifestyleQuickLog": "Quick log",
+  "lifestyleHistoryHeader": "Last 7 days",
+  "lifestyleHistoryHelper": "Swipe a row to delete",
+  "lifestyleHistoryEmpty": "No entries in the last 7 days.",
+  "lifestyleHistoryEmptyHint": "Tap \"Quick log\" to record your first entry.",
+  "lifestyleCategoryWater": "Water",
+  "lifestyleCategorySleep": "Sleep",
+  "lifestyleCategoryExercise": "Exercise",
+  "lifestyleCategoryMood": "Mood",
+  "lifestyleUnitGlasses": "glasses",
+  "lifestyleUnitHours": "hours",
+  "lifestyleUnitMinutes": "minutes",
+  "lifestyleUnitMood": "/5",
+  "lifestyleEntriesToday": "{count, plural, =1{1 entry today} other{{count} entries today}}",
+  "@lifestyleEntriesToday": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "lifestyleDeleteConfirmTitle": "Delete entry?",
+  "lifestyleDeleteConfirmBody": "Remove this {category} log?",
+  "@lifestyleDeleteConfirmBody": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+  "lifestyleQuickLogCategory": "Category",
+  "lifestyleQuickLogValue": "Value",
+  "lifestyleQuickLogRange": "{min}–{max} {unit}",
+  "@lifestyleQuickLogRange": {
+    "placeholders": {
+      "min": {"type": "String"},
+      "max": {"type": "String"},
+      "unit": {"type": "String"}
+    }
+  },
+  "lifestyleQuickLogValueRequired": "Enter a number.",
+  "lifestyleQuickLogValueOutOfRange": "Must be {range} {unit}.",
+  "@lifestyleQuickLogValueOutOfRange": {
+    "placeholders": {
+      "range": {"type": "String"},
+      "unit": {"type": "String"}
+    }
+  },
+  "lifestyleNoteOptional": "Note (optional)",
+  "lifestyleSaveFailed": "Could not save: {error}",
+  "@lifestyleSaveFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "lifestyleDeleteFailed": "Delete failed: {error}",
+  "@lifestyleDeleteFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "lifestyleHistoryYesterday": "Yesterday",
+  "lifestyleHistoryDaysAgo": "{count}d ago",
+  "@lifestyleHistoryDaysAgo": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "lifestyleLoadFailed": "Failed to load: {error}",
+  "@lifestyleLoadFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+
+  "insightsSectionTitle": "Insights for you",
+
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "Follow system",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageIndonesian": "Bahasa Indonesia",
+  "settingsAbout": "About",
+  "settingsAboutVersion": "Version {version}",
+  "@settingsAboutVersion": {
+    "placeholders": {"version": {"type": "String"}}
+  },
+  "settingsProfile": "Profile",
+  "settingsHideLifeCountdown": "Hide life countdown",
+  "settingsHideLifeCountdownHint": "Quiet the home countdown if it feels too heavy.",
+  "settingsDangerZone": "Danger zone",
+  "settingsClearAllData": "Clear all data",
+  "settingsClearAllDataConfirmTitle": "Clear everything?",
+  "settingsClearAllDataConfirmBody": "Removes your profile, events, lifestyle logs, and pinned widget state. This cannot be undone."
+}

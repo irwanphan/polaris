@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-13 by Cursor AI session — **M5 (Recommendation Engine v1) shipped** on top of M0/M1/M2/M4 + CI
+> **Last updated:** 2026-06-13 by Cursor AI session — **M6 (Polish & beta — l10n + a11y + goldens) shipped** on top of M0/M1/M2/M4/M5 + CI
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-13, **M0–M2 + CI + M4 + M5 shipped**)
+## 2. Current Status (As of 2026-06-13, **M0–M2 + CI + M4 + M5 + M6 shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -715,9 +715,132 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     the CTAs route to `/lifestyle` and `/events`
     respectively. Screenshot in chat history.
 
+- **M6 — Polish & beta (l10n + a11y + goldens)** shipped:
+  - **Localization (ID + EN)** — full `flutter_localizations`
+    + `gen-l10n` pipeline. Two ARB files at `lib/l10n/`,
+    generated `AppL` lives at `lib/l10n/generated/`.
+    `l10n.yaml` pins `output-class: AppL` so the generated
+    helper is short to type. **80+ keys** covering every
+    surface string: nav chrome, onboarding, life
+    countdown, events (cards, editor, dialogs), lifestyle
+    (today summary, quick log, history, delete dialog,
+    empty state), insights section header, common
+    buttons/snackbars, and Settings.
+    - ICU plurals used for: `lifeAlreadyLived`,
+      `eventsCountdownDays`, `lifestyleEntriesToday`,
+      `lifestyleHistoryDaysAgo`,
+      `eventsCountdownBadgeSemanticLabel`.
+    - **Domain layers kept Flutter-free**: enum→label
+      mappers live in `lib/core/l10n/enum_labels.dart`
+      (presentation-side helpers for `Sex`, `DisplayMode`,
+      `Recurrence`, `LogCategory`). Domain enums still
+      expose stable storage keys + diagnostic English
+      labels for logs.
+    - **`NumberFormat` and `DateFormat` are locale-aware**:
+      every call passes `Localizations.localeOf(context).toString()`
+      so "10,907" in EN becomes "10.907" in ID, and
+      `DateFormat.yMMMMd` reads "June 20, 2026" vs
+      "20 Juni 2026" automatically.
+    - **`MaterialApp`** picks up `localizationsDelegates`
+      and `supportedLocales` from `AppL`, and a new
+      `LocaleController` (`lib/core/l10n/locale_controller.dart`)
+      persists the user's choice into the existing
+      `SharedPreferences` seam under key
+      `polaris.locale.v1`. `null` = follow system.
+  - **Settings page upgraded** (was a "Coming Soon"
+    placeholder): real `ListView` with a "Language"
+    section + new `LanguagePickerTile` widget (radio
+    group with Follow system / English / Bahasa
+    Indonesia). Tile uses Material 3's `RadioGroup` API.
+    Toggling the radio updates `MaterialApp.locale` in
+    real time across all 4 tabs.
+  - **Accessibility pass**:
+    - **Semantics labels** on icon-only buttons + decorative
+      icons: `PopupMenuButton` on `EventCard` now has a
+      proper tooltip (`eventsActionsMenuLabel`); pinned-pin
+      icon announces `eventsPinnedSemanticLabel`; the
+      `_CountdownBadge` collapses its number + "days"
+      stack into a single `excludeSemantics` `Semantics`
+      node labelled "14 days remaining"; the hero
+      `CountdownDisplay` announces e.g. "10,907 DAYS
+      REMAINING" as one a11y node; `add_circle`
+      decorative icon on `CategorySummaryCard` wrapped in
+      `ExcludeSemantics`.
+    - **Text-scale safety**: hero countdown number wrapped
+      in `FittedBox(BoxFit.scaleDown, maxLines: 1)` so
+      it never overflows at 1.5× / 2× text scale or on
+      narrower screens.
+    - **Tap targets**: `LanguagePickerTile` uses
+      `RadioListTile` (>= 48dp by default with
+      `VisualDensity.standard`). Existing FABs and the
+      pin/delete popup menu already exceed 48dp; no
+      shrinkage needed.
+    - **Contrast**: `InsightCard` titles use `onSurface`
+      and bodies use `onSurfaceVariant` against
+      `*Container` backgrounds — Material's contract
+      already guarantees WCAG AA; severity tones use
+      `withValues(alpha: 0.35)` on the container which
+      preserves the on-surface contrast envelope.
+  - **Golden tests** — new `test/golden/` tree, 10
+    baselines, **tagged `@Tags(<String>['golden'])`** so
+    CI on Linux can skip via `--exclude-tags=golden`
+    (font rendering differs across hosts). All goldens
+    generated on macOS:
+    - `event_card_unpinned_en.png`,
+      `event_card_pinned_yearly_id.png`
+    - `category_summary_water_en.png`,
+      `category_summary_mood_empty_id.png`
+    - `insight_info.png`, `insight_encourage.png`,
+      `insight_warn.png`, `insight_critical.png`
+    - `countdown_days_en_light.png`,
+      `countdown_percent_id_dark.png`
+    - **Harness** at `test/golden/golden_harness.dart`
+      pumps each widget inside a real `MaterialApp` with
+      `AppTheme.light()/dark()` and pins a locale per
+      call so EN vs ID variants are explicit. Body text
+      renders as Roboto placeholder rectangles in the
+      Flutter test runtime (no system font); the
+      diff comparator still catches layout/color/spacing
+      regressions byte-for-byte. To regen after a UI
+      change: `flutter test test/golden --update-goldens`.
+    - **`dart_test.yaml`** declares the `golden` tag so
+      runners don't warn about an unknown tag.
+    - **`.github/workflows/ci.yml`** now invokes
+      `flutter test --coverage --exclude-tags=golden`.
+  - **Test totals**: **141 unit + widget tests** (no
+    regressions from M5) + **10 golden tests** = 151
+    passing locally.
+  - **APK verified on emulator**: built debug APK
+    installed over the existing app, switched language
+    to "Bahasa Indonesia" via Settings → Life tab
+    re-rendered with localized chrome (`HARI TERSISA`,
+    `Saran untuk Anda`, `Hari / Minggu / Bulan / Tahun`)
+    and ID number format (`10.907`). Screenshots in
+    chat history.
+  - **Known gaps deferred to M7+**:
+    - **Insight title + body strings are still English**
+      because they're emitted from `RecommendationRule`s
+      in the domain layer. Refactor plan: have rules
+      emit an `id` + a `Map<String, Object?> params`,
+      then a presentation-side `InsightContent` resolver
+      looks them up in ARB. Out of scope here to keep
+      M6 a single sitting.
+    - **Internal Play Store track** (sub-deliverable D)
+      not started — needs the owner to set up the Play
+      Console + a signing keystore + service account.
+      Once those are in place we add `key.properties` +
+      a `release.yml` workflow that builds a signed AAB
+      on `v*` tag push and uploads via
+      `r0adkll/upload-google-play`.
+    - **Android home-screen widget text** still uses
+      `event.recurrence.label` (English) because Glance /
+      RemoteViews need their own locale plumbing —
+      tracked alongside the Glance Compose migration.
+
 ### In Progress
-- None — M5 closed. Manual smoke tests below remain
-  user-driven (no blockers).
+- None — M6 closed except for the deferred Play Store
+  track sub-deliverable (D), which is owner-gated. Manual
+  smoke tests below remain user-driven (no blockers).
 
 ### Pending Manual Verification (user-driven)
 - **Lifestyle end-to-end on device**:
@@ -747,12 +870,43 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
   flow as before: create an event ~70 min out, accept
   `POST_NOTIFICATIONS`, lock screen, wait for T-1h reminder.
 
+### Pending Manual Verification — M6 (user-driven)
+- **Locale switch on device**:
+  1. Open Polaris → **Settings** tab.
+  2. Tap **Bahasa Indonesia** in the Language picker.
+  3. Verify Life tab title becomes `Sisa Hariku` (unchanged
+     since it's preserved as a brand phrase) and the
+     "DAYS REMAINING" subtitle becomes `HARI TERSISA`,
+     bottom nav becomes `Hidup / Acara / Gaya Hidup /
+     Pengaturan`, and Insights header becomes
+     `Saran untuk Anda`.
+  4. Numbers should switch to ID grouping (`10.907` instead
+     of `10,907`).
+  5. Tap **Follow system** to revert.
+- **TalkBack a11y sweep** (optional):
+  1. Enable TalkBack on the emulator/device.
+  2. Swipe through the Life tab — the big countdown number
+     should be announced as one phrase ("10907 DAYS
+     REMAINING").
+  3. On Events, the pin indicator should be announced as
+     "Pinned to widget" without re-reading the icon glyph.
+  4. The popup-menu icon on event cards should announce
+     "More actions" via the tooltip.
+- **Text-scale at 2×** (Settings → Display & font size →
+  Largest): Life-tab hero number should shrink-to-fit
+  (single line) and other surfaces should remain
+  readable without overflow.
+
 ### Not Started (next on deck)
-- **M6 — Polish & beta**: a11y pass, l10n (ID+EN — most
-  copy is still hard-coded English aside from "Sisa Hariku"),
-  golden tests for `EventCard` / `LifeCountdownPage` /
-  `CategorySummaryCard` / `InsightCard`, internal Play Store
-  track.
+- **M6 sub-deliverable D — Internal Play Store track**
+  (owner-gated): generate upload keystore, add
+  `android/key.properties` (gitignored), wire signing in
+  `android/app/build.gradle.kts`, then add a
+  `release.yml` workflow that builds a signed AAB on
+  `v*` tag push and uploads via
+  `r0adkll/upload-google-play`. Pre-req: Play Console
+  app shell created + a service-account JSON committed
+  as a GitHub Actions secret.
 - **Recommendation Engine v2** (after M6): dismiss-a-card
   + cooldown (so the same `LifePhaseRule` insight doesn't
   re-show every open), per-rule analytics events, plus
@@ -806,7 +960,8 @@ flutter doctor -v          # all checked categories should be green
 flutter pub get            # resolve current pubspec
 dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed! (141+ tests)
+flutter test               # expect: All tests passed! (141 unit/widget tests)
+flutter test test/golden   # macOS only — 10 golden tests (font-sensitive)
 ```
 
 > The `build_runner build` step is mandatory after a fresh checkout

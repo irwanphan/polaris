@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/event_countdown/application/events_controller.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/value_objects/recurrence.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// Modal bottom sheet for creating or editing an [Event].
 ///
@@ -114,9 +116,10 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
   }
 
   Future<void> _submit() async {
+    final AppL l = AppL.of(context);
     final String title = _titleCtrl.text.trim();
     if (title.isEmpty) {
-      setState(() => _titleError = 'Title is required.');
+      setState(() => _titleError = l.eventsFieldTitleRequired);
       return;
     }
     setState(() {
@@ -151,7 +154,9 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
       Navigator.of(context).pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save: ${result.failureOrNull}')),
+        SnackBar(
+          content: Text(l.eventsSaveFailed(result.failureOrNull.toString())),
+        ),
       );
     }
   }
@@ -159,7 +164,9 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppL l = AppL.of(context);
     final bool isEdit = widget.original != null;
+    final String localeTag = Localizations.localeOf(context).toString();
     final EdgeInsets keyboardInset = EdgeInsets.only(
       bottom: MediaQuery.of(context).viewInsets.bottom,
     );
@@ -178,7 +185,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              isEdit ? 'Edit event' : 'New event',
+              isEdit ? l.eventsEditTitle : l.eventsNewTitle,
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: Spacing.x4),
@@ -188,7 +195,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               maxLength: 200,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
-                labelText: 'Title',
+                labelText: l.eventsFieldTitle,
                 errorText: _titleError,
                 prefixIcon: const Icon(Icons.title),
               ),
@@ -198,23 +205,28 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               onTap: _pickTargetDate,
               borderRadius: BorderRadius.circular(Radii.lg),
               child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'When',
-                  prefixIcon: Icon(Icons.event),
+                decoration: InputDecoration(
+                  labelText: l.eventsFieldWhen,
+                  prefixIcon: const Icon(Icons.event),
                 ),
-                child: Text(DateFormat.yMMMMd().add_jm().format(_targetAt)),
+                child: Text(
+                  DateFormat.yMMMMd(localeTag).add_jm().format(_targetAt),
+                ),
               ),
             ),
             const SizedBox(height: Spacing.x3),
             DropdownButtonFormField<Recurrence>(
               initialValue: _recurrence,
-              decoration: const InputDecoration(
-                labelText: 'Repeats',
-                prefixIcon: Icon(Icons.repeat),
+              decoration: InputDecoration(
+                labelText: l.eventsFieldRepeats,
+                prefixIcon: const Icon(Icons.repeat),
               ),
               items: <DropdownMenuItem<Recurrence>>[
                 for (final Recurrence r in Recurrence.values)
-                  DropdownMenuItem<Recurrence>(value: r, child: Text(r.label)),
+                  DropdownMenuItem<Recurrence>(
+                    value: r,
+                    child: Text(recurrenceLabel(context, r)),
+                  ),
               ],
               onChanged: (Recurrence? r) {
                 if (r != null) setState(() => _recurrence = r);
@@ -227,13 +239,13 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               maxLines: 3,
               maxLength: 500,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Note (optional)',
-                prefixIcon: Icon(Icons.notes),
+              decoration: InputDecoration(
+                labelText: l.eventsFieldNote,
+                prefixIcon: const Icon(Icons.notes),
               ),
             ),
             const SizedBox(height: Spacing.x4),
-            Text('Accent color', style: theme.textTheme.labelLarge),
+            Text(l.eventsAccentColor, style: theme.textTheme.labelLarge),
             const SizedBox(height: Spacing.x2),
             Wrap(
               spacing: Spacing.x2,
@@ -254,14 +266,14 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(l.commonCancel),
                   ),
                 ),
                 const SizedBox(width: Spacing.x3),
                 Expanded(
                   child: FilledButton(
                     onPressed: _submitting ? null : _submit,
-                    child: Text(_submitting ? 'Saving…' : 'Save'),
+                    child: Text(_submitting ? l.commonSaving : l.commonSave),
                   ),
                 ),
               ],

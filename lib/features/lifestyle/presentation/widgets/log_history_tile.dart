@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/lifestyle/domain/entities/lifestyle_log.dart';
 import 'package:polaris/features/lifestyle/presentation/widgets/category_icons.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// Compact single-row history entry. Used inside the 7-day history
 /// list under the today summary.
@@ -20,8 +22,8 @@ class LogHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme cs = theme.colorScheme;
-    final String valueText = _formatValue(log);
-    final String whenText = _formatWhen(log.loggedAt);
+    final String valueText = _formatValue(context, log);
+    final String whenText = _formatWhen(context, log.loggedAt);
 
     return Dismissible(
       key: ValueKey<String>('log-${log.id}'),
@@ -102,21 +104,25 @@ class LogHistoryTile extends StatelessWidget {
     );
   }
 
-  static String _formatValue(LifestyleLog log) {
+  static String _formatValue(BuildContext context, LifestyleLog log) {
     final String number = log.category.isInteger
         ? log.value.toInt().toString()
         : log.value.toStringAsFixed(1);
-    return '${log.category.label} • $number ${log.category.unit}';
+    final String label = logCategoryLabel(context, log.category);
+    final String unit = logCategoryUnit(context, log.category);
+    return '$label • $number $unit';
   }
 
-  static String _formatWhen(DateTime when) {
+  static String _formatWhen(BuildContext context, DateTime when) {
+    final AppL l = AppL.of(context);
+    final String localeTag = Localizations.localeOf(context).toString();
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
     final DateTime entryDay = DateTime(when.year, when.month, when.day);
     final int daysAgo = today.difference(entryDay).inDays;
-    if (daysAgo == 0) return DateFormat.jm().format(when);
-    if (daysAgo == 1) return 'Yesterday';
-    if (daysAgo < 7) return '${daysAgo}d ago';
-    return DateFormat.MMMd().format(when);
+    if (daysAgo == 0) return DateFormat.jm(localeTag).format(when);
+    if (daysAgo == 1) return l.lifestyleHistoryYesterday;
+    if (daysAgo < 7) return l.lifestyleHistoryDaysAgo(daysAgo);
+    return DateFormat.MMMd(localeTag).format(when);
   }
 }

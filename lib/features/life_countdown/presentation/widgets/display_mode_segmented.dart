@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:polaris/core/l10n/enum_labels.dart';
 import 'package:polaris/features/life_countdown/application/display_mode.dart';
 
 /// Segmented toggle for switching countdown display modes.
@@ -21,7 +22,10 @@ class DisplayModeSegmented extends StatelessWidget {
       style: SegmentedButton.styleFrom(visualDensity: VisualDensity.compact),
       segments: <ButtonSegment<DisplayMode>>[
         for (final DisplayMode m in DisplayMode.values)
-          ButtonSegment<DisplayMode>(value: m, label: Text(m.label)),
+          ButtonSegment<DisplayMode>(
+            value: m,
+            label: Text(displayModeLabel(context, m)),
+          ),
       ],
       selected: <DisplayMode>{selected},
       showSelectedIcon: false,
