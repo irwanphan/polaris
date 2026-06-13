@@ -22,10 +22,7 @@ class LifeExpectancyRow {
 
 /// Whole-table representation including the global fallback row.
 class LifeExpectancyTable {
-  const LifeExpectancyTable({
-    required this.global,
-    required this.byCountry,
-  });
+  const LifeExpectancyTable({required this.global, required this.byCountry});
 
   /// Row used when [byCountry] does not contain a country.
   final LifeExpectancyRow global;
@@ -60,8 +57,7 @@ class LifeExpectancyAssetDataSource {
       female: (globalJson['female'] as num).toDouble(),
     );
 
-    final List<dynamic> countriesJson =
-        decoded['byCountry'] as List<dynamic>;
+    final List<dynamic> countriesJson = decoded['byCountry'] as List<dynamic>;
     final List<LifeExpectancyRow> byCountry = countriesJson
         .cast<Map<String, dynamic>>()
         .map(_parseRow)

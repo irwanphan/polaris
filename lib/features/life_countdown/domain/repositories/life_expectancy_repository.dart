@@ -21,10 +21,7 @@ abstract interface class LifeExpectancyRepository {
 
 /// View-model-shaped value used by the country picker.
 final class CountryOption {
-  const CountryOption({
-    required this.code,
-    required this.displayName,
-  });
+  const CountryOption({required this.code, required this.displayName});
 
   final CountryCode code;
   final String displayName;

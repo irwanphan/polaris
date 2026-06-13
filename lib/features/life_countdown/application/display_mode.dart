@@ -7,10 +7,10 @@ enum DisplayMode {
   percent;
 
   String get label => switch (this) {
-        DisplayMode.days => 'Days',
-        DisplayMode.weeks => 'Weeks',
-        DisplayMode.months => 'Months',
-        DisplayMode.years => 'Years',
-        DisplayMode.percent => '%',
-      };
+    DisplayMode.days => 'Days',
+    DisplayMode.weeks => 'Weeks',
+    DisplayMode.months => 'Months',
+    DisplayMode.years => 'Years',
+    DisplayMode.percent => '%',
+  };
 }

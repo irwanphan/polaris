@@ -41,9 +41,10 @@ class _AlwaysFailingSaveRepo extends _InMemoryRepo {
 LifeProfile _profile() {
   final now = DateTime(2026, 6, 12);
   return LifeProfile(
-    dateOfBirth:
-        DateOfBirth.tryFromDateTime(DateTime(1995, 5, 15), today: now)
-            .valueOrNull!,
+    dateOfBirth: DateOfBirth.tryFromDateTime(
+      DateTime(1995, 5, 15),
+      today: now,
+    ).valueOrNull!,
     sex: Sex.female,
     countryCode: CountryCode.tryParse('ID').valueOrNull!,
     hideLifeCountdown: false,

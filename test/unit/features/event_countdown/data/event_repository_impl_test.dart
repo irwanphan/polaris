@@ -115,10 +115,7 @@ void main() {
       await repo.pinExclusive(null);
 
       final List<Event> emitted = await repo.watchAll().first;
-      expect(
-        emitted.every((Event e) => !e.isPinnedToWidget),
-        isTrue,
-      );
+      expect(emitted.every((Event e) => !e.isPinnedToWidget), isTrue);
     });
 
     test('getPinned returns Ok(null) when nothing is pinned', () async {
@@ -136,10 +133,7 @@ void main() {
       await repo.pinExclusive('b');
 
       final result = await repo.getPinned();
-      final Event? pinned = result.fold(
-        onOk: (e) => e,
-        onErr: (_) => null,
-      );
+      final Event? pinned = result.fold(onOk: (e) => e, onErr: (_) => null);
       expect(pinned?.id, 'b');
       expect(pinned?.isPinnedToWidget, isTrue);
     });

@@ -18,8 +18,7 @@ class _FakeExpectancyRepo implements LifeExpectancyRepository {
   Future<Result<double, Failure>> lookup({
     required CountryCode countryCode,
     required Sex sex,
-  }) async =>
-      Result.ok(value);
+  }) async => Result.ok(value);
 
   @override
   Future<Result<List<CountryOption>, Failure>> listSupportedCountries() async =>
@@ -31,18 +30,14 @@ class _ErroringExpectancyRepo implements LifeExpectancyRepository {
   Future<Result<double, Failure>> lookup({
     required CountryCode countryCode,
     required Sex sex,
-  }) async =>
-      const Result.err(NotFoundFailure(message: 'no data'));
+  }) async => const Result.err(NotFoundFailure(message: 'no data'));
 
   @override
   Future<Result<List<CountryOption>, Failure>> listSupportedCountries() async =>
       const Result.ok(<CountryOption>[]);
 }
 
-LifeProfile _profile({
-  required DateTime birth,
-  Sex sex = Sex.male,
-}) {
+LifeProfile _profile({required DateTime birth, Sex sex = Sex.male}) {
   final DateTime today = DateTime(2026, 6, 12);
   return LifeProfile(
     dateOfBirth: DateOfBirth.tryFromDateTime(birth, today: today).valueOrNull!,
@@ -55,27 +50,35 @@ LifeProfile _profile({
 
 void main() {
   group('ComputeLifeEstimate', () {
-    test('computes lived, remaining, total, and percent for a typical case',
-        () async {
-      final usecase = ComputeLifeEstimate(_FakeExpectancyRepo(70.0));
-      final LifeProfile profile = _profile(birth: DateTime(1990, 6, 12));
-      final today = DateTime(2026, 6, 12);
+    test(
+      'computes lived, remaining, total, and percent for a typical case',
+      () async {
+        final usecase = ComputeLifeEstimate(_FakeExpectancyRepo(70.0));
+        final LifeProfile profile = _profile(birth: DateTime(1990, 6, 12));
+        final today = DateTime(2026, 6, 12);
 
-      final result = await usecase(profile, now: today);
+        final result = await usecase(profile, now: today);
 
-      expect(result.isOk, isTrue);
-      final LifeEstimate est = result.valueOrNull!;
-      expect(est.expectancyYears, 70.0);
-      expect(est.expectedTotalDays,
-          (70 * ComputeLifeEstimate.daysPerYear).round());
+        expect(result.isOk, isTrue);
+        final LifeEstimate est = result.valueOrNull!;
+        expect(est.expectancyYears, 70.0);
+        expect(
+          est.expectedTotalDays,
+          (70 * ComputeLifeEstimate.daysPerYear).round(),
+        );
 
-      const int expectedLived = 36 * 365 + 9; // 9 leap days between 1990 and 2026
-      expect(est.livedDays, expectedLived);
+        const int expectedLived =
+            36 * 365 + 9; // 9 leap days between 1990 and 2026
+        expect(est.livedDays, expectedLived);
 
-      expect(est.remainingDays, est.expectedTotalDays - est.livedDays);
-      expect(est.percentLived, closeTo(est.livedDays / est.expectedTotalDays * 100, 0.001));
-      expect(est.estimatedEndDate.year, greaterThanOrEqualTo(2060));
-    });
+        expect(est.remainingDays, est.expectedTotalDays - est.livedDays);
+        expect(
+          est.percentLived,
+          closeTo(est.livedDays / est.expectedTotalDays * 100, 0.001),
+        );
+        expect(est.estimatedEndDate.year, greaterThanOrEqualTo(2060));
+      },
+    );
 
     test('remainingDays is clamped to 0 for an expired estimate', () async {
       final usecase = ComputeLifeEstimate(_FakeExpectancyRepo(20.0));

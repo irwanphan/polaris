@@ -51,8 +51,9 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
       tz.setLocalLocation(tz.UTC);
     }
 
-    const AndroidInitializationSettings android =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const AndroidInitializationSettings android = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const DarwinInitializationSettings darwin = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -66,7 +67,8 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
     if (Platform.isAndroid) {
       final androidImpl = _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await androidImpl?.createNotificationChannel(
         const AndroidNotificationChannel(
           _androidChannelId,
@@ -87,15 +89,16 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
     if (Platform.isAndroid) {
       final androidImpl = _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      final bool? granted =
-          await androidImpl?.requestNotificationsPermission();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final bool? granted = await androidImpl?.requestNotificationsPermission();
       return granted ?? false;
     }
     if (Platform.isIOS) {
       final iosImpl = _plugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+            IOSFlutterLocalNotificationsPlugin
+          >();
       final bool? granted = await iosImpl?.requestPermissions(
         alert: true,
         badge: true,
@@ -137,8 +140,10 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
       title: title,
       body: body,
       scheduledDate: tzWhen,
-      notificationDetails:
-          const NotificationDetails(android: android, iOS: darwin),
+      notificationDetails: const NotificationDetails(
+        android: android,
+        iOS: darwin,
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
     );

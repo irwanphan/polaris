@@ -65,10 +65,9 @@ class _EventsList extends ConsumerWidget {
     WidgetRef ref,
     Event event,
   ) async {
-    final result = await ref.read(eventsControllerProvider).togglePin(
-          id: event.id,
-          isCurrentlyPinned: event.isPinnedToWidget,
-        );
+    final result = await ref
+        .read(eventsControllerProvider)
+        .togglePin(id: event.id, isCurrentlyPinned: event.isPinnedToWidget);
     if (!context.mounted) return;
     if (result.isErr) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -101,8 +100,9 @@ class _EventsList extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result =
-        await ref.read(eventsControllerProvider).deleteEvent(event.id);
+    final result = await ref
+        .read(eventsControllerProvider)
+        .deleteEvent(event.id);
     if (!context.mounted) return;
     if (result.isErr) {
       ScaffoldMessenger.of(context).showSnackBar(

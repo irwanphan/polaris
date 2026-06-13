@@ -33,8 +33,7 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
 
       final profileAsync = ref.read(lifeProfileControllerProvider);
       return profileAsync.maybeWhen(
-        data: (profile) =>
-            profile == null ? AppRoutes.onboarding : null,
+        data: (profile) => profile == null ? AppRoutes.onboarding : null,
         orElse: () => null,
       );
     },

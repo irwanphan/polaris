@@ -26,8 +26,7 @@ class _FakeExpectancyRepo implements LifeExpectancyRepository {
   Future<Result<double, Failure>> lookup({
     required CountryCode countryCode,
     required Sex sex,
-  }) async =>
-      const Result.ok(70.0);
+  }) async => const Result.ok(70.0);
 
   @override
   Future<Result<List<CountryOption>, Failure>> listSupportedCountries() async =>
@@ -168,24 +167,26 @@ Future<ProviderScope> _bootApp({LifeProfile? profile}) async {
     overrides: [
       appLoggerProvider.overrideWithValue(AppLogger.silent()),
       sharedPreferencesProvider.overrideWithValue(sp),
-      lifeExpectancyRepositoryProvider
-          .overrideWithValue(_FakeExpectancyRepo()),
-      eventRepositoryProvider
-          .overrideWithValue(_InMemoryEventRepository()),
-      lifeProfileRepositoryProvider
-          .overrideWithValue(_InMemoryLifeProfileRepository(profile)),
-      notificationDispatcherProvider
-          .overrideWithValue(_NoopNotificationDispatcher()),
-      widget_providers.homeWidgetUpdaterProvider
-          .overrideWithValue(_NoopHomeWidgetUpdater()),
+      lifeExpectancyRepositoryProvider.overrideWithValue(_FakeExpectancyRepo()),
+      eventRepositoryProvider.overrideWithValue(_InMemoryEventRepository()),
+      lifeProfileRepositoryProvider.overrideWithValue(
+        _InMemoryLifeProfileRepository(profile),
+      ),
+      notificationDispatcherProvider.overrideWithValue(
+        _NoopNotificationDispatcher(),
+      ),
+      widget_providers.homeWidgetUpdaterProvider.overrideWithValue(
+        _NoopHomeWidgetUpdater(),
+      ),
     ],
     child: const PolarisApp(),
   );
 }
 
 void main() {
-  testWidgets('Boots into onboarding when no profile exists',
-      (WidgetTester tester) async {
+  testWidgets('Boots into onboarding when no profile exists', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(await _bootApp());
     await tester.pumpAndSettle();
 
@@ -194,8 +195,9 @@ void main() {
     expect(find.text('Start countdown'), findsOneWidget);
   });
 
-  testWidgets('HomeShell renders the bottom navigation with all 4 tabs',
-      (WidgetTester tester) async {
+  testWidgets('HomeShell renders the bottom navigation with all 4 tabs', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
     await tester.pumpAndSettle();
 
@@ -209,8 +211,9 @@ void main() {
     expect(find.text('Sisa Hariku'), findsOneWidget);
   });
 
-  testWidgets('Tapping the Events tab shows the empty state',
-      (WidgetTester tester) async {
+  testWidgets('Tapping the Events tab shows the empty state', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
     await tester.pumpAndSettle();
 
@@ -221,8 +224,9 @@ void main() {
     expect(find.text('New event'), findsOneWidget);
   });
 
-  testWidgets('Tapping the Lifestyle tab shows the placeholder',
-      (WidgetTester tester) async {
+  testWidgets('Tapping the Lifestyle tab shows the placeholder', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
     await tester.pumpAndSettle();
 
@@ -233,8 +237,9 @@ void main() {
     expect(find.text('Planned for M4'), findsOneWidget);
   });
 
-  testWidgets('Tapping the Settings tab shows the placeholder',
-      (WidgetTester tester) async {
+  testWidgets('Tapping the Settings tab shows the placeholder', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(await _bootApp(profile: _sampleProfile()));
     await tester.pumpAndSettle();
 

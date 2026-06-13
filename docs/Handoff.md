@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-13 by Cursor AI session — **M2 fully shipped (notifications + home-screen widget)**
+> **Last updated:** 2026-06-13 by Cursor AI session — **M2 fully shipped + CI (GitHub Actions) shipped**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-13, **M2 fully shipped**)
+## 2. Current Status (As of 2026-06-13, **M2 + CI shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -491,9 +491,35 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
       so the events-page UI tests stay hermetic.
   - **`flutter analyze`**: still zero issues.
 
+- **CI — GitHub Actions** shipped:
+  - `.github/workflows/ci.yml` runs on every push to `main`
+    and every pull request (incl. from forks). In-flight runs
+    are auto-cancelled when a newer commit arrives on the
+    same ref (`concurrency` block) to save Actions minutes.
+  - Single `analyze-and-test` job on `ubuntu-latest`,
+    15-minute timeout.
+  - Pipeline: `subosito/flutter-action@v2` pinned to
+    **Flutter 3.44.1 / channel stable** with pub-cache, then
+    `flutter pub get` → `dart run build_runner build
+    --delete-conflicting-outputs` (must come before analyze
+    because we git-ignore generated files per D1) → `dart
+    format --output=none --set-exit-if-changed .` (formatting
+    gate) → `flutter analyze` → `flutter test --coverage`.
+  - Coverage `lcov.info` uploaded as an Actions artifact
+    (`coverage-lcov`, 14-day retention) — wire Codecov /
+    Coveralls later if useful.
+  - Android APK / iOS build jobs intentionally **not** in CI
+    yet — they need the Android SDK + NDK download (multi-GB,
+    slow) and we don't ship release builds from CI. Add as a
+    separate `release.yml` workflow once we cut Play Store
+    tracks.
+  - **One-time format pass** applied to the entire codebase
+    (`dart format .`) — 50 files re-formatted to satisfy the
+    new gate. All 89 tests still pass.
+
 ### In Progress
-- None — M2 closed. Awaiting manual widget smoke test on
-  device (user-driven step below).
+- None — M2 closed, CI live. Awaiting manual widget smoke
+  test on device (user-driven step below).
 
 ### Pending Manual Verification (user-driven)
 - **Add the widget to the Android home screen** to verify the
@@ -513,9 +539,6 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
   `POST_NOTIFICATIONS`, lock screen, wait for T-1h reminder.
 
 ### Not Started (next on deck)
-- **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
-  `flutter test --coverage` on push & PR (Handoff §4 Step 4).
-  Must include a `dart run build_runner build` step before tests.
 - **M4 — Lifestyle Logging** (per `BRD §11`): daily-log entry
   sheet, history view, Drift schema bump for `lifestyle_logs`
   table.
@@ -612,32 +635,29 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 
 ### Step 3 — First vertical slice: Life Countdown (M1) — DONE
 
-### Step 4 — CI (M0, can run in parallel)
-10. Add `.github/workflows/ci.yml`:
-    - On `push` and `pull_request`: `flutter analyze`, `flutter test
-      --coverage`, upload coverage as artifact.
-    - Cache `~/.pub-cache` keyed on `pubspec.lock`.
+### Step 4 — CI (M0, can run in parallel) — DONE
+See `.github/workflows/ci.yml`. Runs analyze + format check +
+test --coverage on push to `main` and on every PR. Pinned to
+Flutter 3.44.1 stable. Coverage uploaded as artifact.
 
 ### Step 5 — Subsequent milestones
 Follow `BRD §11` for M2 → M9. Each milestone should ship as its own PR
 series and update this Handoff document's `Current Status`.
 
-**Pointer for the next session**: **M2 closed**. Pick one:
-1. **CI** (Step 4) — fastest unlock of safety net.
-   `.github/workflows/ci.yml` with
-   `flutter analyze` + `dart run build_runner build` +
-   `flutter test --coverage` on push & PR. Cache
-   `~/.pub-cache` keyed on `pubspec.lock`. Upload coverage
-   as an artifact.
-2. **M4 — Lifestyle Logging** (BRD §11): daily-log entry
+**Pointer for the next session**: **M2 closed + CI live**.
+Pick one:
+1. **M4 — Lifestyle Logging** (BRD §11): daily-log entry
    sheet, history view, Drift schema bump for
    `lifestyle_logs`. Then **M5 — Recommendation Engine v1**
    builds on top.
-3. **M6 — Polish & beta**: a11y pass, l10n (ID + EN —
+2. **M6 — Polish & beta**: a11y pass, l10n (ID + EN —
    right now most copy is hard-coded English, with
    "Sisa Hariku" as the only Indonesian string), golden
    tests for the new event card and life countdown screen,
    internal Play Store track.
+3. **CI hardening** (optional): Codecov/Coveralls upload,
+   release.yml workflow that signs + uploads APK to Play
+   Store internal track when a `v*` tag is pushed.
 4. Keep `flutter analyze` clean; add tests alongside each item.
 
 ---
@@ -694,6 +714,7 @@ recommendation is in **bold**; revisit when a real constraint appears.
 | Home-widget layout (RemoteViews) | `android/app/src/main/res/layout/polaris_widget_layout.xml` |
 | Seed assets | `assets/seed/` |
 | Test root | `test/` |
+| CI workflow (GitHub Actions) | `.github/workflows/ci.yml` |
 
 ### External links
 - GitHub repo: <https://github.com/irwanphan/polaris>
@@ -746,3 +767,4 @@ When you (the next AI assistant) act on this project:
 | 2026-06-12 | Cursor AI session | **Android build fixes**: (a) NDK override applied to *all* `:plugin` subprojects via `android/build.gradle.kts` (transitive plugins like `jni` from `flutter_timezone` were re-asking for Flutter's default NDK); (b) core library desugaring enabled (`isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs:2.1.4`) — required by `flutter_local_notifications` ≥ 18. `flutter build apk --debug` now succeeds. |
 | 2026-06-13 | Cursor AI session | **Bootstrap zone fix**: moved `WidgetsFlutterBinding.ensureInitialized()` + all async init (SharedPreferences, AppDatabase, migration, notifications init) inside `runZonedGuarded` so binding zone matches `runApp`. Eliminates the "Zone mismatch" warning that fired on every cold boot. |
 | 2026-06-13 | Cursor AI session | Shipped **M2 — Android home-screen widget**: `home_widget ^0.9.3` + `PolarisWidgetProvider` (Kotlin, RemoteViews) + indigo card layout with amber brand pill, abstract `HomeWidgetUpdater` in `core/widgets/` + concrete `PolarisHomeWidgetUpdater` (reads pinned event via new `EventRepository.getPinned()`, formats in Dart, pushes via `home_widget` plugin), wired into `EventsController` (create/update/delete/togglePin) and bootstrap initial refresh. 89/89 tests passing, `flutter analyze` clean. **M2 closed.** |
+| 2026-06-13 | Cursor AI session | Shipped **CI (GitHub Actions)**: `.github/workflows/ci.yml` runs on push to `main` and every PR; pinned to Flutter 3.44.1 stable; pipeline = pub get → build_runner → format check → analyze → test --coverage; coverage uploaded as artifact. One-time `dart format .` cleanup applied (50 files re-formatted, 89/89 tests still pass). Handoff §4 Step 4 done. |

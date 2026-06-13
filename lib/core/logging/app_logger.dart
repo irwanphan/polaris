@@ -58,12 +58,12 @@ class AppLogger {
   }
 
   static Level _toPackageLevel(LogLevel level) => switch (level) {
-        LogLevel.trace => Level.trace,
-        LogLevel.debug => Level.debug,
-        LogLevel.info => Level.info,
-        LogLevel.warn => Level.warning,
-        LogLevel.error => Level.error,
-      };
+    LogLevel.trace => Level.trace,
+    LogLevel.debug => Level.debug,
+    LogLevel.info => Level.info,
+    LogLevel.warn => Level.warning,
+    LogLevel.error => Level.error,
+  };
 }
 
 class _NoopFilter extends LogFilter {

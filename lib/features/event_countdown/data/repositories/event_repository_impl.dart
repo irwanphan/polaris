@@ -19,9 +19,8 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Stream<List<Event>> watchAll() {
     return _dao.watchAll().map(
-          (List<EventRow> rows) =>
-              rows.map(_fromRow).toList(growable: false),
-        );
+      (List<EventRow> rows) => rows.map(_fromRow).toList(growable: false),
+    );
   }
 
   @override
@@ -80,9 +79,10 @@ class EventRepositoryImpl implements EventRepository {
     return Event(
       id: row.id,
       title: row.title,
-      targetAt:
-          DateTime.fromMillisecondsSinceEpoch(row.targetAtEpochMs, isUtc: true)
-              .toLocal(),
+      targetAt: DateTime.fromMillisecondsSinceEpoch(
+        row.targetAtEpochMs,
+        isUtc: true,
+      ).toLocal(),
       colorHex: row.colorHex,
       iconKey: row.iconKey,
       note: row.note,

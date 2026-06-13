@@ -37,8 +37,7 @@ final class CountryCode {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is CountryCode && other.value == value);
+      identical(this, other) || (other is CountryCode && other.value == value);
 
   @override
   int get hashCode => value.hashCode;

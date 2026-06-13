@@ -64,29 +64,27 @@ class CountdownDisplay extends StatelessWidget {
 
     return switch (mode) {
       DisplayMode.days => _DisplayValue(
-          primary: thousands.format(est.remainingDays),
-          unit: 'DAYS REMAINING',
-          secondary:
-              '${thousands.format(est.livedDays)} days already lived',
-        ),
+        primary: thousands.format(est.remainingDays),
+        unit: 'DAYS REMAINING',
+        secondary: '${thousands.format(est.livedDays)} days already lived',
+      ),
       DisplayMode.weeks => _DisplayValue(
-          primary: thousands.format(est.remainingWeeks),
-          unit: 'WEEKS REMAINING',
-        ),
+        primary: thousands.format(est.remainingWeeks),
+        unit: 'WEEKS REMAINING',
+      ),
       DisplayMode.months => _DisplayValue(
-          primary: thousands.format(est.remainingMonths),
-          unit: 'MONTHS REMAINING',
-        ),
+        primary: thousands.format(est.remainingMonths),
+        unit: 'MONTHS REMAINING',
+      ),
       DisplayMode.years => _DisplayValue(
-          primary: oneDecimal.format(est.remainingYears),
-          unit: 'YEARS REMAINING',
-        ),
+        primary: oneDecimal.format(est.remainingYears),
+        unit: 'YEARS REMAINING',
+      ),
       DisplayMode.percent => _DisplayValue(
-          primary: '${twoDecimal.format(est.percentLived)}%',
-          unit: 'OF LIFE LIVED',
-          secondary:
-              '${twoDecimal.format(100 - est.percentLived)}% remaining',
-        ),
+        primary: '${twoDecimal.format(est.percentLived)}%',
+        unit: 'OF LIFE LIVED',
+        secondary: '${twoDecimal.format(100 - est.percentLived)}% remaining',
+      ),
     };
   }
 }

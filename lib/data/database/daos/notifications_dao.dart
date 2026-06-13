@@ -20,9 +20,9 @@ class NotificationsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<List<NotificationScheduleRow>> listForEvent(String eventId) {
-    return (select(notificationSchedulesTable)
-          ..where((t) => t.eventId.equals(eventId)))
-        .get();
+    return (select(
+      notificationSchedulesTable,
+    )..where((t) => t.eventId.equals(eventId))).get();
   }
 
   Future<List<NotificationScheduleRow>> listAll() {
@@ -30,14 +30,14 @@ class NotificationsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<int> deleteForEvent(String eventId) {
-    return (delete(notificationSchedulesTable)
-          ..where((t) => t.eventId.equals(eventId)))
-        .go();
+    return (delete(
+      notificationSchedulesTable,
+    )..where((t) => t.eventId.equals(eventId))).go();
   }
 
   Future<int> deleteById(int id) {
-    return (delete(notificationSchedulesTable)
-          ..where((t) => t.id.equals(id)))
-        .go();
+    return (delete(
+      notificationSchedulesTable,
+    )..where((t) => t.id.equals(id))).go();
   }
 }

@@ -31,22 +31,22 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (Migrator m) async {
-          await m.createAll();
-        },
-        onUpgrade: (Migrator m, int from, int to) async {
-          if (from < 2) {
-            // v1 → v2: introduced LifeProfilesTable when the M1 profile
-            // moved from SharedPreferences into Drift.
-            await m.createTable(lifeProfilesTable);
-          }
-          if (from < 3) {
-            // v2 → v3: notifications bookkeeping for scheduled local
-            // reminders (T-7d / T-1d / T-1h per event).
-            await m.createTable(notificationSchedulesTable);
-          }
-        },
-      );
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        // v1 → v2: introduced LifeProfilesTable when the M1 profile
+        // moved from SharedPreferences into Drift.
+        await m.createTable(lifeProfilesTable);
+      }
+      if (from < 3) {
+        // v2 → v3: notifications bookkeeping for scheduled local
+        // reminders (T-7d / T-1d / T-1h per event).
+        await m.createTable(notificationSchedulesTable);
+      }
+    },
+  );
 
   static QueryExecutor _open() {
     return driftDatabase(name: 'polaris');

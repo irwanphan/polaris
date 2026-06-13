@@ -54,11 +54,11 @@ final class LifeProfile {
 
   @override
   int get hashCode => Object.hash(
-        dateOfBirth,
-        sex,
-        countryCode,
-        hideLifeCountdown,
-        createdAt,
-        updatedAt,
-      );
+    dateOfBirth,
+    sex,
+    countryCode,
+    hideLifeCountdown,
+    createdAt,
+    updatedAt,
+  );
 }

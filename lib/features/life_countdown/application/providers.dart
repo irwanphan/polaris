@@ -14,23 +14,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// widgets can read it synchronously via `ref.watch`.
 final Provider<SharedPreferences> sharedPreferencesProvider =
     Provider<SharedPreferences>(
-  (ref) => throw UnimplementedError(
-    'sharedPreferencesProvider must be overridden in bootstrap()',
-  ),
-);
+      (ref) => throw UnimplementedError(
+        'sharedPreferencesProvider must be overridden in bootstrap()',
+      ),
+    );
 
 final Provider<LifeExpectancyAssetDataSource>
-    lifeExpectancyAssetDataSourceProvider =
-    Provider<LifeExpectancyAssetDataSource>(
+lifeExpectancyAssetDataSourceProvider = Provider<LifeExpectancyAssetDataSource>(
   (ref) => LifeExpectancyAssetDataSource(),
 );
 
 final Provider<LifeExpectancyRepository> lifeExpectancyRepositoryProvider =
     Provider<LifeExpectancyRepository>(
-  (ref) => LifeExpectancyRepositoryImpl(
-    ref.watch(lifeExpectancyAssetDataSourceProvider),
-  ),
-);
+      (ref) => LifeExpectancyRepositoryImpl(
+        ref.watch(lifeExpectancyAssetDataSourceProvider),
+      ),
+    );
 
 /// Production-default uses the Drift-backed implementation introduced in
 /// M2; tests typically override this with an in-memory fake. The legacy
@@ -39,12 +38,12 @@ final Provider<LifeExpectancyRepository> lifeExpectancyRepositoryProvider =
 /// migration on first launch.
 final Provider<LifeProfileRepository> lifeProfileRepositoryProvider =
     Provider<LifeProfileRepository>(
-  (ref) => LifeProfileDriftRepository(
-    ref.watch(appDatabaseProvider).lifeProfilesDao,
-  ),
-);
+      (ref) => LifeProfileDriftRepository(
+        ref.watch(appDatabaseProvider).lifeProfilesDao,
+      ),
+    );
 
 final Provider<ComputeLifeEstimate> computeLifeEstimateProvider =
     Provider<ComputeLifeEstimate>(
-  (ref) => ComputeLifeEstimate(ref.watch(lifeExpectancyRepositoryProvider)),
-);
+      (ref) => ComputeLifeEstimate(ref.watch(lifeExpectancyRepositoryProvider)),
+    );

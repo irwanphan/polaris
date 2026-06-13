@@ -121,19 +121,21 @@ void main() {
   });
 
   group('NotificationScheduler.rescheduleFor', () {
-    test('schedules all three reminders when the event is far in the future',
-        () async {
-      final Event event = _event(targetAt: DateTime(2026, 12, 25, 9));
-      await scheduler.rescheduleFor(event);
+    test(
+      'schedules all three reminders when the event is far in the future',
+      () async {
+        final Event event = _event(targetAt: DateTime(2026, 12, 25, 9));
+        await scheduler.rescheduleFor(event);
 
-      expect(dispatcher.scheduled, hasLength(3));
-      final kinds = dispatcher.scheduled.map((s) => s.body).toList()..sort();
-      expect(kinds, <String>[
-        'Coming up in 1 hour',
-        'Coming up in 1 week',
-        'Coming up tomorrow',
-      ]);
-    });
+        expect(dispatcher.scheduled, hasLength(3));
+        final kinds = dispatcher.scheduled.map((s) => s.body).toList()..sort();
+        expect(kinds, <String>[
+          'Coming up in 1 hour',
+          'Coming up in 1 week',
+          'Coming up tomorrow',
+        ]);
+      },
+    );
 
     test('skips offsets that already lie in the past', () async {
       final Event event = _event(targetAt: now.add(const Duration(hours: 2)));
@@ -145,7 +147,9 @@ void main() {
     });
 
     test('schedules nothing when the event is already in the past', () async {
-      final Event event = _event(targetAt: now.subtract(const Duration(days: 1)));
+      final Event event = _event(
+        targetAt: now.subtract(const Duration(days: 1)),
+      );
       await scheduler.rescheduleFor(event);
 
       expect(dispatcher.scheduled, isEmpty);
@@ -189,22 +193,24 @@ void main() {
       expect(rows, isEmpty);
     });
 
-    test('uses the next yearly recurrence rather than the past targetAt',
-        () async {
-      // Birthday in 1990 — next occurrence after `now` (2026-06-12) is
-      // 2026-12-25, so T-1w / T-1d / T-1h all fit.
-      final Event event = _event(
-        targetAt: DateTime(1990, 12, 25, 9),
-        recurrence: Recurrence.yearly,
-      );
-      await scheduler.rescheduleFor(event);
+    test(
+      'uses the next yearly recurrence rather than the past targetAt',
+      () async {
+        // Birthday in 1990 — next occurrence after `now` (2026-06-12) is
+        // 2026-12-25, so T-1w / T-1d / T-1h all fit.
+        final Event event = _event(
+          targetAt: DateTime(1990, 12, 25, 9),
+          recurrence: Recurrence.yearly,
+        );
+        await scheduler.rescheduleFor(event);
 
-      expect(dispatcher.scheduled, hasLength(3));
-      for (final s in dispatcher.scheduled) {
-        expect(s.when.year, 2026);
-        expect(s.when.month, 12);
-      }
-    });
+        expect(dispatcher.scheduled, hasLength(3));
+        for (final s in dispatcher.scheduled) {
+          expect(s.when.year, 2026);
+          expect(s.when.month, 12);
+        }
+      },
+    );
 
     test('rolls back the DB row when the dispatcher throws', () async {
       dispatcher.throwOnSchedule = StateError('plugin offline');
@@ -228,8 +234,9 @@ void main() {
     test('cancels every notification and deletes its DB rows', () async {
       final Event event = _event(targetAt: DateTime(2026, 12, 25, 9));
       await scheduler.rescheduleFor(event);
-      final scheduledIds =
-          dispatcher.scheduled.map((s) => s.id).toList(growable: false);
+      final scheduledIds = dispatcher.scheduled
+          .map((s) => s.id)
+          .toList(growable: false);
 
       await scheduler.cancelFor(event.id);
 

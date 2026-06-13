@@ -50,8 +50,8 @@ final class DateOfBirth {
 
   static int _approxYearsBetween(DateTime from, DateTime to) {
     int years = to.year - from.year;
-    final bool hasReachedBirthdayThisYear = to.month > from.month ||
-        (to.month == from.month && to.day >= from.day);
+    final bool hasReachedBirthdayThisYear =
+        to.month > from.month || (to.month == from.month && to.day >= from.day);
     if (!hasReachedBirthdayThisYear) {
       years -= 1;
     }
@@ -60,8 +60,7 @@ final class DateOfBirth {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is DateOfBirth && other.date == date);
+      identical(this, other) || (other is DateOfBirth && other.date == date);
 
   @override
   int get hashCode => date.hashCode;

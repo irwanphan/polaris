@@ -28,37 +28,36 @@ sealed class Result<T, F> {
 
   /// Returns the success value or `null` if this is an [Err].
   T? get valueOrNull => switch (this) {
-        Ok<T, F>(:final value) => value,
-        Err<T, F>() => null,
-      };
+    Ok<T, F>(:final value) => value,
+    Err<T, F>() => null,
+  };
 
   /// Returns the failure or `null` if this is an [Ok].
   F? get failureOrNull => switch (this) {
-        Err<T, F>(:final failure) => failure,
-        Ok<T, F>() => null,
-      };
+    Err<T, F>(:final failure) => failure,
+    Ok<T, F>() => null,
+  };
 
   /// Transforms the success value while preserving the failure.
   Result<U, F> map<U>(U Function(T value) transform) => switch (this) {
-        Ok<T, F>(:final value) => Ok<U, F>(transform(value)),
-        Err<T, F>(:final failure) => Err<U, F>(failure),
-      };
+    Ok<T, F>(:final value) => Ok<U, F>(transform(value)),
+    Err<T, F>(:final failure) => Err<U, F>(failure),
+  };
 
   /// Transforms the failure while preserving the success value.
   Result<T, G> mapErr<G>(G Function(F failure) transform) => switch (this) {
-        Ok<T, F>(:final value) => Ok<T, G>(value),
-        Err<T, F>(:final failure) => Err<T, G>(transform(failure)),
-      };
+    Ok<T, F>(:final value) => Ok<T, G>(value),
+    Err<T, F>(:final failure) => Err<T, G>(transform(failure)),
+  };
 
   /// Folds both cases into a single value.
   R fold<R>({
     required R Function(T value) onOk,
     required R Function(F failure) onErr,
-  }) =>
-      switch (this) {
-        Ok<T, F>(:final value) => onOk(value),
-        Err<T, F>(:final failure) => onErr(failure),
-      };
+  }) => switch (this) {
+    Ok<T, F>(:final value) => onOk(value),
+    Err<T, F>(:final failure) => onErr(failure),
+  };
 }
 
 final class Ok<T, F> extends Result<T, F> {

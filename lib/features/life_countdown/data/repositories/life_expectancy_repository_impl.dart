@@ -48,15 +48,16 @@ class LifeExpectancyRepositoryImpl implements LifeExpectancyRepository {
   Future<Result<List<CountryOption>, Failure>> listSupportedCountries() async {
     try {
       final LifeExpectancyTable table = await _table();
-      final List<CountryOption> options = table.byCountry
-          .map(
-            (LifeExpectancyRow r) => CountryOption(
-              code: CountryCode.tryParse(r.countryCode).valueOrNull!,
-              displayName: r.displayName,
-            ),
-          )
-          .toList(growable: false)
-        ..sort((a, b) => a.displayName.compareTo(b.displayName));
+      final List<CountryOption> options =
+          table.byCountry
+              .map(
+                (LifeExpectancyRow r) => CountryOption(
+                  code: CountryCode.tryParse(r.countryCode).valueOrNull!,
+                  displayName: r.displayName,
+                ),
+              )
+              .toList(growable: false)
+            ..sort((a, b) => a.displayName.compareTo(b.displayName));
       return Result.ok(options);
     } catch (e, st) {
       return Result.err(

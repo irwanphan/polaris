@@ -166,9 +166,7 @@ void main() {
     test('omits recurrence suffix for one-shot events', () async {
       final DateTime now = DateTime(2026, 6, 12, 9);
       final repo = _StubEventRepository(
-        pinned: _event(
-          targetAt: DateTime(2026, 12, 25, 9),
-        ),
+        pinned: _event(targetAt: DateTime(2026, 12, 25, 9)),
       );
       final saved = _SavedData();
       final updater = _build(repository: repo, saved: saved, now: () => now);
@@ -180,8 +178,7 @@ void main() {
       expect(subtitle.contains('·'), isFalse);
     });
 
-    test('treats repository failure as empty state (does not throw)',
-        () async {
+    test('treats repository failure as empty state (does not throw)', () async {
       final repo = _StubEventRepository(
         failure: const StorageFailure(message: 'disk fire'),
       );
@@ -194,11 +191,10 @@ void main() {
       expect(saved.updateCalls, 1);
     });
 
-    test('still triggers OS update even when save callbacks throw',
-        () async {
-      final repo = _StubEventRepository(pinned: _event(
-        targetAt: DateTime(2026, 6, 25, 9),
-      ));
+    test('still triggers OS update even when save callbacks throw', () async {
+      final repo = _StubEventRepository(
+        pinned: _event(targetAt: DateTime(2026, 6, 25, 9)),
+      );
       var updateCalled = false;
       final updater = PolarisHomeWidgetUpdater(
         repository: repo,

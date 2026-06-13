@@ -50,11 +50,7 @@ class SectionCard extends StatelessWidget {
       borderRadius: radius,
       child: onTap == null
           ? content
-          : InkWell(
-              borderRadius: radius,
-              onTap: onTap,
-              child: content,
-            ),
+          : InkWell(borderRadius: radius, onTap: onTap, child: content),
     );
 
     return DecoratedBox(

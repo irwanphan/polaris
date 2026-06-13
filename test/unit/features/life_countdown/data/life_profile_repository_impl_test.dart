@@ -66,8 +66,9 @@ void main() {
       final repo = await _newRepo();
       await repo.save(_sampleProfile());
 
-      final LifeProfile updated =
-          _sampleProfile().copyWith(hideLifeCountdown: true);
+      final LifeProfile updated = _sampleProfile().copyWith(
+        hideLifeCountdown: true,
+      );
       await repo.save(updated);
 
       final readResult = await repo.read();

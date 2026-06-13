@@ -23,8 +23,7 @@ class LifeCountdownPage extends ConsumerStatefulWidget {
   const LifeCountdownPage({super.key});
 
   @override
-  ConsumerState<LifeCountdownPage> createState() =>
-      _LifeCountdownPageState();
+  ConsumerState<LifeCountdownPage> createState() => _LifeCountdownPageState();
 }
 
 class _LifeCountdownPageState extends ConsumerState<LifeCountdownPage> {
@@ -47,16 +46,16 @@ class _LifeCountdownPageState extends ConsumerState<LifeCountdownPage> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<LifeEstimate?> estimate =
-        ref.watch(lifeCountdownControllerProvider);
+    final AsyncValue<LifeEstimate?> estimate = ref.watch(
+      lifeCountdownControllerProvider,
+    );
 
     return PolarisScaffold(
       appBar: AppBar(title: const Text('Sisa Hariku')),
       body: estimate.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object e, _) => Center(
-          child: Text('Failed to compute estimate: $e'),
-        ),
+        error: (Object e, _) =>
+            Center(child: Text('Failed to compute estimate: $e')),
         data: (LifeEstimate? value) {
           if (value == null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -64,9 +63,13 @@ class _LifeCountdownPageState extends ConsumerState<LifeCountdownPage> {
             });
             return const SizedBox.shrink();
           }
-          return _Loaded(estimate: value, mode: _mode, onModeChanged: (m) {
-            setState(() => _mode = m);
-          });
+          return _Loaded(
+            estimate: value,
+            mode: _mode,
+            onModeChanged: (m) {
+              setState(() => _mode = m);
+            },
+          );
         },
       ),
     );
@@ -95,17 +98,11 @@ class _Loaded extends StatelessWidget {
         CountdownDisplay(estimate: estimate, mode: mode),
         const SizedBox(height: Spacing.x8),
         Center(
-          child: DisplayModeSegmented(
-            selected: mode,
-            onChanged: onModeChanged,
-          ),
+          child: DisplayModeSegmented(selected: mode, onChanged: onModeChanged),
         ),
         const SizedBox(height: Spacing.x8),
         SectionCard(
-          leading: Icon(
-            Icons.timeline,
-            color: theme.colorScheme.primary,
-          ),
+          leading: Icon(Icons.timeline, color: theme.colorScheme.primary),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -120,17 +117,11 @@ class _Loaded extends StatelessWidget {
         ),
         const SizedBox(height: Spacing.x3),
         SectionCard(
-          leading: Icon(
-            Icons.bar_chart,
-            color: theme.colorScheme.primary,
-          ),
+          leading: Icon(Icons.bar_chart, color: theme.colorScheme.primary),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                'Expectancy used',
-                style: theme.textTheme.labelLarge,
-              ),
+              Text('Expectancy used', style: theme.textTheme.labelLarge),
               const SizedBox(height: Spacing.x1),
               Text(
                 '${estimate.expectancyYears.toStringAsFixed(1)} years',

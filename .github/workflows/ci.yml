@@ -1,0 +1,69 @@
+name: CI
+
+# Trigger on every push to main and on every pull request so feature
+# branches get the same gate as merges. The `branches` filter on
+# pull_request is intentionally omitted — we want PRs from forks too.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel in-flight runs for the same ref when a newer commit arrives.
+# Saves Actions minutes during rapid pushes; the latest commit is the
+# only one we actually care about.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: Analyze + Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Pinned to the exact Flutter version the team develops against
+      # (see docs/Handoff.md §3.1). Bump in lockstep with the local
+      # toolchain — drift here causes "works on my machine" bugs.
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.1
+          channel: stable
+          cache: true
+
+      - name: Show toolchain
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      # Drift / Freezed / Riverpod generators must run before analyze
+      # because we git-ignore generated files (Decision D1 in Handoff
+      # §5). Without this step `flutter analyze` reports thousands of
+      # missing-symbol errors.
+      - name: Run code generators
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test (with coverage)
+        run: flutter test --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: warn
+          retention-days: 14

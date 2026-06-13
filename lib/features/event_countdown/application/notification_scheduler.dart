@@ -58,8 +58,7 @@ class NotificationScheduler {
           NotificationSchedulesTableCompanion(
             eventId: Value(event.id),
             kind: Value(offset.storageKey),
-            scheduledForEpochMs:
-                Value(when.toUtc().millisecondsSinceEpoch),
+            scheduledForEpochMs: Value(when.toUtc().millisecondsSinceEpoch),
             createdAtEpochMs: Value(now.toUtc().millisecondsSinceEpoch),
           ),
         );
@@ -89,8 +88,9 @@ class NotificationScheduler {
   /// Cancels every notification (and DB row) for [eventId]. Safe to
   /// call when the event has no schedules.
   Future<void> cancelFor(String eventId) async {
-    final List<NotificationScheduleRow> existing =
-        await dao.listForEvent(eventId);
+    final List<NotificationScheduleRow> existing = await dao.listForEvent(
+      eventId,
+    );
     for (final NotificationScheduleRow row in existing) {
       try {
         await dispatcher.cancel(row.id);

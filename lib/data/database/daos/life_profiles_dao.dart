@@ -17,19 +17,20 @@ class LifeProfilesDao extends DatabaseAccessor<AppDatabase>
   static const int _singletonId = 1;
 
   Future<LifeProfileRow?> read() {
-    return (select(lifeProfilesTable)
-          ..where((t) => t.id.equals(_singletonId)))
-        .getSingleOrNull();
+    return (select(
+      lifeProfilesTable,
+    )..where((t) => t.id.equals(_singletonId))).getSingleOrNull();
   }
 
   Future<void> upsert(LifeProfilesTableCompanion row) {
-    return into(lifeProfilesTable)
-        .insertOnConflictUpdate(row.copyWith(id: const Value(_singletonId)));
+    return into(
+      lifeProfilesTable,
+    ).insertOnConflictUpdate(row.copyWith(id: const Value(_singletonId)));
   }
 
   Future<int> clear() {
-    return (delete(lifeProfilesTable)
-          ..where((t) => t.id.equals(_singletonId)))
-        .go();
+    return (delete(
+      lifeProfilesTable,
+    )..where((t) => t.id.equals(_singletonId))).go();
   }
 }

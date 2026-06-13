@@ -86,24 +86,26 @@ class LifeProfileRepositoryImpl implements LifeProfileRepository {
   // --- Serialization -------------------------------------------------------
 
   Map<String, dynamic> _toJson(LifeProfile p) => <String, dynamic>{
-        'birthDateIso': p.dateOfBirth.date.toIso8601String(),
-        'sex': p.sex.storageKey,
-        'countryCode': p.countryCode.value,
-        'hideLifeCountdown': p.hideLifeCountdown,
-        'createdAtIso': p.createdAt.toIso8601String(),
-        'updatedAtIso': p.updatedAt.toIso8601String(),
-      };
+    'birthDateIso': p.dateOfBirth.date.toIso8601String(),
+    'sex': p.sex.storageKey,
+    'countryCode': p.countryCode.value,
+    'hideLifeCountdown': p.hideLifeCountdown,
+    'createdAtIso': p.createdAt.toIso8601String(),
+    'updatedAtIso': p.updatedAt.toIso8601String(),
+  };
 
   LifeProfile? _fromJson(Map<String, dynamic> data) {
     final String birthIso = data['birthDateIso'] as String;
     final DateTime birth = DateTime.parse(birthIso);
-    final DateOfBirth? dob =
-        DateOfBirth.tryFromDateTime(birth, today: DateTime.now())
-            .valueOrNull;
+    final DateOfBirth? dob = DateOfBirth.tryFromDateTime(
+      birth,
+      today: DateTime.now(),
+    ).valueOrNull;
     if (dob == null) return null;
 
-    final CountryCode? country =
-        CountryCode.tryParse(data['countryCode'] as String).valueOrNull;
+    final CountryCode? country = CountryCode.tryParse(
+      data['countryCode'] as String,
+    ).valueOrNull;
     if (country == null) return null;
 
     return LifeProfile(

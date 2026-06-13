@@ -52,8 +52,11 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
     final Event? o = widget.original;
     _titleCtrl = TextEditingController(text: o?.title ?? '');
     _noteCtrl = TextEditingController(text: o?.note ?? '');
-    _targetAt = o?.targetAt ??
-        DateTime.now().add(const Duration(days: 7)).copyWith(
+    _targetAt =
+        o?.targetAt ??
+        DateTime.now()
+            .add(const Duration(days: 7))
+            .copyWith(
               hour: 9,
               minute: 0,
               second: 0,
@@ -88,22 +91,26 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
       initialTime: TimeOfDay.fromDateTime(_targetAt),
     );
     if (time == null) {
-      setState(() => _targetAt = DateTime(
-            picked.year,
-            picked.month,
-            picked.day,
-            _targetAt.hour,
-            _targetAt.minute,
-          ));
-      return;
-    }
-    setState(() => _targetAt = DateTime(
+      setState(
+        () => _targetAt = DateTime(
           picked.year,
           picked.month,
           picked.day,
-          time.hour,
-          time.minute,
-        ));
+          _targetAt.hour,
+          _targetAt.minute,
+        ),
+      );
+      return;
+    }
+    setState(
+      () => _targetAt = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        time.hour,
+        time.minute,
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -153,8 +160,9 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isEdit = widget.original != null;
-    final EdgeInsets keyboardInset =
-        EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom);
+    final EdgeInsets keyboardInset = EdgeInsets.only(
+      bottom: MediaQuery.of(context).viewInsets.bottom,
+    );
 
     return Padding(
       padding: keyboardInset,
@@ -206,10 +214,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               ),
               items: <DropdownMenuItem<Recurrence>>[
                 for (final Recurrence r in Recurrence.values)
-                  DropdownMenuItem<Recurrence>(
-                    value: r,
-                    child: Text(r.label),
-                  ),
+                  DropdownMenuItem<Recurrence>(value: r, child: Text(r.label)),
               ],
               onChanged: (Recurrence? r) {
                 if (r != null) setState(() => _recurrence = r);
@@ -246,8 +251,9 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               children: <Widget>[
                 Expanded(
                   child: OutlinedButton(
-                    onPressed:
-                        _submitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                 ),

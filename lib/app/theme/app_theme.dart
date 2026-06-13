@@ -37,10 +37,7 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.xl),
-          side: BorderSide(
-            color: colorScheme.outlineVariant,
-            width: 1,
-          ),
+          side: BorderSide(color: colorScheme.outlineVariant, width: 1),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -106,46 +103,43 @@ abstract final class AppTheme {
       brightness: brightness,
       primary: isDark ? ColorTokens.midnight300 : ColorTokens.midnight700,
       onPrimary: isDark ? ColorTokens.midnight950 : ColorTokens.white,
-      primaryContainer:
-          isDark ? ColorTokens.midnight800 : ColorTokens.midnight100,
-      onPrimaryContainer:
-          isDark ? ColorTokens.midnight100 : ColorTokens.midnight900,
+      primaryContainer: isDark
+          ? ColorTokens.midnight800
+          : ColorTokens.midnight100,
+      onPrimaryContainer: isDark
+          ? ColorTokens.midnight100
+          : ColorTokens.midnight900,
       secondary: isDark ? ColorTokens.starlight300 : ColorTokens.starlight600,
-      onSecondary:
-          isDark ? ColorTokens.starlight900 : ColorTokens.white,
-      secondaryContainer:
-          isDark ? ColorTokens.starlight800 : ColorTokens.starlight100,
-      onSecondaryContainer:
-          isDark ? ColorTokens.starlight100 : ColorTokens.starlight900,
+      onSecondary: isDark ? ColorTokens.starlight900 : ColorTokens.white,
+      secondaryContainer: isDark
+          ? ColorTokens.starlight800
+          : ColorTokens.starlight100,
+      onSecondaryContainer: isDark
+          ? ColorTokens.starlight100
+          : ColorTokens.starlight900,
       tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
       onTertiary: ColorTokens.white,
       error: ColorTokens.danger500,
       onError: ColorTokens.white,
       surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
       onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
-      surfaceContainerLowest:
-          isDark ? ColorTokens.black : ColorTokens.white,
-      surfaceContainerLow:
-          isDark ? ColorTokens.slate900 : ColorTokens.slate100,
-      surfaceContainer:
-          isDark ? ColorTokens.slate800 : ColorTokens.slate100,
-      surfaceContainerHigh:
-          isDark ? ColorTokens.slate800 : ColorTokens.white,
-      surfaceContainerHighest:
-          isDark ? ColorTokens.slate700 : ColorTokens.slate200,
-      onSurfaceVariant:
-          isDark ? ColorTokens.slate300 : ColorTokens.slate600,
+      surfaceContainerLowest: isDark ? ColorTokens.black : ColorTokens.white,
+      surfaceContainerLow: isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+      surfaceContainer: isDark ? ColorTokens.slate800 : ColorTokens.slate100,
+      surfaceContainerHigh: isDark ? ColorTokens.slate800 : ColorTokens.white,
+      surfaceContainerHighest: isDark
+          ? ColorTokens.slate700
+          : ColorTokens.slate200,
+      onSurfaceVariant: isDark ? ColorTokens.slate300 : ColorTokens.slate600,
       outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
-      outlineVariant:
-          isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+      outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
       shadow: ColorTokens.black,
       scrim: ColorTokens.black,
-      inverseSurface:
-          isDark ? ColorTokens.slate100 : ColorTokens.slate900,
-      onInverseSurface:
-          isDark ? ColorTokens.slate900 : ColorTokens.slate100,
-      inversePrimary:
-          isDark ? ColorTokens.midnight700 : ColorTokens.midnight300,
+      inverseSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+      onInverseSurface: isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+      inversePrimary: isDark
+          ? ColorTokens.midnight700
+          : ColorTokens.midnight300,
     );
   }
 

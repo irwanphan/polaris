@@ -122,11 +122,13 @@ final class Event {
 
   DateTime _nextYearly(DateTime now) {
     final int year = now.year;
-    DateTime candidate =
-        _withSameTime(_safeDate(year, targetAt.month, targetAt.day));
+    DateTime candidate = _withSameTime(
+      _safeDate(year, targetAt.month, targetAt.day),
+    );
     if (candidate.isBefore(now)) {
-      candidate =
-          _withSameTime(_safeDate(year + 1, targetAt.month, targetAt.day));
+      candidate = _withSameTime(
+        _safeDate(year + 1, targetAt.month, targetAt.day),
+      );
     }
     return candidate;
   }
@@ -160,13 +162,13 @@ final class Event {
   }
 
   DateTime _withSameTime(DateTime date) => DateTime(
-        date.year,
-        date.month,
-        date.day,
-        targetAt.hour,
-        targetAt.minute,
-        targetAt.second,
-      );
+    date.year,
+    date.month,
+    date.day,
+    targetAt.hour,
+    targetAt.minute,
+    targetAt.second,
+  );
 
   /// Returns a date clamped to the last valid day of the month — handles
   /// Feb 29 → Feb 28 and 31st → 30th/last day gracefully.
@@ -194,15 +196,15 @@ final class Event {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        title,
-        targetAt,
-        colorHex,
-        iconKey,
-        note,
-        recurrence,
-        isPinnedToWidget,
-        createdAt,
-        updatedAt,
-      );
+    id,
+    title,
+    targetAt,
+    colorHex,
+    iconKey,
+    note,
+    recurrence,
+    isPinnedToWidget,
+    createdAt,
+    updatedAt,
+  );
 }

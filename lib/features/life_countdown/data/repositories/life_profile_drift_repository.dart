@@ -76,12 +76,15 @@ class LifeProfileDriftRepository implements LifeProfileRepository {
       row.birthDateEpochMs,
       isUtc: true,
     ).toLocal();
-    final DateOfBirth? dob =
-        DateOfBirth.tryFromDateTime(birth, today: DateTime.now()).valueOrNull;
+    final DateOfBirth? dob = DateOfBirth.tryFromDateTime(
+      birth,
+      today: DateTime.now(),
+    ).valueOrNull;
     if (dob == null) return null;
 
-    final CountryCode? country =
-        CountryCode.tryParse(row.countryCode).valueOrNull;
+    final CountryCode? country = CountryCode.tryParse(
+      row.countryCode,
+    ).valueOrNull;
     if (country == null) return null;
 
     return LifeProfile(
@@ -102,15 +105,14 @@ class LifeProfileDriftRepository implements LifeProfileRepository {
 
   LifeProfilesTableCompanion _toCompanion(LifeProfile profile) {
     return LifeProfilesTableCompanion(
-      birthDateEpochMs:
-          Value(profile.dateOfBirth.date.toUtc().millisecondsSinceEpoch),
+      birthDateEpochMs: Value(
+        profile.dateOfBirth.date.toUtc().millisecondsSinceEpoch,
+      ),
       sex: Value(profile.sex.storageKey),
       countryCode: Value(profile.countryCode.value),
       hideLifeCountdown: Value(profile.hideLifeCountdown),
-      createdAtEpochMs:
-          Value(profile.createdAt.toUtc().millisecondsSinceEpoch),
-      updatedAtEpochMs:
-          Value(profile.updatedAt.toUtc().millisecondsSinceEpoch),
+      createdAtEpochMs: Value(profile.createdAt.toUtc().millisecondsSinceEpoch),
+      updatedAtEpochMs: Value(profile.updatedAt.toUtc().millisecondsSinceEpoch),
     );
   }
 }

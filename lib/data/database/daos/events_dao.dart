@@ -22,8 +22,9 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
   }
 
   Future<EventRow?> getById(String id) {
-    return (select(eventsTable)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      eventsTable,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Returns the single pinned row, if any. The repository enforces
@@ -47,8 +48,7 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
   /// Atomically clears every pin and (optionally) sets exactly one.
   Future<void> pinExclusive(String? id) {
     return transaction(() async {
-      await (update(eventsTable)
-            ..where((t) => t.isPinnedToWidget.equals(true)))
+      await (update(eventsTable)..where((t) => t.isPinnedToWidget.equals(true)))
           .write(const EventsTableCompanion(isPinnedToWidget: Value(false)));
       if (id != null) {
         await (update(eventsTable)..where((t) => t.id.equals(id))).write(

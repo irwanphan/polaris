@@ -11,8 +11,9 @@ import 'package:polaris/features/life_countdown/domain/entities/life_profile.dar
 class LifeCountdownController extends AsyncNotifier<LifeEstimate?> {
   @override
   Future<LifeEstimate?> build() async {
-    final LifeProfile? profile =
-        await ref.watch(lifeProfileControllerProvider.future);
+    final LifeProfile? profile = await ref.watch(
+      lifeProfileControllerProvider.future,
+    );
     if (profile == null) return null;
 
     final computeEstimate = ref.watch(computeLifeEstimateProvider);
@@ -31,10 +32,10 @@ class LifeCountdownController extends AsyncNotifier<LifeEstimate?> {
 }
 
 final AsyncNotifierProvider<LifeCountdownController, LifeEstimate?>
-    lifeCountdownControllerProvider =
+lifeCountdownControllerProvider =
     AsyncNotifierProvider<LifeCountdownController, LifeEstimate?>(
-  LifeCountdownController.new,
-);
+      LifeCountdownController.new,
+    );
 
 class _EstimateException implements Exception {
   _EstimateException(this.message);

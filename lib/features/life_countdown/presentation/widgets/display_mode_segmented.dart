@@ -18,9 +18,7 @@ class DisplayModeSegmented extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SegmentedButton<DisplayMode>(
-      style: SegmentedButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-      ),
+      style: SegmentedButton.styleFrom(visualDensity: VisualDensity.compact),
       segments: <ButtonSegment<DisplayMode>>[
         for (final DisplayMode m in DisplayMode.values)
           ButtonSegment<DisplayMode>(value: m, label: Text(m.label)),

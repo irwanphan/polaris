@@ -6,8 +6,9 @@ import 'package:polaris/features/life_countdown/domain/value_objects/country_cod
 void main() {
   group('CountryCode.tryParse', () {
     test('accepts a valid 2-letter code and normalizes to uppercase', () {
-      final Result<CountryCode, ValidationFailure> r =
-          CountryCode.tryParse('id');
+      final Result<CountryCode, ValidationFailure> r = CountryCode.tryParse(
+        'id',
+      );
       expect(r.isOk, isTrue);
       expect(r.valueOrNull!.value, 'ID');
     });

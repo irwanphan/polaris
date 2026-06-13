@@ -104,8 +104,9 @@ class EventsController {
     required String id,
     required bool isCurrentlyPinned,
   }) async {
-    final result =
-        await _repository.pinExclusive(isCurrentlyPinned ? null : id);
+    final result = await _repository.pinExclusive(
+      isCurrentlyPinned ? null : id,
+    );
     if (result.isOk) {
       await _widgetUpdater.refresh();
     }
@@ -124,9 +125,9 @@ class EventsController {
 
 final Provider<EventsController> eventsControllerProvider =
     Provider<EventsController>(
-  (ref) => EventsController(
-    ref.watch(eventRepositoryProvider),
-    ref.watch(notificationSchedulerProvider),
-    ref.watch(homeWidgetUpdaterProvider),
-  ),
-);
+      (ref) => EventsController(
+        ref.watch(eventRepositoryProvider),
+        ref.watch(notificationSchedulerProvider),
+        ref.watch(homeWidgetUpdaterProvider),
+      ),
+    );

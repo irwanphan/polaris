@@ -52,15 +52,19 @@ void main() {
     });
 
     test('equality compares by inner value', () {
-      expect(const Result<int, String>.ok(1) == const Result<int, String>.ok(1),
-          isTrue);
       expect(
-          const Result<int, String>.err('a') ==
-              const Result<int, String>.err('a'),
-          isTrue);
+        const Result<int, String>.ok(1) == const Result<int, String>.ok(1),
+        isTrue,
+      );
       expect(
-          const Result<int, String>.ok(1) == const Result<int, String>.err('a'),
-          isFalse);
+        const Result<int, String>.err('a') ==
+            const Result<int, String>.err('a'),
+        isTrue,
+      );
+      expect(
+        const Result<int, String>.ok(1) == const Result<int, String>.err('a'),
+        isFalse,
+      );
     });
   });
 }

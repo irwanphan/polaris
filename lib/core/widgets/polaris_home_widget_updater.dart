@@ -28,9 +28,9 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
     DateTime Function()? now,
     Future<bool?> Function(String, String?)? saveData,
     Future<bool?> Function({String? androidName})? triggerUpdate,
-  })  : _now = now ?? DateTime.now,
-        _saveData = saveData ?? _defaultSave,
-        _triggerUpdate = triggerUpdate ?? _defaultUpdate;
+  }) : _now = now ?? DateTime.now,
+       _saveData = saveData ?? _defaultSave,
+       _triggerUpdate = triggerUpdate ?? _defaultUpdate;
 
   final EventRepository repository;
   final AppLogger logger;

@@ -25,8 +25,7 @@ class ComputeLifeEstimate {
     LifeProfile profile, {
     DateTime? now,
   }) async {
-    final Result<double, Failure> lookup =
-        await _expectancyRepository.lookup(
+    final Result<double, Failure> lookup = await _expectancyRepository.lookup(
       countryCode: profile.countryCode,
       sex: profile.sex,
     );
@@ -47,8 +46,7 @@ class ComputeLifeEstimate {
     LifeProfile profile, {
     required double expectancyYears,
     required DateTime today,
-  }) =>
-      _build(profile, expectancyYears: expectancyYears, today: today);
+  }) => _build(profile, expectancyYears: expectancyYears, today: today);
 
   LifeEstimate _build(
     LifeProfile profile, {
@@ -56,10 +54,8 @@ class ComputeLifeEstimate {
     required DateTime today,
   }) {
     final DateTime birth = profile.dateOfBirth.date;
-    final int expectedTotalDays =
-        (expectancyYears * daysPerYear).round();
-    final DateTime estimatedEnd =
-        birth.add(Duration(days: expectedTotalDays));
+    final int expectedTotalDays = (expectancyYears * daysPerYear).round();
+    final DateTime estimatedEnd = birth.add(Duration(days: expectedTotalDays));
 
     final int livedDays = math.max(0, birth.daysUntil(today));
     final int remainingDaysRaw = today.daysUntil(estimatedEnd);

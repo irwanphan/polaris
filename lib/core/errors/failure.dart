@@ -39,11 +39,7 @@ final class ValidationFailure extends Failure {
 
 /// Local database or shared-preferences error.
 final class StorageFailure extends Failure {
-  const StorageFailure({
-    required super.message,
-    super.cause,
-    super.stackTrace,
-  });
+  const StorageFailure({required super.message, super.cause, super.stackTrace});
 }
 
 /// Network or remote-service error (used once cloud sync lands).

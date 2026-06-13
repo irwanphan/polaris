@@ -15,13 +15,13 @@ import 'package:polaris/shared/widgets/polaris_scaffold.dart';
 
 final FutureProvider<List<CountryOption>> _countriesProvider =
     FutureProvider<List<CountryOption>>((ref) async {
-  final repo = ref.watch(lifeExpectancyRepositoryProvider);
-  final result = await repo.listSupportedCountries();
-  return result.fold(
-    onOk: (List<CountryOption> options) => options,
-    onErr: (failure) => throw StateError(failure.message),
-  );
-});
+      final repo = ref.watch(lifeExpectancyRepositoryProvider);
+      final result = await repo.listSupportedCountries();
+      return result.fold(
+        onOk: (List<CountryOption> options) => options,
+        onErr: (failure) => throw StateError(failure.message),
+      );
+    });
 
 /// First-run form that captures the inputs needed to compute the life
 /// countdown. Validation happens on submit; per-field errors surface
@@ -82,32 +82,28 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     if (!mounted) return;
     setState(() => _submitting = false);
 
-    final AsyncValue<dynamic> state =
-        ref.read(lifeProfileControllerProvider);
+    final AsyncValue<dynamic> state = ref.read(lifeProfileControllerProvider);
     state.when(
       data: (_) => context.go(AppRoutes.life),
       loading: () {},
-      error: (Object e, _) =>
-          ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save profile: $e')),
-      ),
+      error: (Object e, _) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not save profile: $e'))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<CountryOption>> countries =
-        ref.watch(_countriesProvider);
+    final AsyncValue<List<CountryOption>> countries = ref.watch(
+      _countriesProvider,
+    );
 
     return PolarisScaffold(
       appBar: AppBar(title: const Text('Welcome to Polaris')),
       body: ListView(
         children: <Widget>[
-          Text(
-            'Set up your countdown',
-            style: theme.textTheme.headlineSmall,
-          ),
+          Text('Set up your countdown', style: theme.textTheme.headlineSmall),
           const SizedBox(height: Spacing.x2),
           Text(
             'These details stay on your device. They are used to estimate '
@@ -141,9 +137,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             segments: const <ButtonSegment<Sex>>[
               ButtonSegment(value: Sex.female, label: Text('Female')),
               ButtonSegment(value: Sex.male, label: Text('Male')),
-              ButtonSegment(
-                value: Sex.undisclosed, label: Text('Prefer not'),
-              ),
+              ButtonSegment(value: Sex.undisclosed, label: Text('Prefer not')),
             ],
             selected: <Sex>{_sex},
             showSelectedIcon: false,

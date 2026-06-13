@@ -13,8 +13,7 @@ import 'package:polaris/features/life_countdown/domain/value_objects/sex.dart';
 class LifeProfileController extends AsyncNotifier<LifeProfile?> {
   @override
   Future<LifeProfile?> build() async {
-    final LifeProfileRepository repo =
-        ref.watch(lifeProfileRepositoryProvider);
+    final LifeProfileRepository repo = ref.watch(lifeProfileRepositoryProvider);
     final result = await repo.read();
     return result.fold<LifeProfile?>(
       onOk: (LifeProfile? profile) => profile,
@@ -43,16 +42,12 @@ class LifeProfileController extends AsyncNotifier<LifeProfile?> {
     final LifeProfile? current = state.value;
     if (current == null) return;
     await _persist(
-      current.copyWith(
-        hideLifeCountdown: hide,
-        updatedAt: DateTime.now(),
-      ),
+      current.copyWith(hideLifeCountdown: hide, updatedAt: DateTime.now()),
     );
   }
 
   Future<void> reset() async {
-    final LifeProfileRepository repo =
-        ref.read(lifeProfileRepositoryProvider);
+    final LifeProfileRepository repo = ref.read(lifeProfileRepositoryProvider);
     state = const AsyncValue<LifeProfile?>.loading();
     final result = await repo.clear();
     state = result.fold(
@@ -65,8 +60,7 @@ class LifeProfileController extends AsyncNotifier<LifeProfile?> {
   }
 
   Future<void> _persist(LifeProfile profile) async {
-    final LifeProfileRepository repo =
-        ref.read(lifeProfileRepositoryProvider);
+    final LifeProfileRepository repo = ref.read(lifeProfileRepositoryProvider);
     state = const AsyncValue<LifeProfile?>.loading();
     final result = await repo.save(profile);
     state = result.fold(
@@ -80,10 +74,10 @@ class LifeProfileController extends AsyncNotifier<LifeProfile?> {
 }
 
 final AsyncNotifierProvider<LifeProfileController, LifeProfile?>
-    lifeProfileControllerProvider =
+lifeProfileControllerProvider =
     AsyncNotifierProvider<LifeProfileController, LifeProfile?>(
-  LifeProfileController.new,
-);
+      LifeProfileController.new,
+    );
 
 class _ProfileException implements Exception {
   _ProfileException(this.message);

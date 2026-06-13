@@ -78,8 +78,7 @@ Future<void> bootstrap() async {
         FlutterError.presentError(details);
       };
 
-      PlatformDispatcher.instance.onError =
-          (Object error, StackTrace stack) {
+      PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
         logger.error(
           'Uncaught platform error',
           error: error,
@@ -95,8 +94,9 @@ Future<void> bootstrap() async {
             sharedPreferencesProvider.overrideWithValue(preferences),
             appDatabaseProvider.overrideWithValue(database),
             notificationDispatcherProvider.overrideWithValue(notifications),
-            widget_providers.homeWidgetUpdaterProvider
-                .overrideWithValue(widgetUpdater),
+            widget_providers.homeWidgetUpdaterProvider.overrideWithValue(
+              widgetUpdater,
+            ),
           ],
           child: const PolarisApp(),
         ),

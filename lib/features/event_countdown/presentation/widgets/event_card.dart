@@ -96,10 +96,7 @@ class EventCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Spacing.x1),
-          Text(
-            subLine,
-            style: theme.textTheme.bodySmall,
-          ),
+          Text(subLine, style: theme.textTheme.bodySmall),
         ],
       ),
     );
