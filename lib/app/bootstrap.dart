@@ -7,9 +7,13 @@ import 'package:polaris/app/app.dart';
 import 'package:polaris/core/logging/app_logger.dart';
 import 'package:polaris/core/notifications/flutter_local_notifications_dispatcher.dart';
 import 'package:polaris/core/notifications/notification_dispatcher.dart';
+import 'package:polaris/core/widgets/home_widget_updater.dart';
+import 'package:polaris/core/widgets/polaris_home_widget_updater.dart';
+import 'package:polaris/core/widgets/providers.dart' as widget_providers;
 import 'package:polaris/data/database/app_database.dart';
 import 'package:polaris/data/database/providers.dart';
 import 'package:polaris/features/event_countdown/application/providers.dart';
+import 'package:polaris/features/event_countdown/data/repositories/event_repository_impl.dart';
 import 'package:polaris/features/life_countdown/application/providers.dart';
 import 'package:polaris/features/life_countdown/data/migrations/life_profile_sp_to_drift.dart';
 import 'package:polaris/features/life_countdown/data/repositories/life_profile_drift_repository.dart';
@@ -54,6 +58,17 @@ Future<void> bootstrap() async {
           FlutterLocalNotificationsDispatcher(logger: logger);
       await notifications.initialize();
 
+      // Home-screen widget updater shares the event repository so it
+      // always renders the latest pinned event. Built here so the
+      // provider tree only sees the concrete impl at the root.
+      final HomeWidgetUpdater widgetUpdater = PolarisHomeWidgetUpdater(
+        repository: EventRepositoryImpl(database.eventsDao),
+        logger: logger,
+      );
+      // Best-effort initial render — the OS may show the widget
+      // before the user touches the app.
+      await widgetUpdater.refresh();
+
       FlutterError.onError = (FlutterErrorDetails details) {
         logger.error(
           'Uncaught Flutter error',
@@ -80,6 +95,8 @@ Future<void> bootstrap() async {
             sharedPreferencesProvider.overrideWithValue(preferences),
             appDatabaseProvider.overrideWithValue(database),
             notificationDispatcherProvider.overrideWithValue(notifications),
+            widget_providers.homeWidgetUpdaterProvider
+                .overrideWithValue(widgetUpdater),
           ],
           child: const PolarisApp(),
         ),

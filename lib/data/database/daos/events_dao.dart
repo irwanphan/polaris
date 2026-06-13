@@ -26,6 +26,15 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
         .getSingleOrNull();
   }
 
+  /// Returns the single pinned row, if any. The repository enforces
+  /// at most one pin via [pinExclusive], so `LIMIT 1` is safe.
+  Future<EventRow?> getPinned() {
+    return (select(eventsTable)
+          ..where((t) => t.isPinnedToWidget.equals(true))
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   /// Inserts or replaces by primary key.
   Future<void> upsert(EventsTableCompanion row) {
     return into(eventsTable).insertOnConflictUpdate(row);

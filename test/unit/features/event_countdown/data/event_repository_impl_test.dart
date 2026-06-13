@@ -121,6 +121,29 @@ void main() {
       );
     });
 
+    test('getPinned returns Ok(null) when nothing is pinned', () async {
+      await repo.upsert(_sample(id: 'a'));
+      await repo.upsert(_sample(id: 'b'));
+
+      final result = await repo.getPinned();
+      expect(result.isOk, isTrue);
+      expect(result.fold(onOk: (e) => e, onErr: (_) => _sample()), isNull);
+    });
+
+    test('getPinned returns the pinned event after pinExclusive', () async {
+      await repo.upsert(_sample(id: 'a', title: 'A'));
+      await repo.upsert(_sample(id: 'b', title: 'B'));
+      await repo.pinExclusive('b');
+
+      final result = await repo.getPinned();
+      final Event? pinned = result.fold(
+        onOk: (e) => e,
+        onErr: (_) => null,
+      );
+      expect(pinned?.id, 'b');
+      expect(pinned?.isPinnedToWidget, isTrue);
+    });
+
     test('events are returned sorted by targetAt ascending', () async {
       await repo.upsert(_sample(id: 'b', targetAt: DateTime(2026, 12, 25)));
       await repo.upsert(_sample(id: 'a', targetAt: DateTime(2026, 7, 1)));

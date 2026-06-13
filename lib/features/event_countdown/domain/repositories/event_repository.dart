@@ -13,6 +13,10 @@ abstract interface class EventRepository {
 
   Future<Result<Event?, Failure>> getById(String id);
 
+  /// Returns the single pinned event, or `null` when none is pinned.
+  /// Used by the home-screen widget renderer.
+  Future<Result<Event?, Failure>> getPinned();
+
   /// Inserts or replaces by `event.id`.
   Future<Result<void, Failure>> upsert(Event event);
 

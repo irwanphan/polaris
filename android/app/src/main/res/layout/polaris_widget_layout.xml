@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  RemoteViews layout for the Polaris home-screen widget.
+
+  Design tokens (must mirror lib/app/theme/color_tokens.dart):
+  - Background: Indigo 700 (#4338CA) with 16dp rounded corners.
+  - Title:     White, 14sp, medium.
+  - Days hero: White, 36sp, bold — the at-a-glance number.
+  - Subtitle:  White @ 80% alpha, 12sp.
+  - Brand:     Amber 400 (#FBBF24) "POLARIS" pill in the corner.
+
+  IDs are referenced by name in PolarisWidgetProvider.kt — keep in
+  sync when renaming.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/polaris_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/polaris_widget_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/polaris_widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Polaris" />
+
+        <TextView
+            android:id="@+id/polaris_widget_brand"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:textColor="#0F172A"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:background="@drawable/polaris_widget_brand_pill"
+            android:text="POLARIS" />
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="8dp" />
+
+    <TextView
+        android:id="@+id/polaris_widget_days"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        android:includeFontPadding="false"
+        android:text="—" />
+
+    <TextView
+        android:id="@+id/polaris_widget_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#E0E7FF"
+        android:textSize="12sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="Pin an event in Polaris" />
+</LinearLayout>

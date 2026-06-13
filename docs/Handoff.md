@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-12 by Cursor AI session — **M2 Notifications scheduler complete (Android home-widget pending)**
+> **Last updated:** 2026-06-13 by Cursor AI session — **M2 fully shipped (notifications + home-screen widget)**
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-12, M2 progress: HomeShell + LifeProfile→Drift + Notifications scheduler done)
+## 2. Current Status (As of 2026-06-13, **M2 fully shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -416,38 +416,116 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
       though they don't exercise the editor sheet today.
   - **`flutter analyze`**: still zero issues.
 
+- **M2 — Android home-screen widget** shipped:
+  - **`home_widget ^0.9.3`** added to runtime deps. Uses
+    `SharedPreferences`-based wire contract (key/value strings)
+    between Dart and the native `AppWidgetProvider` — keeps the
+    Kotlin side a dumb RemoteViews renderer.
+  - **Native AppWidget** (Android):
+    - `android/app/src/main/res/xml/polaris_widget_info.xml` —
+      2×2 target cell, `updatePeriodMillis=0` (we trigger
+      updates explicitly from Dart, not via the OS scheduler).
+    - `android/app/src/main/res/layout/polaris_widget_layout.xml`
+      — RemoteViews: indigo-700 card, 20dp radius, title row
+      with amber "POLARIS" pill badge, hero days number (34sp),
+      subtitle row.
+    - `android/app/src/main/res/drawable/polaris_widget_background.xml`
+      + `polaris_widget_brand_pill.xml` — shape drawables for
+      the card + brand pill.
+    - `android/app/src/main/res/values/strings.xml` — widget
+      description shown in the launcher's widget picker.
+    - `PolarisWidgetProvider.kt` (`com.phandarian.polaris`)
+      extends the plugin's `HomeWidgetProvider`. Reads three
+      string keys (`polaris_pinned_title`, `polaris_pinned_days`,
+      `polaris_pinned_subtitle`) from `SharedPreferences` and
+      pours them into the RemoteViews. Empty-state copy
+      ("Pin an event in Polaris") shown when title is blank.
+      Tapping anywhere launches `MainActivity`.
+    - `AndroidManifest.xml` registers
+      `.PolarisWidgetProvider` with the `APPWIDGET_UPDATE`
+      intent filter + `appwidget-provider` meta-data.
+  - **Dart abstraction** (`lib/core/widgets/`):
+    - `home_widget_updater.dart` — `HomeWidgetUpdater` interface
+      with a single `refresh()` method. Lives in `core/` so
+      multiple features can request a re-render without taking
+      a dependency on the plugin.
+    - `polaris_home_widget_updater.dart` —
+      `PolarisHomeWidgetUpdater` reads the pinned event via
+      the new `EventRepository.getPinned()`, formats the
+      user-visible strings in Dart (`"12 days"`, `"Today"`,
+      `"1 day"`, `"EEE, MMM d · Yearly"`), and pushes them via
+      `HomeWidget.saveWidgetData` + `HomeWidget.updateWidget`.
+      Plugin calls are injected as function thunks so unit
+      tests don't hit MethodChannel.
+    - `providers.dart` — `homeWidgetUpdaterProvider` (throws
+      until overridden in `bootstrap()`).
+  - **Repository surface** — added
+    `Future<Result<Event?, Failure>> getPinned()` to
+    `EventRepository`, backed by a new `EventsDao.getPinned()`
+    that does `SELECT … WHERE is_pinned_to_widget LIMIT 1`.
+    Generated Drift code regenerated (no schema bump — the
+    column already existed since M2 v1).
+  - **EventsController integration**: every successful
+    `createEvent` / `updateEvent` / `deleteEvent` /
+    `togglePin` now also calls
+    `_widgetUpdater.refresh()`. Failures inside the updater
+    are logged and swallowed (the user's mutation always wins).
+  - **Bootstrap**: constructs a `PolarisHomeWidgetUpdater`
+    wired to the same `EventRepository` the rest of the app
+    uses, calls an initial `refresh()` so the widget reflects
+    the latest pin even if the user hasn't touched the app
+    since reboot, and overrides
+    `homeWidgetUpdaterProvider` in the ProviderScope.
+  - **Tests**: 89/89 passing (up from 79).
+    - `polaris_home_widget_updater_test` — 8 cases via a
+      hand-rolled `_StubEventRepository` + a `_SavedData`
+      sink: writes title/days/subtitle, empty state when no
+      pin, "Today" / "1 day" / "N days" pluralisation,
+      recurrence suffix only for non-`none` recurrences,
+      next-occurrence math for yearly, repo failure treated
+      as empty state, dispatcher exception is swallowed.
+    - `event_repository_impl_test` gained 2 cases for
+      `getPinned()` (null when nothing pinned, returns the
+      pinned event after `pinExclusive`).
+    - Widget tests gained a `_NoopHomeWidgetUpdater` override
+      so the events-page UI tests stay hermetic.
+  - **`flutter analyze`**: still zero issues.
+
 ### In Progress
-- None — clean checkpoint after the notification scheduler.
+- None — M2 closed. Awaiting manual widget smoke test on
+  device (user-driven step below).
+
+### Pending Manual Verification (user-driven)
+- **Add the widget to the Android home screen** to verify the
+  end-to-end wire:
+  1. On the running emulator, long-press the home screen →
+     **Widgets** → scroll to **polaris** → drag the
+     "Pinned event countdown" tile to the home screen.
+  2. Widget should render the empty state
+     ("Polaris · — · Pin an event in Polaris").
+  3. Open Polaris → Events tab → create an event a few days
+     out → tap **Pin** in the card's menu.
+  4. Widget should update within a second to show the event
+     title, days countdown, and date subtitle.
+  5. Tap the widget — Polaris should launch.
+- **Notification smoke test** is also still pending — same
+  flow as before: create an event ~70 min out, accept
+  `POST_NOTIFICATIONS`, lock screen, wait for T-1h reminder.
 
 ### Not Started (next on deck)
-- **Smoke test on emulator** — `flutter build apk --debug`
-  now succeeds (debug APK at
-  `build/app/outputs/flutter-apk/app-debug.apk`, ~11 min cold
-  build because Gradle had to install CMake 3.22.1 and
-  desugar tooling). Pending step: with the emulator running,
-  `flutter install -d emulator-5554` (or `flutter run -d
-  emulator-5554`) and then exercise:
-  1. Boot into onboarding, complete it.
-  2. Create an event one hour out.
-  3. Accept the `POST_NOTIFICATIONS` prompt.
-  4. Lock the screen and wait for the T-1h reminder.
-  5. Reboot the emulator and confirm the schedule survives
-     (`ScheduledNotificationBootReceiver`).
-- **M2 (remainder)** before declaring the milestone fully
-  shipped (see `BRD §11`):
-  - **Pin to home-screen widget** (Android first, iOS Phase 2):
-    bring in `home_widget`, register a Glance receiver in
-    `android/`, and feed it the pinned event's countdown. The
-    `togglePin` plumbing in `EventRepository` is already in
-    place; only the platform-side renderer is missing. Wire
-    `NotificationScheduler` to also re-render the widget when
-    a reminder fires (or on every event mutation).
 - **CI**: `.github/workflows/ci.yml` running `flutter analyze` +
   `flutter test --coverage` on push & PR (Handoff §4 Step 4).
   Must include a `dart run build_runner build` step before tests.
-- Add `workmanager` for backgrounded notification re-evaluation
-  at M3 (catches recurring events that the user never opens the
-  app to refresh).
+- **M4 — Lifestyle Logging** (per `BRD §11`): daily-log entry
+  sheet, history view, Drift schema bump for `lifestyle_logs`
+  table.
+- **M5 — Recommendation Engine v1**: rule-based engine, home
+  insight card, ≥6 starter rules.
+- Future polish: migrate the widget to **Glance Compose** for
+  Android 12+ visuals, deep-link the widget tap to the pinned
+  event's detail page (currently lands on root), add
+  `workmanager` for background notification re-evaluation
+  (M3-ish — catches recurring events the user never opens).
 
 ---
 
@@ -482,7 +560,7 @@ flutter doctor -v          # all checked categories should be green
 flutter pub get            # resolve current pubspec
 dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed! (79+ tests)
+flutter test               # expect: All tests passed! (89+ tests)
 ```
 
 > The `build_runner build` step is mandatory after a fresh checkout
@@ -544,30 +622,22 @@ Work in this order. Each item maps to milestones in `BRD §11`.
 Follow `BRD §11` for M2 → M9. Each milestone should ship as its own PR
 series and update this Handoff document's `Current Status`.
 
-**Pointer for the next session**: only one production task is
-left in **M2 — Event Countdown** — the Android home-screen
-widget. Notification scheduling is already wired end-to-end.
-Recommended order:
-1. **Smoke-test on the Android emulator**. Build now works:
-   `flutter build apk --debug` produces
-   `build/app/outputs/flutter-apk/app-debug.apk`. With the
-   emulator running, `flutter install -d emulator-5554` (or
-   just `flutter run -d emulator-5554`). Then create an event
-   one hour out, accept the `POST_NOTIFICATIONS` prompt, lock
-   the screen, and confirm the T-1h reminder fires. Also
-   reboot the emulator to confirm
-   `ScheduledNotificationBootReceiver` re-arms the schedule.
-2. **Home-screen widget (Android)**: `home_widget` plugin +
-   AndroidManifest `<receiver>` + a Glance composable. Widget
-   reads the pinned event from Drift in a background isolate
-   (use `home_widget`'s `registerBackgroundCallback`).
-   Re-render on `togglePin`, on every event mutation, and on
-   every notification firing so the day count stays fresh. Wire
-   `NotificationScheduler` (or a new `WidgetUpdater` peer in
-   `core/`) into the same composition root.
-3. **`HomeShellPage` polish** (optional): consider adding a
-   "Pinned event" hero card to the Life tab so the home screen
-   feels coherent with the widget.
+**Pointer for the next session**: **M2 closed**. Pick one:
+1. **CI** (Step 4) — fastest unlock of safety net.
+   `.github/workflows/ci.yml` with
+   `flutter analyze` + `dart run build_runner build` +
+   `flutter test --coverage` on push & PR. Cache
+   `~/.pub-cache` keyed on `pubspec.lock`. Upload coverage
+   as an artifact.
+2. **M4 — Lifestyle Logging** (BRD §11): daily-log entry
+   sheet, history view, Drift schema bump for
+   `lifestyle_logs`. Then **M5 — Recommendation Engine v1**
+   builds on top.
+3. **M6 — Polish & beta**: a11y pass, l10n (ID + EN —
+   right now most copy is hard-coded English, with
+   "Sisa Hariku" as the only Indonesian string), golden
+   tests for the new event card and life countdown screen,
+   internal Play Store track.
 4. Keep `flutter analyze` clean; add tests alongside each item.
 
 ---
@@ -617,6 +687,11 @@ recommendation is in **bold**; revisit when a real constraint appears.
 | Notification dispatcher (impl) | `lib/core/notifications/flutter_local_notifications_dispatcher.dart` |
 | Notification scheduler (per-event) | `lib/features/event_countdown/application/notification_scheduler.dart` |
 | Reminder offsets VO | `lib/features/event_countdown/domain/value_objects/reminder_offset.dart` |
+| Home-widget updater (interface) | `lib/core/widgets/home_widget_updater.dart` |
+| Home-widget updater (impl) | `lib/core/widgets/polaris_home_widget_updater.dart` |
+| Home-widget provider (Kotlin) | `android/app/src/main/kotlin/com/phandarian/polaris/PolarisWidgetProvider.kt` |
+| Home-widget metadata (XML) | `android/app/src/main/res/xml/polaris_widget_info.xml` |
+| Home-widget layout (RemoteViews) | `android/app/src/main/res/layout/polaris_widget_layout.xml` |
 | Seed assets | `assets/seed/` |
 | Test root | `test/` |
 
@@ -669,3 +744,5 @@ When you (the next AI assistant) act on this project:
 | 2026-06-12 | Cursor AI session | Shipped **M2 — HomeShell + LifeProfile→Drift**: bottom-nav `StatefulShellRoute`, `LifeProfilesTable` (schema v2) + DAO + Drift repository, one-shot SP→Drift migration in `bootstrap()`. 68/68 tests passing, `flutter analyze` clean. |
 | 2026-06-12 | Cursor AI session | Shipped **M2 — Notification scheduler**: `flutter_local_notifications` + TZ deps, Android manifest receivers + permissions, NDK pinned to 30.0.14904198, Drift v3 with `NotificationSchedulesTable`, `NotificationDispatcher` interface + Flutter Local Notifications impl in `core/`, per-event `NotificationScheduler` (T-7d/T-1d/T-1h) wired into `EventsController`, dispatcher init in bootstrap. 79/79 tests passing, `flutter analyze` clean. On-device smoke test deferred — local disk at 100%. |
 | 2026-06-12 | Cursor AI session | **Android build fixes**: (a) NDK override applied to *all* `:plugin` subprojects via `android/build.gradle.kts` (transitive plugins like `jni` from `flutter_timezone` were re-asking for Flutter's default NDK); (b) core library desugaring enabled (`isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs:2.1.4`) — required by `flutter_local_notifications` ≥ 18. `flutter build apk --debug` now succeeds. |
+| 2026-06-13 | Cursor AI session | **Bootstrap zone fix**: moved `WidgetsFlutterBinding.ensureInitialized()` + all async init (SharedPreferences, AppDatabase, migration, notifications init) inside `runZonedGuarded` so binding zone matches `runApp`. Eliminates the "Zone mismatch" warning that fired on every cold boot. |
+| 2026-06-13 | Cursor AI session | Shipped **M2 — Android home-screen widget**: `home_widget ^0.9.3` + `PolarisWidgetProvider` (Kotlin, RemoteViews) + indigo card layout with amber brand pill, abstract `HomeWidgetUpdater` in `core/widgets/` + concrete `PolarisHomeWidgetUpdater` (reads pinned event via new `EventRepository.getPinned()`, formats in Dart, pushes via `home_widget` plugin), wired into `EventsController` (create/update/delete/togglePin) and bootstrap initial refresh. 89/89 tests passing, `flutter analyze` clean. **M2 closed.** |

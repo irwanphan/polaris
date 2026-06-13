@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/core/result/result.dart';
+import 'package:polaris/core/widgets/home_widget_updater.dart';
+import 'package:polaris/core/widgets/providers.dart';
 import 'package:polaris/features/event_countdown/application/notification_scheduler.dart';
 import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
@@ -15,10 +17,15 @@ import 'package:polaris/features/event_countdown/domain/value_objects/recurrence
 /// repository write succeeds. A scheduling failure is logged inside the
 /// scheduler and never propagates — the event always persists.
 class EventsController {
-  const EventsController(this._repository, this._scheduler);
+  const EventsController(
+    this._repository,
+    this._scheduler,
+    this._widgetUpdater,
+  );
 
   final EventRepository _repository;
   final NotificationScheduler _scheduler;
+  final HomeWidgetUpdater _widgetUpdater;
 
   Future<Result<Event, Object>> createEvent({
     required String title,
@@ -39,6 +46,7 @@ class EventsController {
     final result = await _repository.upsert(event);
     if (result.isOk) {
       await _scheduler.rescheduleFor(event);
+      await _widgetUpdater.refresh();
     }
     return result.fold(
       onOk: (_) => Result<Event, Object>.ok(event),
@@ -70,6 +78,7 @@ class EventsController {
     final result = await _repository.upsert(updated);
     if (result.isOk) {
       await _scheduler.rescheduleFor(updated);
+      await _widgetUpdater.refresh();
     }
     return result.fold(
       onOk: (_) => Result<Event, Object>.ok(updated),
@@ -81,6 +90,7 @@ class EventsController {
     final result = await _repository.delete(id);
     if (result.isOk) {
       await _scheduler.cancelFor(id);
+      await _widgetUpdater.refresh();
     }
     return result.fold(
       onOk: (_) => const Result<void, Object>.ok(null),
@@ -96,6 +106,9 @@ class EventsController {
   }) async {
     final result =
         await _repository.pinExclusive(isCurrentlyPinned ? null : id);
+    if (result.isOk) {
+      await _widgetUpdater.refresh();
+    }
     return result.fold(
       onOk: (_) => const Result<void, Object>.ok(null),
       onErr: Result<void, Object>.err,
@@ -114,5 +127,6 @@ final Provider<EventsController> eventsControllerProvider =
   (ref) => EventsController(
     ref.watch(eventRepositoryProvider),
     ref.watch(notificationSchedulerProvider),
+    ref.watch(homeWidgetUpdaterProvider),
   ),
 );

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AppWidget metadata for Polaris pinned-event countdown.
+  - minWidth/minHeight: 2x2 grid cell target (covers most launchers).
+  - resizeMode: horizontal so users can stretch to 4x2.
+  - updatePeriodMillis: 0 because we trigger updates explicitly from
+    Dart (event pin/unpin, notification fire). The OS-throttled
+    polling default of 30 min wastes battery for our use case.
+  - previewLayout: same layout, populated with placeholder text on
+    older OS versions; Android 12+ uses previewImage if present.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:initialLayout="@layout/polaris_widget_layout"
+    android:previewLayout="@layout/polaris_widget_layout"
+    android:resizeMode="horizontal"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="0"
+    android:description="@string/polaris_widget_description" />

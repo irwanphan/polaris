@@ -7,6 +7,8 @@ import 'package:polaris/core/errors/failure.dart';
 import 'package:polaris/core/logging/app_logger.dart';
 import 'package:polaris/core/notifications/notification_dispatcher.dart';
 import 'package:polaris/core/result/result.dart';
+import 'package:polaris/core/widgets/home_widget_updater.dart';
+import 'package:polaris/core/widgets/providers.dart' as widget_providers;
 import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/repositories/event_repository.dart';
@@ -58,6 +60,11 @@ class _InMemoryEventRepository implements EventRepository {
   }
 
   @override
+  Future<Result<Event?, Failure>> getPinned() async {
+    return Result.ok(_events.where((e) => e.isPinnedToWidget).firstOrNull);
+  }
+
+  @override
   Future<Result<void, Failure>> upsert(Event event) async {
     _events.removeWhere((e) => e.id == event.id);
     _events.add(event);
@@ -86,6 +93,11 @@ class _InMemoryEventRepository implements EventRepository {
     _controller.add(List<Event>.unmodifiable(_events));
     return const Result.ok(null);
   }
+}
+
+class _NoopHomeWidgetUpdater implements HomeWidgetUpdater {
+  @override
+  Future<void> refresh() async {}
 }
 
 class _NoopNotificationDispatcher implements NotificationDispatcher {
@@ -164,6 +176,8 @@ Future<ProviderScope> _bootApp({LifeProfile? profile}) async {
           .overrideWithValue(_InMemoryLifeProfileRepository(profile)),
       notificationDispatcherProvider
           .overrideWithValue(_NoopNotificationDispatcher()),
+      widget_providers.homeWidgetUpdaterProvider
+          .overrideWithValue(_NoopHomeWidgetUpdater()),
     ],
     child: const PolarisApp(),
   );
