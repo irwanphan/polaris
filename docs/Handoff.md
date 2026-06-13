@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-14 by Cursor AI session — **Widget Pin v2 (life pin + custom message + mutual exclusivity) shipped** on top of M0/M1/M2/M4/M5/M6 + CI
+> **Last updated:** 2026-06-14 by Cursor AI session — **Multi-Pin Widget (Widget Pin v3) shipped**: home-screen widget is now a native `RemoteViews` ListView that renders every pinned subject (life + N events) in one scrollable surface. Mutual exclusivity dropped — life and event pins are independent.
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-14, **M0–M2 + CI + M4 + M5 + M6 + Widget Pin v2 shipped**)
+## 2. Current Status (As of 2026-06-14, **M0–M2 + CI + M4 + M5 + M6 + Widget Pin v2 + Multi-Pin Widget (v3) shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -926,10 +926,99 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     pinned `test` event was auto-unpinned by the
     exclusivity guard.
 
+- **Multi-Pin Widget (v3)** shipped on top of Widget Pin
+  v2 — the home-screen widget is no longer a single-card
+  view of "whatever subject is pinned right now". It's a
+  native `RemoteViews` collection widget that renders a
+  **scrollable `ListView` of every pinned subject** (life
+  pin + each event with `isPinnedToWidget = true`):
+  - **Mutual exclusivity removed**. Life and event pins
+    are now independent — pinning life does NOT unpin
+    events and vice versa. `EventRepository.setPinned(id,
+    bool)` is the new per-event entrypoint (the old
+    `pinExclusive` is kept for backward compat).
+    `EventsController.togglePin` routes through
+    `setPinned`; `LifePinController` no longer touches the
+    event repository at all. The `LifePinSheet` copy was
+    updated to drop the "akan melepas event" warning.
+  - **Wire contract rewritten**. `PolarisHomeWidgetUpdater`
+    serializes a JSON array under a single SharedPreferences
+    key (`polaris_widget_items_json`) plus header /
+    empty-state strings (`polaris_widget_header_title`,
+    `polaris_widget_empty_title`,
+    `polaris_widget_empty_subtitle`). Each item is
+    `{id, kind, title, hero, subtitle, accent}`. Ordering:
+    life first (amber accent matching the brand pill),
+    then events in repository order (target date ascending,
+    each row uses `event.colorHex` as its accent strip).
+  - **Native collection widget**. New files in
+    `android/app/src/main/kotlin/com/phandarian/polaris/`:
+    - `PolarisWidgetRemoteViewsService.kt` — thin
+      `RemoteViewsService` shell.
+    - `PolarisWidgetItemsFactory.kt` — `RemoteViewsFactory`
+      that re-reads the JSON from `HomeWidgetPreferences`
+      in `onDataSetChanged`, parses with `org.json.JSONArray`,
+      and binds each row's title / hero / subtitle / accent
+      color via `RemoteViews#setInt(..., "setBackgroundColor",
+      ...)`. Empty / malformed JSON → empty list → empty
+      view shows.
+    - `PolarisWidgetProvider.kt` rewritten — binds the
+      `ListView` via `setRemoteAdapter`, wires
+      `setEmptyView`, sets a `PendingIntent` template for
+      per-row taps, and crucially calls
+      `notifyAppWidgetViewDataChanged` every update so the
+      adapter actually re-reads the JSON (otherwise the
+      first payload is cached forever).
+    - `AndroidManifest.xml` registers the service with
+      `android:permission="android.permission.BIND_REMOTEVIEWS"`
+      and `android:exported="false"`.
+  - **New layouts**:
+    `res/layout/polaris_widget_layout.xml` is now a
+    header + `ListView` + empty-state column;
+    `res/layout/polaris_widget_item.xml` is the per-row
+    card with a 4dp accent strip, title, hero, subtitle.
+    Default size bumped from 2×2 to 4×3 (`minWidth=250dp`,
+    `minHeight=180dp`, `resizeMode="horizontal|vertical"`)
+    so multiple rows fit out of the box.
+  - **Sharp edge — `<View>` is not allowed in RemoteViews**.
+    Initial implementation used `<View>` for the accent
+    strip; the launcher refused to inflate with
+    "Class not allowed to be inflated android.view.View".
+    Replaced with `<FrameLayout>` (allowed) — the comment
+    in `polaris_widget_item.xml` documents this so the
+    next change doesn't re-introduce the bug. (Same family
+    as the previous `<Space>` regression we hit in v2.)
+  - **Tests updated** (still **166** unit + golden):
+    `polaris_home_widget_updater_test.dart` rewritten to
+    assert the JSON array shape (multi-pin order,
+    accent-color round-trip, custom messages, locale
+    rendering, empty list on repo failure).
+    `life_pin_controller_test.dart` rewritten to assert
+    `LifePinController.pin` does NOT touch
+    `EventRepository`, and `EventsController.togglePin`
+    uses the new `setPinned` instead of `pinExclusive`
+    and does NOT unpin the life countdown.
+  - **Verified end-to-end on the emulator** (Pixel API 34):
+    life pin + one event pinned simultaneously → widget
+    shows two rows — **Sisa Hariku / 10906 hari lagi /
+    Satu napas pada satu waktu** (amber strip) and
+    **test / 6 hari / Sab, Jun 20 · Bulanan** (cyan strip
+    matching the event's `#0EA5E9` color). No mutual
+    exclusivity — both coexist. Native `ListView` scrolls
+    automatically once items overflow.
+  - **Deferred**: SVG / icon / background polish — the
+    user mentioned wanting to source nice SVGs next; once
+    those land they'll likely come in as Android vector
+    drawables (`drawable/*.xml`) referenced from the
+    widget layout, plus a possible `ImageView` row prefix
+    in `polaris_widget_item.xml` for per-kind icons.
+
 ### In Progress
-- None — Widget Pin v2 closed. M6 deferred items (Play
-  Store track, insight l10n) still owner/scope-gated.
-  Manual smoke tests below remain user-driven.
+- None — Multi-Pin Widget (v3) closed. M6 deferred items
+  (Play Store track, insight l10n) still owner/scope-gated.
+  Pending: SVG asset hunt (user-driven) + widget visual
+  polish on top of those assets. Manual smoke tests below
+  remain user-driven.
 
 ### Pending Manual Verification (user-driven)
 - **Lifestyle end-to-end on device**:
@@ -1248,3 +1337,5 @@ When you (the next AI assistant) act on this project:
 | 2026-06-13 | Cursor AI session | **Bootstrap zone fix**: moved `WidgetsFlutterBinding.ensureInitialized()` + all async init (SharedPreferences, AppDatabase, migration, notifications init) inside `runZonedGuarded` so binding zone matches `runApp`. Eliminates the "Zone mismatch" warning that fired on every cold boot. |
 | 2026-06-13 | Cursor AI session | Shipped **M2 — Android home-screen widget**: `home_widget ^0.9.3` + `PolarisWidgetProvider` (Kotlin, RemoteViews) + indigo card layout with amber brand pill, abstract `HomeWidgetUpdater` in `core/widgets/` + concrete `PolarisHomeWidgetUpdater` (reads pinned event via new `EventRepository.getPinned()`, formats in Dart, pushes via `home_widget` plugin), wired into `EventsController` (create/update/delete/togglePin) and bootstrap initial refresh. 89/89 tests passing, `flutter analyze` clean. **M2 closed.** |
 | 2026-06-13 | Cursor AI session | Shipped **CI (GitHub Actions)**: `.github/workflows/ci.yml` runs on push to `main` and every PR; pinned to Flutter 3.44.1 stable; pipeline = pub get → build_runner → format check → analyze → test --coverage; coverage uploaded as artifact. One-time `dart format .` cleanup applied (50 files re-formatted, 89/89 tests still pass). Handoff §4 Step 4 done. |
+| 2026-06-14 | Cursor AI session | Shipped **Widget Pin v2**: Drift v5 adds `events_table.widget_message` (per-event widget override); new `LifePinPreferences` + `LifePinRepository` + `LifePinController` (life can be pinned with a custom mantra); mutual exclusivity between life pin and event pin (only one subject in the widget at a time). `PolarisHomeWidgetUpdater` rewritten with priority resolution + locale-aware date / recurrence formatting (loads `AppL` for the user's `polaris.locale.v1` pref, falls back to `PlatformDispatcher.locale`); `initializeDateFormatting('en'/'id')` added to `bootstrap()` so the headless refresh path doesn't hit `LocaleDataException`. New `LifePinSheet` modal + AppBar pin icon on the Life tab. 154 unit + 10 golden tests, `flutter analyze` clean. |
+| 2026-06-14 | Cursor AI session | Shipped **Multi-Pin Widget (v3)**: dropped mutual exclusivity — life and event pins are now independent. `EventRepository.setPinned(id, bool)` is the new per-event entrypoint (legacy `pinExclusive` kept for back-compat). Widget rewritten as a native `RemoteViews` **collection widget**: `PolarisHomeWidgetUpdater` serializes all pinned subjects (life first w/ amber accent, then events sorted by target date w/ per-event color accent) as a JSON array under `polaris_widget_items_json`; `PolarisWidgetRemoteViewsService` + `PolarisWidgetItemsFactory` parse it and feed a `ListView` inside the widget; `PolarisWidgetProvider` wires `setRemoteAdapter` + `notifyAppWidgetViewDataChanged` (critical for re-reads) + `setPendingIntentTemplate` for per-row taps; service registered in `AndroidManifest.xml` with `BIND_REMOTEVIEWS`. Default widget size bumped from 2×2 to 4×3 with `resizeMode="horizontal\|vertical"`. Sharp edge fix: `<View>` is not on the RemoteViews allow-list — accent strip now uses `<FrameLayout>` (commented in `polaris_widget_item.xml`). `LifePinSheet` copy de-warned. Tests updated to assert the JSON-array shape and the no-exclusivity invariant. 166 tests passing, `flutter analyze` clean. Verified on emulator: life + event coexist in the widget list, locale-aware (`Sisa Hariku / 10906 hari lagi / Satu napas pada satu waktu` + `test / 6 hari / Sab, Jun 20 · Bulanan`). Deferred: SVG/icon polish (user is sourcing assets). |

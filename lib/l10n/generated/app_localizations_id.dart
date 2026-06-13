@@ -426,7 +426,7 @@ class AppLId extends AppL {
 
   @override
   String get lifePinToggleHelper =>
-      'Menyematkan hitung mundur hidup akan melepas event yang sedang disematkan — widget hanya menampilkan satu hal pada satu waktu.';
+      'Tampilkan hitung mundur hidup di bagian atas widget layar utama.';
 
   @override
   String get lifePinCustomMessageLabel => 'Pesan kustom (opsional)';
@@ -479,4 +479,11 @@ class AppLId extends AppL {
     );
     return '$_temp0';
   }
+
+  @override
+  String get widgetEmptyTitle => 'Belum ada yang disematkan';
+
+  @override
+  String get widgetEmptySubtitle =>
+      'Sematkan hitung mundur hidup atau acara untuk muncul di sini.';
 }

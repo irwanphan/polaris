@@ -44,6 +44,26 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
+  Future<Result<List<Event>, Failure>> getAllPinned() async {
+    try {
+      final List<EventRow> rows = await _dao.getAllPinned();
+      return Result.ok(rows.map(_fromRow).toList(growable: false));
+    } catch (e, st) {
+      return Result.err(_failure('Failed to read pinned events', e, st));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> setPinned(String id, bool isPinned) async {
+    try {
+      await _dao.setPinned(id, isPinned);
+      return const Result.ok(null);
+    } catch (e, st) {
+      return Result.err(_failure('Failed to update pin state', e, st));
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> upsert(Event event) async {
     try {
       await _dao.upsert(_toCompanion(event));

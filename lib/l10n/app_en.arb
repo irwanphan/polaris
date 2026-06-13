@@ -197,7 +197,7 @@
 
   "lifePinSheetTitle": "Pin to home widget",
   "lifePinToggleLabel": "Show life countdown on the widget",
-  "lifePinToggleHelper": "Pinning the life countdown unpins any pinned event — the widget shows one thing at a time.",
+  "lifePinToggleHelper": "Show the life countdown at the top of your home-screen widget.",
   "lifePinCustomMessageLabel": "Custom message (optional)",
   "lifePinCustomMessageHelper": "Replaces the auto subtitle. Try something grounding — e.g. \"One breath at a time.\"",
   "lifePinAction": "Pin",
@@ -222,5 +222,7 @@
   "widgetEventDays": "{count, plural, =0{Today} =1{1 day} other{{count} days}}",
   "@widgetEventDays": {
     "placeholders": {"count": {"type": "int"}}
-  }
+  },
+  "widgetEmptyTitle": "Nothing pinned yet",
+  "widgetEmptySubtitle": "Pin your life countdown or events to see them here."
 }

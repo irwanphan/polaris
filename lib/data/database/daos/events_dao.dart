@@ -27,13 +27,37 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
-  /// Returns the single pinned row, if any. The repository enforces
-  /// at most one pin via [pinExclusive], so `LIMIT 1` is safe.
+  /// Returns the first pinned row by id, if any. Multi-pin is now
+  /// allowed (since the home-screen widget renders a scrollable list);
+  /// this exists for legacy callers — prefer [watchPinned] for the
+  /// modern path.
   Future<EventRow?> getPinned() {
     return (select(eventsTable)
           ..where((t) => t.isPinnedToWidget.equals(true))
           ..limit(1))
         .getSingleOrNull();
+  }
+
+  /// Snapshot read of every pinned event, ordered by target date
+  /// ascending so the widget shows soonest-first.
+  Future<List<EventRow>> getAllPinned() {
+    return (select(eventsTable)
+          ..where((t) => t.isPinnedToWidget.equals(true))
+          ..orderBy(<OrderClauseGenerator<$EventsTableTable>>[
+            (t) => OrderingTerm.asc(t.targetAtEpochMs),
+          ]))
+        .get();
+  }
+
+  /// Reactive variant of [getAllPinned] — emits a fresh list every
+  /// time the pin state of any row changes.
+  Stream<List<EventRow>> watchAllPinned() {
+    return (select(eventsTable)
+          ..where((t) => t.isPinnedToWidget.equals(true))
+          ..orderBy(<OrderClauseGenerator<$EventsTableTable>>[
+            (t) => OrderingTerm.asc(t.targetAtEpochMs),
+          ]))
+        .watch();
   }
 
   /// Inserts or replaces by primary key.
@@ -45,7 +69,18 @@ class EventsDao extends DatabaseAccessor<AppDatabase> with _$EventsDaoMixin {
     return (delete(eventsTable)..where((t) => t.id.equals(id))).go();
   }
 
-  /// Atomically clears every pin and (optionally) sets exactly one.
+  /// Sets the pin state of a single event without touching the
+  /// others. Multi-pin is now allowed because the widget renders a
+  /// scrollable list of all pinned subjects.
+  Future<void> setPinned(String id, bool isPinned) {
+    return (update(eventsTable)..where((t) => t.id.equals(id))).write(
+      EventsTableCompanion(isPinnedToWidget: Value(isPinned)),
+    );
+  }
+
+  /// Legacy single-pin entrypoint kept for backward compat — callers
+  /// that still want exclusive pin semantics can use it. New code
+  /// should use [setPinned] instead.
   Future<void> pinExclusive(String? id) {
     return transaction(() async {
       await (update(eventsTable)..where((t) => t.isPinnedToWidget.equals(true)))

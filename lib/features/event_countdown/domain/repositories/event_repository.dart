@@ -13,18 +13,28 @@ abstract interface class EventRepository {
 
   Future<Result<Event?, Failure>> getById(String id);
 
-  /// Returns the single pinned event, or `null` when none is pinned.
-  /// Used by the home-screen widget renderer.
+  /// Returns the first pinned event (legacy single-pin reader).
+  /// Kept for backward compatibility — modern callers should use
+  /// [getAllPinned] since the widget now renders a scrollable list.
   Future<Result<Event?, Failure>> getPinned();
+
+  /// Snapshot read of every currently-pinned event, ordered by
+  /// `targetAt` ascending (soonest first). Drives the home-screen
+  /// widget's scrollable list.
+  Future<Result<List<Event>, Failure>> getAllPinned();
 
   /// Inserts or replaces by `event.id`.
   Future<Result<void, Failure>> upsert(Event event);
 
   Future<Result<void, Failure>> delete(String id);
 
-  /// Unpins all events except [id], which is then pinned.
-  ///
-  /// Polaris allows exactly one pinned event at a time — the widget shows
-  /// the pinned event. Pass `null` to clear the pin entirely.
+  /// Sets the pin state of a single event independently of the
+  /// others. Multi-pin is now allowed because the widget shows a
+  /// scrollable list of every pinned subject.
+  Future<Result<void, Failure>> setPinned(String id, bool isPinned);
+
+  /// Legacy single-pin entrypoint — kept for backward compat with
+  /// callers that explicitly need "clear every pin, then optionally
+  /// set one". New code should call [setPinned] instead.
   Future<Result<void, Failure>> pinExclusive(String? id);
 }

@@ -7,8 +7,6 @@ import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/repositories/event_repository.dart';
 import 'package:polaris/features/event_countdown/domain/value_objects/recurrence.dart';
-import 'package:polaris/features/life_countdown/application/providers.dart';
-import 'package:polaris/features/life_countdown/data/repositories/life_pin_repository.dart';
 
 /// Imperative commands for the events feature.
 ///
@@ -23,13 +21,11 @@ class EventsController {
     this._repository,
     this._scheduler,
     this._widgetUpdater,
-    this._lifePinRepository,
   );
 
   final EventRepository _repository;
   final NotificationScheduler _scheduler;
   final HomeWidgetUpdater _widgetUpdater;
-  final LifePinRepository _lifePinRepository;
 
   Future<Result<Event, Object>> createEvent({
     required String title,
@@ -106,26 +102,15 @@ class EventsController {
     );
   }
 
-  /// Pins [id], unpinning anything else. Toggling a currently-pinned event
-  /// clears the pin entirely.
-  ///
-  /// Pinning an event also unpins the life countdown (mutual exclusivity:
-  /// the widget surface only renders one subject at a time). Unpinning an
-  /// event does NOT auto-pin life — that would be surprising.
+  /// Toggles the pin state of [id] independently of any other event
+  /// or the life countdown. The widget renders a scrollable list of
+  /// every pinned subject, so multi-pin is the supported norm.
   Future<Result<void, Object>> togglePin({
     required String id,
     required bool isCurrentlyPinned,
   }) async {
-    final result = await _repository.pinExclusive(
-      isCurrentlyPinned ? null : id,
-    );
+    final result = await _repository.setPinned(id, !isCurrentlyPinned);
     if (result.isOk) {
-      if (!isCurrentlyPinned) {
-        final current = _lifePinRepository.read();
-        if (current.pinned) {
-          await _lifePinRepository.save(current.copyWith(pinned: false));
-        }
-      }
       await _widgetUpdater.refresh();
     }
     return result.fold(
@@ -147,6 +132,5 @@ final Provider<EventsController> eventsControllerProvider =
         ref.watch(eventRepositoryProvider),
         ref.watch(notificationSchedulerProvider),
         ref.watch(homeWidgetUpdaterProvider),
-        ref.watch(lifePinRepositoryProvider),
       ),
     );

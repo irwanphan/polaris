@@ -68,6 +68,13 @@ class _InMemoryEventRepository implements EventRepository {
   }
 
   @override
+  Future<Result<List<Event>, Failure>> getAllPinned() async {
+    final pinned = _events.where((e) => e.isPinnedToWidget).toList()
+      ..sort((a, b) => a.targetAt.compareTo(b.targetAt));
+    return Result.ok(List<Event>.unmodifiable(pinned));
+  }
+
+  @override
   Future<Result<void, Failure>> upsert(Event event) async {
     _events.removeWhere((e) => e.id == event.id);
     _events.add(event);
@@ -79,6 +86,16 @@ class _InMemoryEventRepository implements EventRepository {
   Future<Result<void, Failure>> delete(String id) async {
     _events.removeWhere((e) => e.id == id);
     _controller.add(List<Event>.unmodifiable(_events));
+    return const Result.ok(null);
+  }
+
+  @override
+  Future<Result<void, Failure>> setPinned(String id, bool isPinned) async {
+    final idx = _events.indexWhere((e) => e.id == id);
+    if (idx >= 0) {
+      _events[idx] = _events[idx].copyWith(isPinnedToWidget: isPinned);
+      _controller.add(List<Event>.unmodifiable(_events));
+    }
     return const Result.ok(null);
   }
 

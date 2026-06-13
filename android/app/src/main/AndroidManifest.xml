@@ -68,6 +68,13 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/polaris_widget_info" />
         </receiver>
+
+        <!-- Backs the ListView inside the Polaris widget. The
+             BIND_REMOTEVIEWS permission is enforced by the framework
+             so only the launcher / system process can bind. -->
+        <service android:name=".PolarisWidgetRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

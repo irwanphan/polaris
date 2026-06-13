@@ -1,3 +1,5 @@
+import 'dart:convert' as convert;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:polaris/core/errors/failure.dart';
@@ -25,16 +27,32 @@ class _SavedData {
   final Map<String, String?> entries = <String, String?>{};
   int updateCalls = 0;
   String? lastAndroidName;
+
+  List<Map<String, Object?>> get items {
+    final raw = entries[PolarisHomeWidgetUpdater.kItemsJsonKey];
+    if (raw == null) return const <Map<String, Object?>>[];
+    final List<dynamic> decoded = convert.json.decode(raw) as List<dynamic>;
+    return decoded
+        .cast<Map<String, dynamic>>()
+        .map<Map<String, Object?>>(Map<String, Object?>.from)
+        .toList(growable: false);
+  }
 }
 
 class _StubEventRepository implements EventRepository {
-  _StubEventRepository({this.pinned, this.failure});
+  _StubEventRepository({this.pinned = const <Event>[], this.failure});
 
-  Event? pinned;
+  List<Event> pinned;
   Failure? failure;
 
   @override
   Future<Result<Event?, Failure>> getPinned() async {
+    if (failure != null) return Result.err(failure!);
+    return Result.ok(pinned.isEmpty ? null : pinned.first);
+  }
+
+  @override
+  Future<Result<List<Event>, Failure>> getAllPinned() async {
     if (failure != null) return Result.err(failure!);
     return Result.ok(pinned);
   }
@@ -49,6 +67,9 @@ class _StubEventRepository implements EventRepository {
       const Result.ok(null);
   @override
   Future<Result<void, Failure>> delete(String id) async =>
+      const Result.ok(null);
+  @override
+  Future<Result<void, Failure>> setPinned(String id, bool isPinned) async =>
       const Result.ok(null);
   @override
   Future<Result<void, Failure>> pinExclusive(String? id) async =>
@@ -88,6 +109,7 @@ Event _event({
   required DateTime targetAt,
   String id = 'evt-1',
   String title = 'Concert',
+  String colorHex = '#6366F1',
   Recurrence recurrence = Recurrence.none,
   String? widgetMessage,
 }) {
@@ -95,7 +117,7 @@ Event _event({
     id: id,
     title: title,
     targetAt: targetAt,
-    colorHex: '#6366F1',
+    colorHex: colorHex,
     iconKey: 'event',
     recurrence: recurrence,
     isPinnedToWidget: true,
@@ -165,13 +187,14 @@ void main() {
     await initializeDateFormatting('en', null);
   });
 
-  group('PolarisHomeWidgetUpdater.refresh — event pin', () {
-    test('writes the pinned event title, days, and subtitle (EN)', () async {
+  group('PolarisHomeWidgetUpdater.refresh — event list', () {
+    test('serializes a single pinned event into the items JSON (EN)',
+        () async {
       final saved = _SavedData();
       final updater = await _build(
         saved: saved,
         events: _StubEventRepository(
-          pinned: _event(targetAt: DateTime(2026, 6, 25, 9)),
+          pinned: <Event>[_event(targetAt: DateTime(2026, 6, 25, 9))],
         ),
         now: () => DateTime(2026, 6, 12, 9),
         localePref: 'en',
@@ -179,9 +202,12 @@ void main() {
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_title'], 'Concert');
-      expect(saved.entries['polaris_pinned_days'], '13 days');
-      expect(saved.entries['polaris_pinned_subtitle'], contains('Jun 25'));
+      expect(saved.items, hasLength(1));
+      expect(saved.items.first['title'], 'Concert');
+      expect(saved.items.first['hero'], '13 days');
+      expect(saved.items.first['subtitle'], contains('Jun 25'));
+      expect(saved.items.first['kind'], 'event');
+      expect(saved.items.first['accent'], '#6366F1');
       expect(saved.updateCalls, 1);
       expect(saved.lastAndroidName, 'PolarisWidgetProvider');
     });
@@ -191,11 +217,13 @@ void main() {
       final updater = await _build(
         saved: saved,
         events: _StubEventRepository(
-          pinned: _event(
-            targetAt: DateTime(2026, 6, 25, 9),
-            recurrence: Recurrence.yearly,
-            widgetMessage: "Don't forget the gift",
-          ),
+          pinned: <Event>[
+            _event(
+              targetAt: DateTime(2026, 6, 25, 9),
+              recurrence: Recurrence.yearly,
+              widgetMessage: "Don't forget the gift",
+            ),
+          ],
         ),
         now: () => DateTime(2026, 6, 12, 9),
         localePref: 'en',
@@ -203,21 +231,22 @@ void main() {
 
       await updater.refresh();
 
-      expect(
-        saved.entries['polaris_pinned_subtitle'],
-        "Don't forget the gift",
-      );
+      expect(saved.items.first['subtitle'], "Don't forget the gift");
     });
 
-    test('writes nulls when nothing is pinned (empty state)', () async {
+    test('writes an empty items array when nothing is pinned', () async {
       final saved = _SavedData();
       final updater = await _build(saved: saved);
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_title'], isNull);
-      expect(saved.entries['polaris_pinned_days'], isNull);
-      expect(saved.entries['polaris_pinned_subtitle'], isNull);
+      expect(saved.items, isEmpty);
+      // Empty-state text is still written so the native layout has
+      // copy to render.
+      expect(
+        saved.entries[PolarisHomeWidgetUpdater.kEmptyTitleKey],
+        isNotNull,
+      );
       expect(saved.updateCalls, 1);
     });
 
@@ -226,7 +255,7 @@ void main() {
       final updater = await _build(
         saved: saved,
         events: _StubEventRepository(
-          pinned: _event(targetAt: DateTime(2026, 6, 12, 18)),
+          pinned: <Event>[_event(targetAt: DateTime(2026, 6, 12, 18))],
         ),
         now: () => DateTime(2026, 6, 12, 9),
         localePref: 'en',
@@ -234,7 +263,7 @@ void main() {
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_days'], 'Today');
+      expect(saved.items.first['hero'], 'Today');
     });
 
     test('appends localized recurrence label for yearly events', () async {
@@ -242,10 +271,12 @@ void main() {
       final updater = await _build(
         saved: saved,
         events: _StubEventRepository(
-          pinned: _event(
-            targetAt: DateTime(1990, 12, 25, 9),
-            recurrence: Recurrence.yearly,
-          ),
+          pinned: <Event>[
+            _event(
+              targetAt: DateTime(1990, 12, 25, 9),
+              recurrence: Recurrence.yearly,
+            ),
+          ],
         ),
         now: () => DateTime(2026, 6, 12, 9),
         localePref: 'en',
@@ -255,11 +286,11 @@ void main() {
 
       // Should use the next occurrence (2026-12-25), not the historic
       // 1990 birthdate.
-      expect(saved.entries['polaris_pinned_subtitle'], contains('Dec 25'));
-      expect(saved.entries['polaris_pinned_subtitle'], contains('Yearly'));
+      expect(saved.items.first['subtitle'], contains('Dec 25'));
+      expect(saved.items.first['subtitle'], contains('Yearly'));
     });
 
-    test('treats repository failure as empty state (does not throw)', () async {
+    test('treats repository failure as empty list (does not throw)', () async {
       final saved = _SavedData();
       final updater = await _build(
         saved: saved,
@@ -270,18 +301,52 @@ void main() {
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_title'], isNull);
+      expect(saved.items, isEmpty);
       expect(saved.updateCalls, 1);
     });
-  });
 
-  group('PolarisHomeWidgetUpdater.refresh — life pin priority', () {
-    test('life pin wins over event pin (mutual exclusivity)', () async {
+    test('serializes multiple pinned events preserving repo order',
+        () async {
       final saved = _SavedData();
       final updater = await _build(
         saved: saved,
         events: _StubEventRepository(
-          pinned: _event(targetAt: DateTime(2026, 6, 25, 9)),
+          pinned: <Event>[
+            _event(
+              id: 'evt-soon',
+              title: 'Wedding',
+              targetAt: DateTime(2026, 6, 20, 9),
+              colorHex: '#F472B6',
+            ),
+            _event(
+              id: 'evt-later',
+              title: 'Conference',
+              targetAt: DateTime(2026, 8, 1, 9),
+              colorHex: '#34D399',
+            ),
+          ],
+        ),
+        now: () => DateTime(2026, 6, 12, 9),
+        localePref: 'en',
+      );
+
+      await updater.refresh();
+
+      expect(saved.items, hasLength(2));
+      expect(saved.items[0]['title'], 'Wedding');
+      expect(saved.items[0]['accent'], '#F472B6');
+      expect(saved.items[1]['title'], 'Conference');
+      expect(saved.items[1]['accent'], '#34D399');
+    });
+  });
+
+  group('PolarisHomeWidgetUpdater.refresh — life + event composition', () {
+    test('life pin appears first, then events in repo order', () async {
+      final saved = _SavedData();
+      final updater = await _build(
+        saved: saved,
+        events: _StubEventRepository(
+          pinned: <Event>[_event(targetAt: DateTime(2026, 6, 25, 9))],
         ),
         lifePin: LifePinPreferences(pinned: true),
         profile: _profile(),
@@ -291,11 +356,11 @@ void main() {
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_title'], 'Sisa Hariku');
-      // Event was Concert — must NOT leak through.
-      expect(saved.entries['polaris_pinned_title'], isNot('Concert'));
-      expect(saved.entries['polaris_pinned_days'], contains('days left'));
-      expect(saved.entries['polaris_pinned_subtitle'], contains('Ends'));
+      expect(saved.items, hasLength(2));
+      expect(saved.items[0]['kind'], 'life');
+      expect(saved.items[0]['title'], 'Sisa Hariku');
+      expect(saved.items[1]['kind'], 'event');
+      expect(saved.items[1]['title'], 'Concert');
     });
 
     test('custom life message overrides auto subtitle', () async {
@@ -313,21 +378,21 @@ void main() {
 
       await updater.refresh();
 
-      expect(
-        saved.entries['polaris_pinned_subtitle'],
-        'One breath at a time.',
-      );
+      expect(saved.items.first['subtitle'], 'One breath at a time.');
     });
 
-    test('life pin without profile falls back to event pin', () async {
+    test('life pin without profile is silently skipped (events still emitted)',
+        () async {
       final saved = _SavedData();
       final updater = await _build(
         saved: saved,
         events: _StubEventRepository(
-          pinned: _event(
-            targetAt: DateTime(2026, 6, 25, 9),
-            title: 'Fallback Event',
-          ),
+          pinned: <Event>[
+            _event(
+              targetAt: DateTime(2026, 6, 25, 9),
+              title: 'Fallback Event',
+            ),
+          ],
         ),
         lifePin: LifePinPreferences(pinned: true),
         // profile: null → life estimate cannot be built.
@@ -337,7 +402,8 @@ void main() {
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_title'], 'Fallback Event');
+      expect(saved.items, hasLength(1));
+      expect(saved.items.first['title'], 'Fallback Event');
     });
 
     test('Indonesian locale renders ID strings for life pin', () async {
@@ -352,9 +418,9 @@ void main() {
 
       await updater.refresh();
 
-      expect(saved.entries['polaris_pinned_title'], 'Sisa Hariku');
-      expect(saved.entries['polaris_pinned_days'], contains('hari lagi'));
-      expect(saved.entries['polaris_pinned_subtitle'], contains('Sekitar'));
+      expect(saved.items.first['title'], 'Sisa Hariku');
+      expect(saved.items.first['hero'] as String, contains('hari lagi'));
+      expect(saved.items.first['subtitle'] as String, contains('Sekitar'));
     });
   });
 }

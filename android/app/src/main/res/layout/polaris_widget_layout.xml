@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  RemoteViews layout for the Polaris home-screen widget.
+  RemoteViews layout for the Polaris home-screen collection widget.
+
+  Structure:
+    * Header   — app title ("Polaris") + amber brand pill. Tappable
+                 to launch the app.
+    * ListView — scrollable list of pinned subjects (life countdown
+                 first, then events sorted by target date). Each row
+                 is inflated from polaris_widget_item.xml by
+                 PolarisWidgetItemsFactory.
+    * Empty    — shown by RemoteViews when the list is empty (no
+                 pins yet). Wired via setEmptyView in the provider.
 
   Design tokens (must mirror lib/app/theme/color_tokens.dart):
-  - Background: Indigo 700 (#4338CA) with 16dp rounded corners.
-  - Title:     White, 14sp, medium.
-  - Days hero: White, 36sp, bold — the at-a-glance number.
-  - Subtitle:  White @ 80% alpha, 12sp.
-  - Brand:     Amber 400 (#FBBF24) "POLARIS" pill in the corner.
+  - Surface:   Indigo 700 (#4338CA) with 20dp rounded corners.
+  - Title:     White, 14sp, bold.
+  - Brand pill Amber 400 (#FBBF24) "POLARIS" badge.
 
   IDs are referenced by name in PolarisWidgetProvider.kt — keep in
   sync when renaming.
@@ -17,14 +25,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="14dp"
     android:background="@drawable/polaris_widget_background">
 
     <LinearLayout
+        android:id="@+id/polaris_widget_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
 
         <TextView
             android:id="@+id/polaris_widget_title"
@@ -51,32 +61,40 @@
             android:text="POLARIS" />
     </LinearLayout>
 
-    <!--
-      Vertical spacing is expressed as a margin on the next TextView
-      instead of a <Space> element. RemoteViews on Android 14+ ships
-      a stricter allowlist of inflatable classes, and `android.widget.Space`
-      is not on it — using it crashes the launcher with
-      "Class not allowed to be inflated android.widget.Space" and shows
-      "Can't load widget" on the home screen.
-    -->
-    <TextView
-        android:id="@+id/polaris_widget_days"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#FFFFFF"
-        android:textSize="34sp"
-        android:textStyle="bold"
-        android:includeFontPadding="false"
-        android:text="—" />
-
-    <TextView
-        android:id="@+id/polaris_widget_subtitle"
+    <ListView
+        android:id="@+id/polaris_widget_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="#E0E7FF"
-        android:textSize="12sp"
-        android:maxLines="2"
-        android:ellipsize="end"
-        android:text="Pin an event in Polaris" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:listSelector="@android:color/transparent" />
+
+    <LinearLayout
+        android:id="@+id/polaris_widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/polaris_widget_empty_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:text="Nothing pinned yet" />
+
+        <TextView
+            android:id="@+id/polaris_widget_empty_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#C7D2FE"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:text="Pin from inside Polaris" />
+    </LinearLayout>
 </LinearLayout>

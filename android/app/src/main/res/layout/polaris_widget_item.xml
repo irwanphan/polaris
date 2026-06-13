@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Single row in the Polaris widget ListView. Populated by
+  PolarisWidgetItemsFactory#getViewAt.
+
+  Layout: vertical card with rounded background, a colored accent
+  strip on the left, and three text rows:
+    * title    — subject name (e.g. "Sisa Hariku" or event title)
+    * hero     — at-a-glance days count (e.g. "10906 hari lagi")
+    * subtitle — custom message or auto "{date} · {recurrence}"
+
+  All IDs are referenced from
+  android/app/src/main/kotlin/com/phandarian/polaris/PolarisWidgetItemsFactory.kt —
+  keep in sync when renaming.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/polaris_widget_item_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:background="@drawable/polaris_widget_item_background">
+
+    <!--
+      FrameLayout (not View) because raw `android.view.View` is not
+      on the RemoteViews allowed-class list — inflating it crashes
+      the launcher with "Class not allowed to be inflated". The
+      backgroundColor is overridden per-row from
+      PolarisWidgetItemsFactory via
+      `RemoteViews#setInt(..., "setBackgroundColor", color)`.
+    -->
+    <FrameLayout
+        android:id="@+id/polaris_widget_item_accent"
+        android:layout_width="4dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/polaris_widget_accent_strip" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/polaris_widget_item_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#E0E7FF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Title" />
+
+        <TextView
+            android:id="@+id/polaris_widget_item_hero"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="—" />
+
+        <TextView
+            android:id="@+id/polaris_widget_item_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#C7D2FE"
+            android:textSize="11sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:text="Subtitle" />
+    </LinearLayout>
+</LinearLayout>

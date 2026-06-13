@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Per-row card background for items inside the Polaris widget
+  ListView. Sits on top of the indigo widget surface and adds a
+  subtle white tint so individual items pop without looking like a
+  separate panel.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#1AFFFFFF" />
+    <corners android:radius="14dp" />
+</shape>

@@ -425,7 +425,7 @@ class AppLEn extends AppL {
 
   @override
   String get lifePinToggleHelper =>
-      'Pinning the life countdown unpins any pinned event — the widget shows one thing at a time.';
+      'Show the life countdown at the top of your home-screen widget.';
 
   @override
   String get lifePinCustomMessageLabel => 'Custom message (optional)';
@@ -478,4 +478,11 @@ class AppLEn extends AppL {
     );
     return '$_temp0';
   }
+
+  @override
+  String get widgetEmptyTitle => 'Nothing pinned yet';
+
+  @override
+  String get widgetEmptySubtitle =>
+      'Pin your life countdown or events to see them here.';
 }

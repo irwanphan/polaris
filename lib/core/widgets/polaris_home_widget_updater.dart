@@ -1,3 +1,4 @@
+import 'dart:convert' as convert;
 import 'dart:ui' as ui;
 
 import 'package:home_widget/home_widget.dart';
@@ -16,21 +17,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Concrete [HomeWidgetUpdater] backed by the `home_widget` plugin.
 ///
-/// Pushes three string keys to the Android `SharedPreferences` that
-/// the native `PolarisWidgetProvider` reads — see the companion
-/// constants on that class for the wire contract.
+/// Serializes every currently-pinned subject (life-countdown + each
+/// pinned event) as a JSON array stored under
+/// [kItemsJsonKey] in the Android `SharedPreferences` bridge. The
+/// native side parses this list and renders it as a scrollable
+/// `ListView` collection widget — see
+/// `PolarisWidgetRemoteViewsService.kt` for the wire reader.
 ///
-/// Subject resolution (highest priority first):
-///   1. Life-countdown pin (`LifePinPreferences.pinned == true`) →
-///      title is the localized "Sisa Hariku" label, hero is days
-///      remaining, subtitle is either the user's custom message or
-///      "Ends ~{estimatedEndDate}".
-///   2. Pinned event → title is the event title, hero is days until
-///      the next occurrence, subtitle is either the event's
-///      [Event.widgetMessage] or the auto "{date} · {recurrence}"
-///      line.
-///   3. Neither → all three keys cleared so the native layout falls
-///      back to the empty state.
+/// Ordering: life pin (if any) first, then events sorted by
+/// `targetAt` ascending (soonest first). Life is treated as a
+/// "meta" subject — it's the most stable countdown so it's a useful
+/// anchor at the top of the list.
+///
+/// Per-item subtitle resolution:
+///   * Life:  custom message → otherwise "Ends ~{estimatedEndDate}".
+///   * Event: [Event.widgetMessage] → otherwise
+///            "{date} · {recurrence}".
 ///
 /// Strings are formatted in Dart using [AppL] loaded with the user's
 /// preferred locale (or the OS locale when "system" is selected) so
@@ -69,20 +71,31 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
   final Future<bool?> Function({String? androidName}) _triggerUpdate;
   final Future<AppL> Function(ui.Locale) _loadLocalizations;
 
-  /// Mirrors the key used by [LocaleController]. Hardcoded here
+  /// Mirrors the key used by `LocaleController`. Hardcoded here
   /// instead of importing the controller to avoid a Flutter-only
   /// dependency in this isolate-friendly class.
   static const String _kLocalePrefsKey = 'polaris.locale.v1';
   static const Set<String> _kSupportedLocales = <String>{'en', 'id'};
 
-  /// Wire-contract keys mirrored in
-  /// `android/.../kotlin/.../PolarisWidgetProvider.kt`.
-  static const String _kTitle = 'polaris_pinned_title';
-  static const String _kDays = 'polaris_pinned_days';
-  static const String _kSubtitle = 'polaris_pinned_subtitle';
+  /// JSON-encoded list of widget items. Mirrored in
+  /// `PolarisWidgetRemoteViewsService.kt` (`KEY_ITEMS_JSON`).
+  static const String kItemsJsonKey = 'polaris_widget_items_json';
+
+  /// Localized title shown above the list (e.g. "Polaris").
+  /// Mirrored in `PolarisWidgetProvider.kt` (`KEY_HEADER_TITLE`).
+  static const String kHeaderTitleKey = 'polaris_widget_header_title';
+
+  /// Localized empty-state copy. Mirrored in `PolarisWidgetProvider.kt`
+  /// (`KEY_EMPTY_TITLE` / `KEY_EMPTY_SUBTITLE`).
+  static const String kEmptyTitleKey = 'polaris_widget_empty_title';
+  static const String kEmptySubtitleKey = 'polaris_widget_empty_subtitle';
 
   /// Matches the class name registered in `AndroidManifest.xml`.
   static const String _kAndroidProvider = 'PolarisWidgetProvider';
+
+  /// Wire-format kind tags. Mirrored in `PolarisWidgetItemsFactory.kt`.
+  static const String _kKindLife = 'life';
+  static const String _kKindEvent = 'event';
 
   @override
   Future<void> refresh() async {
@@ -91,8 +104,10 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
       final AppL l = await _loadLocalizations(locale);
       final String localeTag = locale.toLanguageTag();
 
-      final _WidgetPayload? payload = await _resolvePayload(l, localeTag);
-      await _writeWidgetData(payload);
+      final List<_WidgetItem> items = await _buildItems(l, localeTag);
+
+      await _writeHeader(l);
+      await _writeItems(items);
       await _triggerUpdate(androidName: _kAndroidProvider);
     } catch (e, st) {
       logger.warn(
@@ -103,34 +118,35 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
     }
   }
 
-  /// Resolves the subject in priority order. Returns `null` for the
-  /// empty state so [_writeWidgetData] can blank the keys uniformly.
-  Future<_WidgetPayload?> _resolvePayload(AppL l, String localeTag) async {
+  Future<List<_WidgetItem>> _buildItems(AppL l, String localeTag) async {
+    final List<_WidgetItem> items = <_WidgetItem>[];
+
     final lifePin = lifePinRepository.read();
     if (lifePin.pinned) {
-      final life = await _buildLifePayload(l, localeTag, lifePin.customMessage);
-      if (life != null) return life;
-      // Profile missing → fall through to event so we still show something.
+      final _WidgetItem? life =
+          await _buildLifeItem(l, localeTag, lifePin.customMessage);
+      if (life != null) items.add(life);
     }
 
-    final eventResult = await eventRepository.getPinned();
-    final Event? pinnedEvent = eventResult.fold(
-      onOk: (e) => e,
+    final eventsResult = await eventRepository.getAllPinned();
+    final List<Event> events = eventsResult.fold(
+      onOk: (list) => list,
       onErr: (failure) {
         logger.warn(
-          'Widget refresh: failed to read pinned event, treating as empty',
+          'Widget refresh: failed to read pinned events',
           error: failure,
         );
-        return null;
+        return const <Event>[];
       },
     );
-    if (pinnedEvent != null) {
-      return _buildEventPayload(l, localeTag, pinnedEvent);
+    for (final event in events) {
+      items.add(_buildEventItem(l, localeTag, event));
     }
-    return null;
+
+    return items;
   }
 
-  Future<_WidgetPayload?> _buildLifePayload(
+  Future<_WidgetItem?> _buildLifeItem(
     AppL l,
     String localeTag,
     String? customMessage,
@@ -166,14 +182,21 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
         l.lifeWidgetSubtitleDefault(
           DateFormat.yMMMd(localeTag).format(estimate.estimatedEndDate),
         );
-    return _WidgetPayload(
+
+    return _WidgetItem(
+      id: 'life',
+      kind: _kKindLife,
       title: l.lifeTitle,
-      days: hero,
+      hero: hero,
       subtitle: subtitle,
+      // Amber matches the POLARIS brand pill and contrasts the
+      // indigo widget surface — indigo-on-indigo accent disappears
+      // visually.
+      accentColorHex: '#FBBF24',
     );
   }
 
-  _WidgetPayload _buildEventPayload(AppL l, String localeTag, Event event) {
+  _WidgetItem _buildEventItem(AppL l, String localeTag, Event event) {
     final DateTime now = _now();
     final DateTime next = event.nextOccurrence(now);
     final int days = event.daysUntil(now);
@@ -183,23 +206,26 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
           DateFormat('EEE, MMM d', localeTag).format(next),
           _localizedRecurrence(l, event.recurrence.storageKey),
         );
-    return _WidgetPayload(
+    return _WidgetItem(
+      id: event.id,
+      kind: _kKindEvent,
       title: event.title,
-      days: hero,
+      hero: hero,
       subtitle: subtitle,
+      accentColorHex: event.colorHex,
     );
   }
 
-  Future<void> _writeWidgetData(_WidgetPayload? payload) async {
-    if (payload == null) {
-      await _saveData(_kTitle, null);
-      await _saveData(_kDays, null);
-      await _saveData(_kSubtitle, null);
-      return;
-    }
-    await _saveData(_kTitle, payload.title);
-    await _saveData(_kDays, payload.days);
-    await _saveData(_kSubtitle, payload.subtitle);
+  Future<void> _writeHeader(AppL l) async {
+    await _saveData(kHeaderTitleKey, l.appTitle);
+    await _saveData(kEmptyTitleKey, l.widgetEmptyTitle);
+    await _saveData(kEmptySubtitleKey, l.widgetEmptySubtitle);
+  }
+
+  Future<void> _writeItems(List<_WidgetItem> items) async {
+    final List<Map<String, Object?>> rows =
+        items.map((i) => i.toJson()).toList(growable: false);
+    await _saveData(kItemsJsonKey, convert.json.encode(rows));
   }
 
   ui.Locale _resolveLocale() {
@@ -239,15 +265,31 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
       HomeWidget.updateWidget(androidName: androidName);
 }
 
-/// Internal struct so [_writeWidgetData] can stay agnostic of the
-/// subject type. Not exported.
-class _WidgetPayload {
-  const _WidgetPayload({
+/// Wire-format struct serialized to a single JSON array string and
+/// read by the native `PolarisWidgetItemsFactory`.
+class _WidgetItem {
+  const _WidgetItem({
+    required this.id,
+    required this.kind,
     required this.title,
-    required this.days,
+    required this.hero,
     required this.subtitle,
+    required this.accentColorHex,
   });
+
+  final String id;
+  final String kind;
   final String title;
-  final String days;
+  final String hero;
   final String subtitle;
+  final String accentColorHex;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'kind': kind,
+        'title': title,
+        'hero': hero,
+        'subtitle': subtitle,
+        'accent': accentColorHex,
+      };
 }

@@ -125,7 +125,7 @@
 
   "lifePinSheetTitle": "Sematkan ke widget",
   "lifePinToggleLabel": "Tampilkan hitung mundur hidup di widget",
-  "lifePinToggleHelper": "Menyematkan hitung mundur hidup akan melepas event yang sedang disematkan — widget hanya menampilkan satu hal pada satu waktu.",
+  "lifePinToggleHelper": "Tampilkan hitung mundur hidup di bagian atas widget layar utama.",
   "lifePinCustomMessageLabel": "Pesan kustom (opsional)",
   "lifePinCustomMessageHelper": "Mengganti subtitle otomatis. Coba sesuatu yang menenangkan — mis. \"Satu napas pada satu waktu.\"",
   "lifePinAction": "Sematkan",
@@ -135,5 +135,7 @@
   "lifeWidgetDaysRemainingShort": "{count, plural, =1{1 hari lagi} other{{count} hari lagi}}",
   "lifeWidgetSubtitleDefault": "Sekitar {date}",
   "widgetEventSubtitleDefault": "{date} \u00b7 {recurrence}",
-  "widgetEventDays": "{count, plural, =0{Hari ini} =1{1 hari} other{{count} hari}}"
+  "widgetEventDays": "{count, plural, =0{Hari ini} =1{1 hari} other{{count} hari}}",
+  "widgetEmptyTitle": "Belum ada yang disematkan",
+  "widgetEmptySubtitle": "Sematkan hitung mundur hidup atau acara untuk muncul di sini."
 }

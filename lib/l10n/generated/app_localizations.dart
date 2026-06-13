@@ -790,7 +790,7 @@ abstract class AppL {
   /// No description provided for @lifePinToggleHelper.
   ///
   /// In en, this message translates to:
-  /// **'Pinning the life countdown unpins any pinned event — the widget shows one thing at a time.'**
+  /// **'Show the life countdown at the top of your home-screen widget.'**
   String get lifePinToggleHelper;
 
   /// No description provided for @lifePinCustomMessageLabel.
@@ -852,6 +852,18 @@ abstract class AppL {
   /// In en, this message translates to:
   /// **'{count, plural, =0{Today} =1{1 day} other{{count} days}}'**
   String widgetEventDays(int count);
+
+  /// No description provided for @widgetEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing pinned yet'**
+  String get widgetEmptyTitle;
+
+  /// No description provided for @widgetEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin your life countdown or events to see them here.'**
+  String get widgetEmptySubtitle;
 }
 
 class _AppLDelegate extends LocalizationsDelegate<AppL> {

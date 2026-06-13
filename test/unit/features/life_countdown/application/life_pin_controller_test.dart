@@ -35,15 +35,26 @@ class _NoopDispatcher implements NotificationDispatcher {
   Future<void> cancelAll() async {}
 }
 
-/// Records every mutating call so we can assert ordering and arguments.
+/// Records every pin-related call so we can assert that
+/// [EventsController] talks to the new per-event [setPinned] API
+/// instead of the old exclusive entrypoint.
 class _SpyEventRepo implements EventRepository {
-  String? lastPinExclusiveArg;
+  String? lastSetPinnedId;
+  bool? lastSetPinnedValue;
+  int setPinnedCalls = 0;
   int pinExclusiveCalls = 0;
+
+  @override
+  Future<Result<void, Failure>> setPinned(String id, bool isPinned) async {
+    setPinnedCalls += 1;
+    lastSetPinnedId = id;
+    lastSetPinnedValue = isPinned;
+    return const Result.ok(null);
+  }
 
   @override
   Future<Result<void, Failure>> pinExclusive(String? id) async {
     pinExclusiveCalls += 1;
-    lastPinExclusiveArg = id;
     return const Result.ok(null);
   }
 
@@ -51,6 +62,9 @@ class _SpyEventRepo implements EventRepository {
   Stream<List<Event>> watchAll() => const Stream<List<Event>>.empty();
   @override
   Future<Result<Event?, Failure>> getPinned() async => const Result.ok(null);
+  @override
+  Future<Result<List<Event>, Failure>> getAllPinned() async =>
+      const Result.ok(<Event>[]);
   @override
   Future<Result<Event?, Failure>> getById(String id) async =>
       const Result.ok(null);
@@ -92,14 +106,13 @@ void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   group('LifePinController.pin', () {
-    test('persists pinned + message, unpins events, refreshes widget',
+    test(
+        'persists pinned + message and refreshes widget without touching events',
         () async {
       final lifeRepo = await _lifeRepo();
-      final eventRepo = _SpyEventRepo();
       final widget = _CountingWidget();
       final ctrl = LifePinController(
         lifePinRepository: lifeRepo,
-        eventRepository: eventRepo,
         widgetUpdater: widget,
       );
 
@@ -108,9 +121,6 @@ void main() {
       final after = lifeRepo.read();
       expect(after.pinned, isTrue);
       expect(after.customMessage, 'breathe in');
-      expect(eventRepo.pinExclusiveCalls, 1);
-      expect(eventRepo.lastPinExclusiveArg, isNull,
-          reason: 'pinExclusive(null) unpins everything');
       expect(widget.calls, 1);
     });
 
@@ -118,7 +128,6 @@ void main() {
       final lifeRepo = await _lifeRepo();
       final ctrl = LifePinController(
         lifePinRepository: lifeRepo,
-        eventRepository: _SpyEventRepo(),
         widgetUpdater: _CountingWidget(),
       );
 
@@ -137,7 +146,6 @@ void main() {
       final widget = _CountingWidget();
       final ctrl = LifePinController(
         lifePinRepository: lifeRepo,
-        eventRepository: _SpyEventRepo(),
         widgetUpdater: widget,
       );
 
@@ -157,7 +165,6 @@ void main() {
       final widget = _CountingWidget();
       final ctrl = LifePinController(
         lifePinRepository: lifeRepo,
-        eventRepository: _SpyEventRepo(),
         widgetUpdater: widget,
       );
 
@@ -175,20 +182,11 @@ void main() {
     });
   });
 
-  group('EventsController.togglePin × LifePinRepository (mutual exclusivity)',
-      () {
-    test('pinning an event unpins the life countdown', () async {
-      final lifeRepo = await _lifeRepo();
-      await lifeRepo.save(
-        LifePinPreferences(pinned: true, customMessage: 'grounding'),
-      );
+  group('EventsController.togglePin (independent pin)', () {
+    test('uses setPinned and does not invoke pinExclusive', () async {
       final widget = _CountingWidget();
-      final events = EventsController(
-        _SpyEventRepo(),
-        _scheduler(),
-        widget,
-        lifeRepo,
-      );
+      final eventRepo = _SpyEventRepo();
+      final events = EventsController(eventRepo, _scheduler(), widget);
 
       final result = await events.togglePin(
         id: 'evt-1',
@@ -196,26 +194,37 @@ void main() {
       );
 
       expect(result.isOk, isTrue);
-      expect(lifeRepo.read().pinned, isFalse,
-          reason: 'mutual exclusivity: only one subject at a time');
-      expect(lifeRepo.read().customMessage, 'grounding',
-          reason: 'message is kept for the next pin');
+      expect(eventRepo.setPinnedCalls, 1);
+      expect(eventRepo.lastSetPinnedId, 'evt-1');
+      expect(eventRepo.lastSetPinnedValue, isTrue);
+      expect(eventRepo.pinExclusiveCalls, 0,
+          reason: 'multi-pin: must not use the legacy exclusive entrypoint');
       expect(widget.calls, 1);
     });
 
-    test('unpinning an event does NOT auto-pin life', () async {
-      final lifeRepo = await _lifeRepo();
+    test('toggling a currently-pinned event flips it to unpinned', () async {
       final widget = _CountingWidget();
-      final events = EventsController(
-        _SpyEventRepo(),
-        _scheduler(),
-        widget,
-        lifeRepo,
-      );
+      final eventRepo = _SpyEventRepo();
+      final events = EventsController(eventRepo, _scheduler(), widget);
 
       await events.togglePin(id: 'evt-1', isCurrentlyPinned: true);
 
-      expect(lifeRepo.read().pinned, isFalse);
+      expect(eventRepo.lastSetPinnedValue, isFalse);
+    });
+
+    test('pinning an event does NOT unpin the life countdown', () async {
+      final lifeRepo = await _lifeRepo();
+      await lifeRepo.save(
+        LifePinPreferences(pinned: true, customMessage: 'grounding'),
+      );
+      final widget = _CountingWidget();
+      final events = EventsController(_SpyEventRepo(), _scheduler(), widget);
+
+      await events.togglePin(id: 'evt-1', isCurrentlyPinned: false);
+
+      expect(lifeRepo.read().pinned, isTrue,
+          reason:
+              'life and event pins are independent — both can coexist in the widget list');
     });
   });
 }

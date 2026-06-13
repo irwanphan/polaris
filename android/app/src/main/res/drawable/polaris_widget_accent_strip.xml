@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Vertical accent strip displayed on the left edge of each list
+  row. The solid color is overridden per-row in
+  PolarisWidgetItemsFactory via
+  `RemoteViews#setInt(id, "setBackgroundColor", color)` so the
+  shape itself only needs to define rounded corners.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FBBF24" />
+    <corners android:radius="6dp" />
+</shape>

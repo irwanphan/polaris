@@ -12,9 +12,10 @@ import 'package:polaris/l10n/generated/app_localizations.dart';
 /// Behaviour:
 ///   - Reads the current [LifePinPreferences] from the repository so
 ///     the toggle and message field preserve prior choices.
-///   - On Save: routes through [LifePinController] which enforces the
-///     mutual-exclusivity invariant (pinning life unpins any pinned
-///     event) and triggers a widget refresh.
+///   - On Save: routes through [LifePinController] which persists the
+///     preference and triggers a widget refresh. Life and event pins
+///     are independent — the widget renders all pinned subjects in a
+///     scrollable list.
 ///   - The custom message survives unpinning so re-pinning later
 ///     restores it without retyping.
 class LifePinSheet extends ConsumerStatefulWidget {
