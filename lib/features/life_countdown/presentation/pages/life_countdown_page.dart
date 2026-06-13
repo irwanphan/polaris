@@ -12,6 +12,7 @@ import 'package:polaris/features/life_countdown/domain/entities/life_estimate.da
 import 'package:polaris/features/life_countdown/presentation/widgets/countdown_display.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/disclaimer_note.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/display_mode_segmented.dart';
+import 'package:polaris/features/recommendations/presentation/widgets/insights_section.dart';
 import 'package:polaris/shared/widgets/polaris_scaffold.dart';
 import 'package:polaris/shared/widgets/section_card.dart';
 
@@ -101,6 +102,8 @@ class _Loaded extends StatelessWidget {
           child: DisplayModeSegmented(selected: mode, onChanged: onModeChanged),
         ),
         const SizedBox(height: Spacing.x8),
+        const InsightsSection(),
+        const SizedBox(height: Spacing.x6),
         SectionCard(
           leading: Icon(Icons.timeline, color: theme.colorScheme.primary),
           child: Column(

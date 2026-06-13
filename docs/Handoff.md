@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-13 by Cursor AI session — **M4 (Lifestyle Logging) shipped** on top of M0/M1/M2 + CI
+> **Last updated:** 2026-06-13 by Cursor AI session — **M5 (Recommendation Engine v1) shipped** on top of M0/M1/M2/M4 + CI
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-13, **M0–M2 + CI + M4 shipped**)
+## 2. Current Status (As of 2026-06-13, **M0–M2 + CI + M4 + M5 shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -613,8 +613,110 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     without crashes (logcat clean — only a benign HWUI EGL
     notice).
 
+- **M5 — Recommendation Engine v1** shipped:
+  - **Domain** (`features/recommendations/domain/`):
+    - `InsightSeverity` enum (`info` / `encourage` / `warn` /
+      `critical`) — drives card colour + sort order via
+      `index`. `critical` reserved for future health flags;
+      no M5 rule emits it yet, but UI styling is already
+      wired so adding the first one is zero-friction.
+    - `Insight` entity — `id`, `severity`, `title`, `body`,
+      optional `relatedCategory` (for icon tint), optional
+      `ctaLabel` + `ctaRoute`. Immutable + structural
+      equality so widget keys + analytics dedupe work.
+    - `LifestyleSnapshot` value object — pre-aggregated
+      `Map<LogCategory, Map<DateTime, DailyAggregate>>`
+      keyed by local midnight, plus optional
+      `LifeEstimate`, `referenceDate`, `windowDays`. Helpers
+      (`recentDays`, `activeDays`, `averagePerActiveDay`,
+      `sumOverWindow`, `hasAnyLogIn`) keep rule code
+      one-liners.
+    - `DailyAggregate` — per (date, category) value +
+      entryCount.
+    - `RecommendationRule` abstract interface — pure
+      function `evaluate(snapshot) -> Insight?`. No
+      `BuildContext`, no `Ref`, no I/O.
+    - **Six starter rules** (one file each → Open/Closed):
+      - `WaterTargetRule` (≥3 sample days, avg < 6 glasses
+        over last 7 days) — `warn`.
+      - `SleepRegularityRule` (≥3 nights < 6h in last 7
+        days) — `warn`.
+      - `ExerciseStreakRule` (0 exercise minutes in last 7
+        days; guarded by "user is actively logging
+        something else" so it never stacks with
+        `NoDataRule`) — `encourage`.
+      - `MoodTrendRule` (last 3 logged moods strictly
+        descending) — `warn`. Strict descent avoids firing
+        on flat `(3,3,3)`.
+      - `LifePhaseRule` (percentLived crosses 25/50/75/90)
+        — `info`. Picks the largest matched threshold.
+      - `NoDataRule` (zero lifestyle logs in last 14 days)
+        — `encourage`. Onboarding nudge.
+  - **Application** (`features/recommendations/application/`):
+    - `SnapshotBuilder` — pure transformer `(logs, now,
+      windowDays, lifeEstimate?) -> LifestyleSnapshot`.
+      Honours `LogAggregation` (cumulative sums per day,
+      snapshot picks latest), drops entries outside the
+      window. Reusable from any future surface (weekly
+      digest, push payload, …).
+    - `RecommendationEngine` — composes the rule list,
+      drops nulls, sorts by severity descending, returns
+      `List<Insight>` (unmodifiable). `evaluateTop(max:)`
+      caps for attention-limited surfaces.
+    - `providers.dart`:
+      - `defaultRuleSetProvider` (all 6 rules; add a rule =
+        append here, no engine change).
+      - `snapshotBuilderProvider`, `recommendationEngineProvider`.
+      - `insightWindowLogsStreamProvider` — 14-day rolling
+        window query against the M4 lifestyle repository
+        (doesn't widen M4's 7-day `weekLogsStreamProvider`).
+      - `insightsProvider` — composes the logs stream + the
+        existing `lifeCountdownControllerProvider` into the
+        evaluated insight feed. Recomputes whenever either
+        upstream changes; surfaces loading/error from
+        whichever is pending.
+      - `kInsightWindowDays = 14` — single source of truth
+        shared with the builder and tests.
+  - **Presentation** (`features/recommendations/presentation/`):
+    - `InsightCard` — stateless, severity drives the
+      colour mapper (`_toneFor`) which reads from the
+      app's `ColorScheme` (no hard-coded hex → dark mode
+      free, rebrand free). Icon falls back to
+      severity-specific glyphs when `relatedCategory` is
+      null. `ctaLabel` renders a `TextButton` that the
+      parent wires.
+    - `InsightsSection` — `ConsumerWidget`, watches
+      `insightsProvider`, hides itself when empty (loading,
+      error, or zero insights — never grows an empty
+      "Insights" header). Caps at `maxCards: 3`. CTA taps
+      route via `context.go(ctaRoute)`.
+    - Surfaced inline on `LifeCountdownPage` between the
+      display-mode segmented control and the existing
+      estimate/expectancy cards. Justification in BRD §5.4:
+      Life is the most-opened screen, insights piggyback
+      on that attention.
+  - **Tests** — 141/141 passing (up from 110):
+    - `snapshot_builder_test`: empty snapshot, cumulative
+      day-sum, snapshot latest-wins, window drop,
+      chronological `recentDays`, `averagePerActiveDay`
+      (ignores empty days), `sumOverWindow`, `hasAnyLogIn`.
+    - `rules_test`: every rule covered with both fire and
+      skip cases; `MoodTrendRule` explicitly asserts flat
+      `(3,3,3)` does *not* fire; `LifePhaseRule` asserts
+      it picks the highest crossed threshold.
+    - `recommendation_engine_test`: drops nulls, sorts by
+      severity descending (verifies all 4 tiers in order),
+      returns an unmodifiable list, `evaluateTop` caps.
+  - **`flutter analyze`**: still zero issues.
+  - **APK build verified + live on emulator**: debug APK
+    installs over the existing app, freshly-onboarded
+    profile triggers `NoDataRule` + `LifePhaseRule` (50%
+    bucket), both render with their per-severity tones and
+    the CTAs route to `/lifestyle` and `/events`
+    respectively. Screenshot in chat history.
+
 ### In Progress
-- None — M4 closed. Manual smoke tests below are still
+- None — M5 closed. Manual smoke tests below remain
   user-driven (no blockers).
 
 ### Pending Manual Verification (user-driven)
@@ -646,17 +748,20 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
   `POST_NOTIFICATIONS`, lock screen, wait for T-1h reminder.
 
 ### Not Started (next on deck)
-- **M5 — Recommendation Engine v1**: rule-based engine that
-  consumes `weekLogsStreamProvider` (or a new
-  `last30DaysLogsStreamProvider`) and emits an insight feed
-  on the Life or Lifestyle landing — ≥6 starter rules
-  (water target, sleep regularity, exercise streak, mood
-  trend, etc.). Now unblocked by the lifestyle data shipped
-  in M4.
 - **M6 — Polish & beta**: a11y pass, l10n (ID+EN — most
   copy is still hard-coded English aside from "Sisa Hariku"),
   golden tests for `EventCard` / `LifeCountdownPage` /
-  `CategorySummaryCard`, internal Play Store track.
+  `CategorySummaryCard` / `InsightCard`, internal Play Store
+  track.
+- **Recommendation Engine v2** (after M6): dismiss-a-card
+  + cooldown (so the same `LifePhaseRule` insight doesn't
+  re-show every open), per-rule analytics events, plus
+  3–5 more rules drawn from real user data once we have
+  testers (e.g. weekend vs weekday sleep delta, mood vs
+  exercise correlation, water-on-low-sleep nudge).
+  Optional: ship one rule as a *positive* streak
+  (`encourage` after 7 consecutive exercise days) so the
+  feed isn't only warnings.
 - **Lifestyle polish (deferred from M4 scope)**: per-category
   charts (e.g. last-7-days water bars, sleep trendline) —
   fold into M6 or a dedicated minor milestone. HealthKit /
@@ -701,7 +806,7 @@ flutter doctor -v          # all checked categories should be green
 flutter pub get            # resolve current pubspec
 dart run build_runner build  # regenerate *.g.dart (Drift, Riverpod, …)
 flutter analyze            # expect: No issues found!
-flutter test               # expect: All tests passed! (110+ tests)
+flutter test               # expect: All tests passed! (141+ tests)
 ```
 
 > The `build_runner build` step is mandatory after a fresh checkout
