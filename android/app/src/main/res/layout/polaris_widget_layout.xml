@@ -51,14 +51,19 @@
             android:text="POLARIS" />
     </LinearLayout>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="8dp" />
-
+    <!--
+      Vertical spacing is expressed as a margin on the next TextView
+      instead of a <Space> element. RemoteViews on Android 14+ ships
+      a stricter allowlist of inflatable classes, and `android.widget.Space`
+      is not on it — using it crashes the launcher with
+      "Class not allowed to be inflated android.widget.Space" and shows
+      "Can't load widget" on the home screen.
+    -->
     <TextView
         android:id="@+id/polaris_widget_days"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:textColor="#FFFFFF"
         android:textSize="34sp"
         android:textStyle="bold"
