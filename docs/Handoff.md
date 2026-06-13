@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-13 by Cursor AI session — **M6 (Polish & beta — l10n + a11y + goldens) shipped** on top of M0/M1/M2/M4/M5 + CI
+> **Last updated:** 2026-06-14 by Cursor AI session — **Widget Pin v2 (life pin + custom message + mutual exclusivity) shipped** on top of M0/M1/M2/M4/M5/M6 + CI
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-13, **M0–M2 + CI + M4 + M5 + M6 shipped**)
+## 2. Current Status (As of 2026-06-14, **M0–M2 + CI + M4 + M5 + M6 + Widget Pin v2 shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -832,15 +832,104 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
       a `release.yml` workflow that builds a signed AAB
       on `v*` tag push and uploads via
       `r0adkll/upload-google-play`.
-    - **Android home-screen widget text** still uses
-      `event.recurrence.label` (English) because Glance /
-      RemoteViews need their own locale plumbing —
-      tracked alongside the Glance Compose migration.
+    - ~~**Android home-screen widget text** still uses
+      `event.recurrence.label` (English)~~ — **resolved
+      by Widget Pin v2**: `PolarisHomeWidgetUpdater` now
+      loads `AppL` for the user's preferred locale on
+      every refresh and routes recurrence labels through
+      a local switch. Date/number formatting also locale-
+      aware. The Glance Compose migration is now purely
+      a rendering-engine concern, not a localization gap.
+
+- **Widget Pin v2 (life pin + custom message)** shipped on
+  top of M6:
+  - **Drift schema v5** adds a nullable `widget_message`
+    column to `events_table`. Migration runs idempotently
+    on launch via `addColumn` — verified live on the
+    emulator (existing test event survived intact).
+  - **`Event.widgetMessage`** is the per-event override
+    line. Trimmed + normalized to `null` on empty in the
+    entity factory so the widget code never has to
+    special-case empty strings. Mapped through both
+    directions of `EventRepositoryImpl`. Surfaced in
+    `EventEditorSheet` as a dedicated TextField below
+    `note` (kept separate because note = private context,
+    `widgetMessage` = what the widget shows).
+  - **`LifePinPreferences` + `LifePinRepository`**
+    (SharedPreferences-backed, broadcast `watch()` stream)
+    persist `{pinned, customMessage}` under the
+    `polaris.life_pin.v1.*` keys. Unpinning preserves the
+    message so re-pinning later restores it without
+    retyping.
+  - **`LifePinController`** owns the write path:
+    `pin(customMessage:)`, `updateMessage(...)`, `unpin()`.
+    `pin()` enforces the mutual-exclusivity invariant by
+    calling `eventRepository.pinExclusive(null)` before
+    refreshing the widget — only one subject can occupy
+    the pinned slot at a time. Symmetric guard lives in
+    `EventsController.togglePin`, which clears the life
+    pin when pinning an event (unpinning an event does
+    NOT auto-pin life — that would be surprising).
+  - **`LifePinSheet`** (modal bottom sheet, opened from a
+    new pin `IconButton` in the Life tab AppBar) hosts a
+    `SwitchListTile.adaptive` toggle, a max-80-char custom
+    message `TextField`, and Cancel/Save buttons. The
+    AppBar icon switches between `push_pin_outlined` /
+    `push_pin` via a `StreamProvider` on the prefs, so
+    pin state is always reflected without a manual
+    refresh.
+  - **`PolarisHomeWidgetUpdater` rewritten** with explicit
+    subject priority: life-pin → event-pin → empty. The
+    widget renders the user's custom message in place of
+    the auto subtitle when one is set (Event.widgetMessage
+    for events, LifePinPreferences.customMessage for life).
+    Now locale-aware: reads the user's `polaris.locale.v1`
+    preference (falls back to `PlatformDispatcher.locale`)
+    and formats hero/subtitle/recurrence strings through
+    `AppL.delegate.load(locale)` — recurrence labels are
+    handled via a local switch since `enum_labels.dart`
+    requires a `BuildContext` we don't have in the
+    headless refresh path. **Bootstrap now eagerly calls
+    `initializeDateFormatting('en'/'id')`** so the first
+    widget refresh after launch doesn't blow up on
+    `LocaleDataException`.
+  - **New tests** (+13 over the M6 baseline → **154** unit
+    + 10 golden):
+    - `life_pin_repository_test.dart` — round-trip,
+      whitespace normalization, `clear()`, `watch()`
+      emissions.
+    - `life_pin_controller_test.dart` — pin/unpin/update
+      side effects, widget refresh only when pinned,
+      `EventsController.togglePin × LifePinRepository`
+      mutual exclusivity in both directions.
+    - `polaris_home_widget_updater_test.dart` rewritten
+      end-to-end: event pin (EN), event `widgetMessage`
+      overrides subtitle, life-pin priority over event,
+      life custom message overrides subtitle, life pin
+      with missing profile falls back to event, ID
+      locale renders ID strings (`hari lagi`, `Sekitar`).
+  - **L10n** keys added (EN + ID) for the sheet
+    (`lifePinSheetTitle`, `lifePinToggleLabel`,
+    `lifePinToggleHelper`, `lifePinCustomMessageLabel`,
+    `lifePinCustomMessageHelper`, `lifePinAction`,
+    `lifePinUnpinAction`, `lifePinTooltip`,
+    `lifePinUnpinTooltip`) and the widget itself
+    (`lifeWidgetDaysRemainingShort` plural,
+    `lifeWidgetSubtitleDefault`,
+    `widgetEventDays` plural,
+    `widgetEventSubtitleDefault`,
+    `eventsFieldWidgetMessage` + helper).
+  - Verified end-to-end on the emulator: pinned life
+    countdown with `"Satu napas pada satu waktu"` → home
+    widget renders **Sisa Hariku / 10906 hari lagi /
+    Satu napas pada satu waktu**, and the previously
+    pinned `test` event was auto-unpinned by the
+    exclusivity guard.
 
 ### In Progress
-- None — M6 closed except for the deferred Play Store
-  track sub-deliverable (D), which is owner-gated. Manual
-  smoke tests below remain user-driven (no blockers).
+- None — Widget Pin v2 closed. M6 deferred items (Play
+  Store track, insight l10n) still owner/scope-gated.
+  Manual smoke tests below remain user-driven.
 
 ### Pending Manual Verification (user-driven)
 - **Lifestyle end-to-end on device**:
@@ -855,17 +944,30 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
      confirm dialog → delete; row disappears from list and
      today summary recalculates.
 - **Add the widget to the Android home screen** (carry-over
-  from M2):
+  from M2 — now exercises Widget Pin v2 too):
   1. On the running emulator, long-press the home screen →
      **Widgets** → scroll to **polaris** → drag the
      "Pinned event countdown" tile to the home screen.
   2. Widget should render the empty state
      ("Polaris · — · Pin an event in Polaris").
   3. Open Polaris → Events tab → create an event a few days
-     out → tap **Pin** in the card's menu.
-  4. Widget should update within a second to show the event
-     title, days countdown, and date subtitle.
-  5. Tap the widget — Polaris should launch.
+     out, optionally fill **Widget message (optional)** with
+     e.g. `"Lunch with Mom"`, then tap **Pin** in the card's
+     menu. Widget should update within a second to show the
+     event title, days countdown, and your widget message
+     (or the auto `date · recurrence` line if you left it
+     blank).
+  4. Open the **Life** tab → tap the pin icon in the AppBar
+     → toggle **Show life countdown on widget** → optionally
+     type a custom message → **Pin**. The previously pinned
+     event should auto-unpin and the widget should show
+     `Sisa Hariku / <N> hari lagi / <your message or "Sekitar
+     <date>">`.
+  5. Toggle the language picker in **Settings** between
+     EN and ID — the widget should re-render with the
+     new locale strings (plural rules, recurrence label,
+     date format).
+  6. Tap the widget — Polaris should launch.
 - **Notification smoke test** is also still pending — same
   flow as before: create an event ~70 min out, accept
   `POST_NOTIFICATIONS`, lock screen, wait for T-1h reminder.

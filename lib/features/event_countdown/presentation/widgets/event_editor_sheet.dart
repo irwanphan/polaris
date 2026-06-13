@@ -33,6 +33,7 @@ class EventEditorSheet extends ConsumerStatefulWidget {
 class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
   late final TextEditingController _titleCtrl;
   late final TextEditingController _noteCtrl;
+  late final TextEditingController _widgetMessageCtrl;
   late DateTime _targetAt;
   late Recurrence _recurrence;
   String _colorHex = '#6366F1';
@@ -54,6 +55,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
     final Event? o = widget.original;
     _titleCtrl = TextEditingController(text: o?.title ?? '');
     _noteCtrl = TextEditingController(text: o?.note ?? '');
+    _widgetMessageCtrl = TextEditingController(text: o?.widgetMessage ?? '');
     _targetAt =
         o?.targetAt ??
         DateTime.now()
@@ -73,6 +75,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
   void dispose() {
     _titleCtrl.dispose();
     _noteCtrl.dispose();
+    _widgetMessageCtrl.dispose();
     super.dispose();
   }
 
@@ -135,6 +138,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
             targetAt: _targetAt,
             colorHex: _colorHex,
             note: _noteCtrl.text,
+            widgetMessage: _widgetMessageCtrl.text,
             recurrence: _recurrence,
           )
         : await ctrl.updateEvent(
@@ -144,6 +148,7 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
             colorHex: _colorHex,
             iconKey: original.iconKey,
             note: _noteCtrl.text,
+            widgetMessage: _widgetMessageCtrl.text,
             recurrence: _recurrence,
           );
 
@@ -242,6 +247,20 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               decoration: InputDecoration(
                 labelText: l.eventsFieldNote,
                 prefixIcon: const Icon(Icons.notes),
+              ),
+            ),
+            const SizedBox(height: Spacing.x3),
+            TextField(
+              controller: _widgetMessageCtrl,
+              minLines: 1,
+              maxLines: 2,
+              maxLength: 80,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                labelText: l.eventsFieldWidgetMessage,
+                helperText: l.eventsFieldWidgetMessageHelper,
+                helperMaxLines: 3,
+                prefixIcon: const Icon(Icons.push_pin_outlined),
               ),
             ),
             const SizedBox(height: Spacing.x4),

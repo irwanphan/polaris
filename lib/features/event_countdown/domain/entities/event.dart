@@ -19,6 +19,7 @@ final class Event {
     required this.createdAt,
     required this.updatedAt,
     this.note,
+    this.widgetMessage,
   });
 
   /// Creates a brand-new event with a freshly-generated id and matching
@@ -29,6 +30,7 @@ final class Event {
     String colorHex = '#6366F1',
     String iconKey = 'event',
     String? note,
+    String? widgetMessage,
     Recurrence recurrence = Recurrence.none,
     bool isPinnedToWidget = false,
     DateTime? now,
@@ -41,6 +43,7 @@ final class Event {
       colorHex: colorHex,
       iconKey: iconKey,
       note: note,
+      widgetMessage: _normalizeWidgetMessage(widgetMessage),
       recurrence: recurrence,
       isPinnedToWidget: isPinnedToWidget,
       createdAt: stamp,
@@ -56,6 +59,12 @@ final class Event {
   final String colorHex;
   final String iconKey;
   final String? note;
+
+  /// Optional user-authored line shown on the home-screen widget in
+  /// place of the auto subtitle. See [EventsTable.widgetMessage] for
+  /// the persistence contract. Stored normalized: trimmed; empty
+  /// becomes `null` so widget code can `??` cleanly.
+  final String? widgetMessage;
   final Recurrence recurrence;
   final bool isPinnedToWidget;
   final DateTime createdAt;
@@ -64,17 +73,23 @@ final class Event {
   /// Returns a copy with the supplied fields replaced.
   ///
   /// Passing `null` for a nullable field means "leave unchanged". To
-  /// **clear** [note], construct a new [Event] directly instead.
+  /// **clear** [note] or [widgetMessage], use the dedicated
+  /// `*Override` flags below.
   Event copyWith({
     String? title,
     DateTime? targetAt,
     String? colorHex,
     String? iconKey,
     String? note,
+    String? widgetMessage,
+    bool clearWidgetMessage = false,
     Recurrence? recurrence,
     bool? isPinnedToWidget,
     DateTime? updatedAt,
   }) {
+    final String? nextWidgetMessage = clearWidgetMessage
+        ? null
+        : _normalizeWidgetMessage(widgetMessage ?? this.widgetMessage);
     return Event(
       id: id,
       title: title ?? this.title,
@@ -82,11 +97,18 @@ final class Event {
       colorHex: colorHex ?? this.colorHex,
       iconKey: iconKey ?? this.iconKey,
       note: note ?? this.note,
+      widgetMessage: nextWidgetMessage,
       recurrence: recurrence ?? this.recurrence,
       isPinnedToWidget: isPinnedToWidget ?? this.isPinnedToWidget,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  static String? _normalizeWidgetMessage(String? raw) {
+    if (raw == null) return null;
+    final String trimmed = raw.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   /// Returns the next occurrence on or after [now], honoring [recurrence].
@@ -188,6 +210,7 @@ final class Event {
         other.colorHex == colorHex &&
         other.iconKey == iconKey &&
         other.note == note &&
+        other.widgetMessage == widgetMessage &&
         other.recurrence == recurrence &&
         other.isPinnedToWidget == isPinnedToWidget &&
         other.createdAt == createdAt &&
@@ -202,6 +225,7 @@ final class Event {
     colorHex,
     iconKey,
     note,
+    widgetMessage,
     recurrence,
     isPinnedToWidget,
     createdAt,

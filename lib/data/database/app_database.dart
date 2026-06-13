@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -56,6 +56,12 @@ class AppDatabase extends _$AppDatabase {
         // v3 → v4: lifestyle logging (water, sleep, exercise, mood).
         // Powers the recommendation engine landing in M5.
         await m.createTable(lifestyleLogsTable);
+      }
+      if (from < 5) {
+        // v4 → v5: optional per-event message shown on the home-screen
+        // widget (overrides the auto `<date> · <recurrence>` subtitle).
+        // Nullable column, no default, no backfill needed.
+        await m.addColumn(eventsTable, eventsTable.widgetMessage);
       }
     },
   );

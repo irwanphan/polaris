@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:polaris/app/app.dart';
 import 'package:polaris/core/logging/app_logger.dart';
 import 'package:polaris/core/notifications/flutter_local_notifications_dispatcher.dart';
@@ -15,9 +16,13 @@ import 'package:polaris/data/database/providers.dart';
 import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/data/repositories/event_repository_impl.dart';
 import 'package:polaris/features/life_countdown/application/providers.dart';
+import 'package:polaris/features/life_countdown/data/datasources/life_expectancy_asset_data_source.dart';
 import 'package:polaris/features/life_countdown/data/migrations/life_profile_sp_to_drift.dart';
+import 'package:polaris/features/life_countdown/data/repositories/life_expectancy_repository_impl.dart';
+import 'package:polaris/features/life_countdown/data/repositories/life_pin_repository.dart';
 import 'package:polaris/features/life_countdown/data/repositories/life_profile_drift_repository.dart';
 import 'package:polaris/features/life_countdown/data/repositories/life_profile_repository_impl.dart';
+import 'package:polaris/features/life_countdown/domain/usecases/compute_life_estimate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Composition root.
@@ -36,6 +41,14 @@ Future<void> bootstrap() async {
   await runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Load `intl` date symbol tables for every locale we ship before
+      // anything that uses `DateFormat(pattern, localeTag)` — most
+      // notably the headless home-widget updater, which runs without
+      // a `Localizations` ancestor. Done once at boot to keep widget
+      // refreshes synchronous and crash-free.
+      await initializeDateFormatting('en');
+      await initializeDateFormatting('id');
 
       final AppLogger logger = AppLogger.create();
       final SharedPreferences preferences =
@@ -58,11 +71,24 @@ Future<void> bootstrap() async {
           FlutterLocalNotificationsDispatcher(logger: logger);
       await notifications.initialize();
 
-      // Home-screen widget updater shares the event repository so it
-      // always renders the latest pinned event. Built here so the
-      // provider tree only sees the concrete impl at the root.
+      // Home-screen widget updater shares the event repository, life
+      // pin preferences, and the life-estimate use case so it can
+      // render either a pinned event or the pinned life countdown
+      // with the user's custom message. Built here (rather than in a
+      // Riverpod provider) so we can synchronously trigger an initial
+      // refresh during boot — the OS may render the widget before
+      // any UI loads.
+      final lifeProfileRepo = LifeProfileDriftRepository(
+        database.lifeProfilesDao,
+      );
       final HomeWidgetUpdater widgetUpdater = PolarisHomeWidgetUpdater(
-        repository: EventRepositoryImpl(database.eventsDao),
+        eventRepository: EventRepositoryImpl(database.eventsDao),
+        lifePinRepository: LifePinRepository(preferences),
+        lifeProfileRepository: lifeProfileRepo,
+        computeLifeEstimate: ComputeLifeEstimate(
+          LifeExpectancyRepositoryImpl(LifeExpectancyAssetDataSource()),
+        ),
+        sharedPreferences: preferences,
         logger: logger,
       );
       // Best-effort initial render — the OS may show the widget

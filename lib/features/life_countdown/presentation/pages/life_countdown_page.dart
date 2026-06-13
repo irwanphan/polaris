@@ -8,10 +8,13 @@ import 'package:polaris/app/router.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
 import 'package:polaris/features/life_countdown/application/display_mode.dart';
 import 'package:polaris/features/life_countdown/application/life_countdown_controller.dart';
+import 'package:polaris/features/life_countdown/application/providers.dart';
 import 'package:polaris/features/life_countdown/domain/entities/life_estimate.dart';
+import 'package:polaris/features/life_countdown/domain/value_objects/life_pin_preferences.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/countdown_display.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/disclaimer_note.dart';
 import 'package:polaris/features/life_countdown/presentation/widgets/display_mode_segmented.dart';
+import 'package:polaris/features/life_countdown/presentation/widgets/life_pin_sheet.dart';
 import 'package:polaris/features/recommendations/presentation/widgets/insights_section.dart';
 import 'package:polaris/l10n/generated/app_localizations.dart';
 import 'package:polaris/shared/widgets/polaris_scaffold.dart';
@@ -53,8 +56,25 @@ class _LifeCountdownPageState extends ConsumerState<LifeCountdownPage> {
     );
 
     final AppL l = AppL.of(context);
+    final AsyncValue<LifePinPreferences> lifePin =
+        ref.watch(lifePinStreamProvider);
+    final bool isPinned = lifePin.maybeWhen(
+      data: (LifePinPreferences p) => p.pinned,
+      orElse: () => false,
+    );
     return PolarisScaffold(
-      appBar: AppBar(title: Text(l.lifeTitle)),
+      appBar: AppBar(
+        title: Text(l.lifeTitle),
+        actions: <Widget>[
+          IconButton(
+            onPressed: () => LifePinSheet.show(context),
+            tooltip: isPinned ? l.lifePinUnpinTooltip : l.lifePinTooltip,
+            icon: Icon(
+              isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+            ),
+          ),
+        ],
+      ),
       body: estimate.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, _) =>

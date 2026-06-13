@@ -7,6 +7,8 @@ import 'package:polaris/features/event_countdown/application/providers.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
 import 'package:polaris/features/event_countdown/domain/repositories/event_repository.dart';
 import 'package:polaris/features/event_countdown/domain/value_objects/recurrence.dart';
+import 'package:polaris/features/life_countdown/application/providers.dart';
+import 'package:polaris/features/life_countdown/data/repositories/life_pin_repository.dart';
 
 /// Imperative commands for the events feature.
 ///
@@ -21,11 +23,13 @@ class EventsController {
     this._repository,
     this._scheduler,
     this._widgetUpdater,
+    this._lifePinRepository,
   );
 
   final EventRepository _repository;
   final NotificationScheduler _scheduler;
   final HomeWidgetUpdater _widgetUpdater;
+  final LifePinRepository _lifePinRepository;
 
   Future<Result<Event, Object>> createEvent({
     required String title,
@@ -33,6 +37,7 @@ class EventsController {
     String colorHex = '#6366F1',
     String iconKey = 'event',
     String? note,
+    String? widgetMessage,
     Recurrence recurrence = Recurrence.none,
   }) async {
     final Event event = Event.create(
@@ -41,6 +46,7 @@ class EventsController {
       colorHex: colorHex,
       iconKey: iconKey,
       note: _normalizeNote(note),
+      widgetMessage: widgetMessage,
       recurrence: recurrence,
     );
     final result = await _repository.upsert(event);
@@ -61,6 +67,7 @@ class EventsController {
     required String colorHex,
     required String iconKey,
     required String? note,
+    required String? widgetMessage,
     required Recurrence recurrence,
   }) async {
     final Event updated = Event(
@@ -70,6 +77,7 @@ class EventsController {
       colorHex: colorHex,
       iconKey: iconKey,
       note: _normalizeNote(note),
+      widgetMessage: _normalizeNote(widgetMessage),
       recurrence: recurrence,
       isPinnedToWidget: original.isPinnedToWidget,
       createdAt: original.createdAt,
@@ -100,6 +108,10 @@ class EventsController {
 
   /// Pins [id], unpinning anything else. Toggling a currently-pinned event
   /// clears the pin entirely.
+  ///
+  /// Pinning an event also unpins the life countdown (mutual exclusivity:
+  /// the widget surface only renders one subject at a time). Unpinning an
+  /// event does NOT auto-pin life — that would be surprising.
   Future<Result<void, Object>> togglePin({
     required String id,
     required bool isCurrentlyPinned,
@@ -108,6 +120,12 @@ class EventsController {
       isCurrentlyPinned ? null : id,
     );
     if (result.isOk) {
+      if (!isCurrentlyPinned) {
+        final current = _lifePinRepository.read();
+        if (current.pinned) {
+          await _lifePinRepository.save(current.copyWith(pinned: false));
+        }
+      }
       await _widgetUpdater.refresh();
     }
     return result.fold(
@@ -129,5 +147,6 @@ final Provider<EventsController> eventsControllerProvider =
         ref.watch(eventRepositoryProvider),
         ref.watch(notificationSchedulerProvider),
         ref.watch(homeWidgetUpdaterProvider),
+        ref.watch(lifePinRepositoryProvider),
       ),
     );

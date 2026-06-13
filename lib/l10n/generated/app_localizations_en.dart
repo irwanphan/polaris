@@ -168,6 +168,13 @@ class AppLEn extends AppL {
   String get eventsFieldNote => 'Note (optional)';
 
   @override
+  String get eventsFieldWidgetMessage => 'Widget message (optional)';
+
+  @override
+  String get eventsFieldWidgetMessageHelper =>
+      'Shown on the home-screen widget when this event is pinned. Replaces the auto date · recurrence line.';
+
+  @override
   String get eventsAccentColor => 'Accent color';
 
   @override
@@ -409,4 +416,66 @@ class AppLEn extends AppL {
   @override
   String get settingsClearAllDataConfirmBody =>
       'Removes your profile, events, lifestyle logs, and pinned widget state. This cannot be undone.';
+
+  @override
+  String get lifePinSheetTitle => 'Pin to home widget';
+
+  @override
+  String get lifePinToggleLabel => 'Show life countdown on the widget';
+
+  @override
+  String get lifePinToggleHelper =>
+      'Pinning the life countdown unpins any pinned event — the widget shows one thing at a time.';
+
+  @override
+  String get lifePinCustomMessageLabel => 'Custom message (optional)';
+
+  @override
+  String get lifePinCustomMessageHelper =>
+      'Replaces the auto subtitle. Try something grounding — e.g. \"One breath at a time.\"';
+
+  @override
+  String get lifePinAction => 'Pin';
+
+  @override
+  String get lifePinUnpinAction => 'Unpin';
+
+  @override
+  String get lifePinTooltip => 'Pin to widget';
+
+  @override
+  String get lifePinUnpinTooltip => 'Currently pinned to widget';
+
+  @override
+  String lifeWidgetDaysRemainingShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lifeWidgetSubtitleDefault(String date) {
+    return 'Ends ~$date';
+  }
+
+  @override
+  String widgetEventSubtitleDefault(String date, String recurrence) {
+    return '$date · $recurrence';
+  }
+
+  @override
+  String widgetEventDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+      zero: 'Today',
+    );
+    return '$_temp0';
+  }
 }

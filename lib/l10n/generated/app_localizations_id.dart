@@ -168,6 +168,13 @@ class AppLId extends AppL {
   String get eventsFieldNote => 'Catatan (opsional)';
 
   @override
+  String get eventsFieldWidgetMessage => 'Pesan widget (opsional)';
+
+  @override
+  String get eventsFieldWidgetMessageHelper =>
+      'Muncul di widget home screen saat acara ini disematkan. Mengganti baris otomatis tanggal · perulangan.';
+
+  @override
   String get eventsAccentColor => 'Warna aksen';
 
   @override
@@ -410,4 +417,66 @@ class AppLId extends AppL {
   @override
   String get settingsClearAllDataConfirmBody =>
       'Menghapus profil, acara, catatan gaya hidup, dan widget tersemat. Tidak bisa dibatalkan.';
+
+  @override
+  String get lifePinSheetTitle => 'Sematkan ke widget';
+
+  @override
+  String get lifePinToggleLabel => 'Tampilkan hitung mundur hidup di widget';
+
+  @override
+  String get lifePinToggleHelper =>
+      'Menyematkan hitung mundur hidup akan melepas event yang sedang disematkan — widget hanya menampilkan satu hal pada satu waktu.';
+
+  @override
+  String get lifePinCustomMessageLabel => 'Pesan kustom (opsional)';
+
+  @override
+  String get lifePinCustomMessageHelper =>
+      'Mengganti subtitle otomatis. Coba sesuatu yang menenangkan — mis. \"Satu napas pada satu waktu.\"';
+
+  @override
+  String get lifePinAction => 'Sematkan';
+
+  @override
+  String get lifePinUnpinAction => 'Lepaskan';
+
+  @override
+  String get lifePinTooltip => 'Sematkan ke widget';
+
+  @override
+  String get lifePinUnpinTooltip => 'Sedang tersemat ke widget';
+
+  @override
+  String lifeWidgetDaysRemainingShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hari lagi',
+      one: '1 hari lagi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lifeWidgetSubtitleDefault(String date) {
+    return 'Sekitar $date';
+  }
+
+  @override
+  String widgetEventSubtitleDefault(String date, String recurrence) {
+    return '$date · $recurrence';
+  }
+
+  @override
+  String widgetEventDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hari',
+      one: '1 hari',
+      zero: 'Hari ini',
+    );
+    return '$_temp0';
+  }
 }

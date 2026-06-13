@@ -54,6 +54,8 @@
   "eventsFieldWhen": "Kapan",
   "eventsFieldRepeats": "Berulang",
   "eventsFieldNote": "Catatan (opsional)",
+  "eventsFieldWidgetMessage": "Pesan widget (opsional)",
+  "eventsFieldWidgetMessageHelper": "Muncul di widget home screen saat acara ini disematkan. Mengganti baris otomatis tanggal · perulangan.",
   "eventsAccentColor": "Warna aksen",
   "eventsDeleteConfirmTitle": "Hapus acara?",
   "eventsDeleteConfirmBody": "\"{title}\" akan dihapus.",
@@ -119,5 +121,19 @@
   "settingsDangerZone": "Zona berbahaya",
   "settingsClearAllData": "Hapus semua data",
   "settingsClearAllDataConfirmTitle": "Hapus semuanya?",
-  "settingsClearAllDataConfirmBody": "Menghapus profil, acara, catatan gaya hidup, dan widget tersemat. Tidak bisa dibatalkan."
+  "settingsClearAllDataConfirmBody": "Menghapus profil, acara, catatan gaya hidup, dan widget tersemat. Tidak bisa dibatalkan.",
+
+  "lifePinSheetTitle": "Sematkan ke widget",
+  "lifePinToggleLabel": "Tampilkan hitung mundur hidup di widget",
+  "lifePinToggleHelper": "Menyematkan hitung mundur hidup akan melepas event yang sedang disematkan — widget hanya menampilkan satu hal pada satu waktu.",
+  "lifePinCustomMessageLabel": "Pesan kustom (opsional)",
+  "lifePinCustomMessageHelper": "Mengganti subtitle otomatis. Coba sesuatu yang menenangkan — mis. \"Satu napas pada satu waktu.\"",
+  "lifePinAction": "Sematkan",
+  "lifePinUnpinAction": "Lepaskan",
+  "lifePinTooltip": "Sematkan ke widget",
+  "lifePinUnpinTooltip": "Sedang tersemat ke widget",
+  "lifeWidgetDaysRemainingShort": "{count, plural, =1{1 hari lagi} other{{count} hari lagi}}",
+  "lifeWidgetSubtitleDefault": "Sekitar {date}",
+  "widgetEventSubtitleDefault": "{date} \u00b7 {recurrence}",
+  "widgetEventDays": "{count, plural, =0{Hari ini} =1{1 hari} other{{count} hari}}"
 }

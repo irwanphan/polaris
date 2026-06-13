@@ -86,6 +86,7 @@ class EventRepositoryImpl implements EventRepository {
       colorHex: row.colorHex,
       iconKey: row.iconKey,
       note: row.note,
+      widgetMessage: row.widgetMessage,
       recurrence: Recurrence.fromStorageKey(row.recurrence),
       isPinnedToWidget: row.isPinnedToWidget,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
@@ -107,6 +108,7 @@ class EventRepositoryImpl implements EventRepository {
       colorHex: Value(event.colorHex),
       iconKey: Value(event.iconKey),
       note: Value(event.note),
+      widgetMessage: Value(event.widgetMessage),
       recurrence: Value(event.recurrence.storageKey),
       isPinnedToWidget: Value(event.isPinnedToWidget),
       createdAtEpochMs: Value(event.createdAt.toUtc().millisecondsSinceEpoch),

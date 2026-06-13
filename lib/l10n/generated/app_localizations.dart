@@ -385,6 +385,18 @@ abstract class AppL {
   /// **'Note (optional)'**
   String get eventsFieldNote;
 
+  /// No description provided for @eventsFieldWidgetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget message (optional)'**
+  String get eventsFieldWidgetMessage;
+
+  /// No description provided for @eventsFieldWidgetMessageHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown on the home-screen widget when this event is pinned. Replaces the auto date · recurrence line.'**
+  String get eventsFieldWidgetMessageHelper;
+
   /// No description provided for @eventsAccentColor.
   ///
   /// In en, this message translates to:
@@ -762,6 +774,84 @@ abstract class AppL {
   /// In en, this message translates to:
   /// **'Removes your profile, events, lifestyle logs, and pinned widget state. This cannot be undone.'**
   String get settingsClearAllDataConfirmBody;
+
+  /// No description provided for @lifePinSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to home widget'**
+  String get lifePinSheetTitle;
+
+  /// No description provided for @lifePinToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show life countdown on the widget'**
+  String get lifePinToggleLabel;
+
+  /// No description provided for @lifePinToggleHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinning the life countdown unpins any pinned event — the widget shows one thing at a time.'**
+  String get lifePinToggleHelper;
+
+  /// No description provided for @lifePinCustomMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom message (optional)'**
+  String get lifePinCustomMessageLabel;
+
+  /// No description provided for @lifePinCustomMessageHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces the auto subtitle. Try something grounding — e.g. \"One breath at a time.\"'**
+  String get lifePinCustomMessageHelper;
+
+  /// No description provided for @lifePinAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get lifePinAction;
+
+  /// No description provided for @lifePinUnpinAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get lifePinUnpinAction;
+
+  /// No description provided for @lifePinTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to widget'**
+  String get lifePinTooltip;
+
+  /// No description provided for @lifePinUnpinTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently pinned to widget'**
+  String get lifePinUnpinTooltip;
+
+  /// No description provided for @lifeWidgetDaysRemainingShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day left} other{{count} days left}}'**
+  String lifeWidgetDaysRemainingShort(int count);
+
+  /// No description provided for @lifeWidgetSubtitleDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends ~{date}'**
+  String lifeWidgetSubtitleDefault(String date);
+
+  /// No description provided for @widgetEventSubtitleDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · {recurrence}'**
+  String widgetEventSubtitleDefault(String date, String recurrence);
+
+  /// No description provided for @widgetEventDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Today} =1{1 day} other{{count} days}}'**
+  String widgetEventDays(int count);
 }
 
 class _AppLDelegate extends LocalizationsDelegate<AppL> {

@@ -21,6 +21,19 @@ class EventsTable extends Table {
   TextColumn get recurrence => text().withDefault(const Constant('none'))();
   BoolColumn get isPinnedToWidget =>
       boolean().withDefault(const Constant(false))();
+
+  /// Optional user-authored line shown on the home-screen widget in place
+  /// of the auto-generated `<date> · <recurrence>` subtitle.
+  ///
+  /// Kept separate from [note] (which is private context) so that
+  /// pinning an event to the widget can surface a different, more
+  /// distilled phrase ("Lunch with Mom", "Mom's birthday gift") without
+  /// changing the in-app card detail.
+  ///
+  /// Trimmed in the entity factory; empty strings are normalized to null
+  /// before persistence so the updater never has to special-case them.
+  TextColumn get widgetMessage =>
+      text().nullable().withLength(max: 80)();
   IntColumn get createdAtEpochMs => integer()();
   IntColumn get updatedAtEpochMs => integer()();
 
