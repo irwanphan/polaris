@@ -622,4 +622,9 @@ class AppLId extends AppL {
   @override
   String get widgetEmptySubtitle =>
       'Sematkan hitung mundur hidup atau acara untuk muncul di sini.';
+
+  @override
+  String widgetGreeting(String name) {
+    return 'Halo, $name';
+  }
 }

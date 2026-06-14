@@ -2,29 +2,54 @@
 <!--
   Per-row "ticket" pill for items inside the Polaris widget
   ListView. Amber-400 fill (#FBBF24, same hue as the brand pill)
-  with a thick slate-900 outline to give the row a confident,
-  hand-stamped feel — the same visual language as the outer
-  widget surface, just one nesting level in.
+  framed by a slate-900 outline that is intentionally THICKER on
+  the bottom than on the other three sides — a neobrutalist offset
+  that reads as a soft drop-shadow without needing a real shadow
+  layer (RemoteViews ignores `elevation`).
+
+  Why a layer-list instead of a centered `<stroke>`?
+   * `<stroke>` is centered on the path — half of its width sits
+     OUTSIDE the view bounds. Inside a ListView (which has
+     `clipChildren=true` by default and ignores attempts to turn
+     it off), that outer half gets clipped, so the top edge of
+     the first row's stroke disappears. Layered insets keep the
+     entire frame inside the row's bounds, fixing the clipping.
+   * Per-side insets let us make the bottom border thicker than
+     the top/left/right, which `<stroke>` alone cannot do.
 
   Geometry:
-   * Corner radius 16dp on the outer edge. The stroke is 3dp wide
-     and centered on the path, so the visible inside radius works
-     out to ~14.5dp — close enough to feel concentric with the
-     icon-box (10dp) inside.
-   * Stroke uses `<stroke>` rather than a layered `<solid>` shape
-     because RemoteViews handles antialiased strokes cleanly down
-     to API 21, and it keeps this file declarative with no inset
-     math to maintain.
+   * Outer black layer: 16dp corner radius, fills the whole row.
+   * Inner amber layer: inset 2dp on top/left/right and 5dp on
+     bottom. The inner radius is reduced by the inset so the curve
+     stays roughly concentric with the outer one.
+   * Bottom-corner radius on the amber layer is reduced by the
+     larger bottom inset (16 - 5 = 11dp) so the inner shape's
+     bottom corners do not visually flatten against the outer.
 
-  Pairs with `polaris_widget_item_icon_box.xml` (the inner amber-
-  500 square the clock glyph sits in) and the dark-on-amber text
-  colors set in `polaris_widget_item.xml`.
+  Pairs with `polaris_widget_item_icon_box.xml` and the dark-on-
+  amber text colors set in `polaris_widget_item.xml`.
 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="#FBBF24" />
-    <corners android:radius="16dp" />
-    <stroke
-        android:width="3dp"
-        android:color="#0F172A" />
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#0F172A" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+
+    <item
+        android:left="2dp"
+        android:top="2dp"
+        android:right="2dp"
+        android:bottom="5dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FBBF24" />
+            <corners
+                android:topLeftRadius="14dp"
+                android:topRightRadius="14dp"
+                android:bottomLeftRadius="11dp"
+                android:bottomRightRadius="11dp" />
+        </shape>
+    </item>
+</layer-list>

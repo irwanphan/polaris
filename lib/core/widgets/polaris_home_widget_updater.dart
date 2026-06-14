@@ -77,6 +77,20 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
   static const String _kLocalePrefsKey = 'polaris.locale.v1';
   static const Set<String> _kSupportedLocales = <String>{'en', 'id'};
 
+  /// Stored display name for the widget greeting. Read at refresh
+  /// time and folded into `l.widgetGreeting(...)`. Designed as a
+  /// stop-gap until proper auth lands — once Polaris has a
+  /// `currentUser` notion, swap [_resolveUserName] to read from
+  /// that source instead and this key becomes obsolete (we can
+  /// migrate by writing the auth name into this same key on
+  /// login, then deleting the key after the next major version).
+  static const String _kUserNamePrefsKey = 'polaris.user.name.v1';
+
+  /// Visible when the user has not set a display name yet. Kept
+  /// English-neutral on purpose: the Indonesian "Halo, User" still
+  /// reads naturally and avoids a second localization round-trip.
+  static const String _kFallbackUserName = 'User';
+
   /// JSON-encoded list of widget items. Mirrored in
   /// `PolarisWidgetRemoteViewsService.kt` (`KEY_ITEMS_JSON`).
   static const String kItemsJsonKey = 'polaris_widget_items_json';
@@ -217,9 +231,26 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
   }
 
   Future<void> _writeHeader(AppL l) async {
-    await _saveData(kHeaderTitleKey, l.appTitle);
+    await _saveData(kHeaderTitleKey, l.widgetGreeting(_resolveUserName()));
     await _saveData(kEmptyTitleKey, l.widgetEmptyTitle);
     await _saveData(kEmptySubtitleKey, l.widgetEmptySubtitle);
+  }
+
+  /// Resolves the display name shown in the widget header greeting.
+  ///
+  /// Lookup order:
+  ///   1. SharedPreferences[`_kUserNamePrefsKey`] — manual override
+  ///      and (eventually) the bridge that auth writes into.
+  ///   2. [_kFallbackUserName] — generic stand-in until login is
+  ///      implemented, so the widget never reads "Hello, ".
+  ///
+  /// Whitespace-only values are treated as missing.
+  String _resolveUserName() {
+    final String? stored = sharedPreferences.getString(_kUserNamePrefsKey);
+    if (stored != null && stored.trim().isNotEmpty) {
+      return stored.trim();
+    }
+    return _kFallbackUserName;
   }
 
   Future<void> _writeItems(List<_WidgetItem> items) async {

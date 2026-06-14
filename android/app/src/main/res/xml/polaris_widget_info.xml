@@ -1,17 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   AppWidget metadata for Polaris pinned-event countdown.
-  - minWidth/minHeight: 2x2 grid cell target (covers most launchers).
-  - resizeMode: horizontal so users can stretch to 4x2.
-  - updatePeriodMillis: 0 because we trigger updates explicitly from
-    Dart (event pin/unpin, notification fire). The OS-throttled
-    polling default of 30 min wastes battery for our use case.
-  - previewLayout: same layout, populated with placeholder text on
-    older OS versions; Android 12+ uses previewImage if present.
+
+  Sizing math (Android docs formula `dp = 70 × cells - 30`):
+   - 4 cells wide  → 250dp  (≈ full screen width on most launchers)
+   - 2 cells tall  → 110dp  (minimum — header + ~one row visible)
+   - 3 cells tall  → 180dp  (target — header + ~2 visible rows)
+
+  We deliberately set `minHeight` to the 2-cell floor so users can
+  resize down to a tight strip (e.g. just one pinned event
+  visible) without the launcher rejecting the placement. The
+  `targetCellHeight` stays at 3 so it INITIALLY lands at the
+  comfortable size on launchers that respect target cells
+  (Android 12+).
+
+  Other knobs:
+   - resizeMode: horizontal|vertical so users can stretch in both
+     axes after placement.
+   - updatePeriodMillis: 0 because we trigger updates explicitly
+     from Dart (event pin/unpin, notification fire). The OS-
+     throttled polling default of 30 min wastes battery for our
+     use case.
+   - previewLayout: same layout, populated with placeholder text
+     on older OS versions; Android 12+ uses previewImage if present.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
-    android:minHeight="180dp"
+    android:minHeight="110dp"
     android:targetCellWidth="4"
     android:targetCellHeight="3"
     android:initialLayout="@layout/polaris_widget_layout"

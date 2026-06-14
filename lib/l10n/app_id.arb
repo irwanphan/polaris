@@ -178,5 +178,6 @@
   "widgetEventSubtitleDefault": "{date} \u00b7 {recurrence}",
   "widgetEventDays": "{count, plural, =0{Hari ini} =1{1 hari} other{{count} hari}}",
   "widgetEmptyTitle": "Belum ada yang disematkan",
-  "widgetEmptySubtitle": "Sematkan hitung mundur hidup atau acara untuk muncul di sini."
+  "widgetEmptySubtitle": "Sematkan hitung mundur hidup atau acara untuk muncul di sini.",
+  "widgetGreeting": "Halo, {name}"
 }

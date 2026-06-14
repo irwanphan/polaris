@@ -17,7 +17,9 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * header chrome and binds the ListView adapter.
  *
  * Wire contract with `PolarisHomeWidgetUpdater` (Dart):
- *   * polaris_widget_header_title    String? — app title chip in the header
+ *   * polaris_widget_header_title    String? — header greeting,
+ *                                              currently "Hello, {user}"
+ *                                              (localized on the Dart side)
  *   * polaris_widget_empty_title     String? — empty-state heading
  *   * polaris_widget_empty_subtitle  String? — empty-state body
  *   * polaris_widget_items_json      String? — JSON array (see factory)
@@ -45,7 +47,11 @@ class PolarisWidgetProvider : HomeWidgetProvider() {
 
             views.setTextViewText(
                 R.id.polaris_widget_title,
-                widgetData.getString(KEY_HEADER_TITLE, "Polaris") ?: "Polaris",
+                // Defensive default: only used if Dart has not pushed
+                // the localized greeting yet (e.g. fresh install, before
+                // first refresh). The Dart side overwrites this on every
+                // `refresh()` via `l.widgetGreeting(_resolveUserName())`.
+                widgetData.getString(KEY_HEADER_TITLE, "Hello") ?: "Hello",
             )
             views.setTextViewText(
                 R.id.polaris_widget_empty_title,

@@ -1,29 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Polaris widget surface: cyan-50 (#ECFEFF) card framed by a
-  layered "ticket / stationery" double border — thick black outer
-  ring + a thin black hairline a few dp in. The pattern reads as a
-  hand-drawn frame ("coretan border") without needing a 9-patch
-  asset.
+  single thick black outer ring. Earlier revisions also had a
+  thin inner hairline a few dp inside the outer ring, but that
+  competes visually with the per-row pill outlines below — the
+  hairline has been removed in favor of a single, confident frame.
 
   Background color is the sRGB approximation of the design spec
-  `oklch(98.4% 0.019 200.873)`. Adjust the hex if a stricter match
-  is needed — Android drawables do not understand OKLCH natively.
+  `oklch(98.4% 0.019 200.873)`. Adjust the hex if a stricter
+  match is needed — Android drawables do not understand OKLCH
+  natively.
 
   Layer order (bottom → top):
    1. Solid black with the widget's outer corner radius — paints
-      the OUTER ring; everything above masks it.
+      the OUTER ring; the layer above masks it.
    2. Cyan-50 fill, inset 6dp on every side — this is the actual
       surface the content sits on. Inset = stroke thickness.
-   3. Stroke-only shape with no fill, inset another 4dp — that's
-      the inner hairline. Its corner radius is reduced to keep the
-      curve concentric with the outer frame.
 
   Tweak knobs:
    * Outer stroke thickness  → first item corners.radius vs the
      second item's inset.
-   * Hairline thickness      → third item's `<stroke android:width>`.
-   * Frame color             → solid color in items 1 & 3.
+   * Frame color             → solid color in item 1.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -42,19 +39,6 @@
         <shape android:shape="rectangle">
             <solid android:color="#ECFEFF" />
             <corners android:radius="16dp" />
-        </shape>
-    </item>
-
-    <item
-        android:left="10dp"
-        android:top="10dp"
-        android:right="10dp"
-        android:bottom="10dp">
-        <shape android:shape="rectangle">
-            <stroke
-                android:width="1.5dp"
-                android:color="#0F172A" />
-            <corners android:radius="12dp" />
         </shape>
     </item>
 </layer-list>

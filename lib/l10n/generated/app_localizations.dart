@@ -1058,6 +1058,12 @@ abstract class AppL {
   /// In en, this message translates to:
   /// **'Pin your life countdown or events to see them here.'**
   String get widgetEmptySubtitle;
+
+  /// Header greeting on the home-screen widget. {name} is the logged-in user (placeholder string until auth lands).
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, {name}'**
+  String widgetGreeting(String name);
 }
 
 class _AppLDelegate extends LocalizationsDelegate<AppL> {

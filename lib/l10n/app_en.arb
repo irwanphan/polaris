@@ -313,5 +313,10 @@
     "placeholders": {"count": {"type": "int"}}
   },
   "widgetEmptyTitle": "Nothing pinned yet",
-  "widgetEmptySubtitle": "Pin your life countdown or events to see them here."
+  "widgetEmptySubtitle": "Pin your life countdown or events to see them here.",
+  "widgetGreeting": "Hello, {name}",
+  "@widgetGreeting": {
+    "description": "Header greeting on the home-screen widget. {name} is the logged-in user (placeholder string until auth lands).",
+    "placeholders": {"name": {"type": "String"}}
+  }
 }

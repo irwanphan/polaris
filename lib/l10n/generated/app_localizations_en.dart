@@ -621,4 +621,9 @@ class AppLEn extends AppL {
   @override
   String get widgetEmptySubtitle =>
       'Pin your life countdown or events to see them here.';
+
+  @override
+  String widgetGreeting(String name) {
+    return 'Hello, $name';
+  }
 }
