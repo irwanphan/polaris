@@ -1,12 +1,17 @@
 import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
 
-/// One actionable nudge surfaced to the user.
+/// One actionable nudge, fully resolved for rendering.
 ///
-/// Insights are *content*: rules produce them, the UI renders them.
-/// The model is intentionally light — no rendering hints beyond
-/// [severity] and [relatedCategory] so we can swap surfaces (card,
-/// banner, notification, widget) without changing the rules.
+/// Rules emit [InsightSpec] (l10n-free description); the presentation
+/// layer's `InsightContent` resolver turns each spec into an
+/// [Insight] just before the card renders. This split keeps rule
+/// code pure and centralizes every ARB / number-format decision in
+/// one file.
+///
+/// Surfaces beyond the home card (banner, notification, future
+/// widget) can consume the same `Insight` shape — the model stays
+/// rendering-agnostic beyond [severity] + [relatedCategory].
 class Insight {
   const Insight({
     required this.id,

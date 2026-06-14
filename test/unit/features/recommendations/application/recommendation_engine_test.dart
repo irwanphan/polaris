@@ -1,20 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:polaris/features/recommendations/application/recommendation_engine.dart';
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
 
-/// Fake rule that always returns a fixed [Insight] (or null).
+/// Fake rule that always returns a fixed [InsightSpec] (or null).
 class _StaticRule implements RecommendationRule {
-  const _StaticRule(this._insight);
-  final Insight? _insight;
+  const _StaticRule(this._spec);
+  final InsightSpec? _spec;
 
   @override
-  String get id => _insight?.id ?? 'noop';
+  String get id => _spec?.id ?? 'noop';
 
   @override
-  Insight? evaluate(LifestyleSnapshot snapshot) => _insight;
+  InsightSpec? evaluate(LifestyleSnapshot snapshot) => _spec;
 }
 
 LifestyleSnapshot _emptySnapshot() => LifestyleSnapshot(
@@ -23,8 +23,8 @@ LifestyleSnapshot _emptySnapshot() => LifestyleSnapshot(
   dailyByCategory: const {},
 );
 
-Insight _insight(String id, InsightSeverity severity) =>
-    Insight(id: id, severity: severity, title: id, body: id);
+InsightSpec _spec(String id, InsightSeverity severity) =>
+    InsightSpec(id: id, contentKey: id, severity: severity);
 
 void main() {
   group('RecommendationEngine.evaluate', () {
@@ -35,14 +35,14 @@ void main() {
       expect(engine.evaluate(_emptySnapshot()), isEmpty);
     });
 
-    test('drops nulls and keeps only fired insights', () {
+    test('drops nulls and keeps only fired specs', () {
       final RecommendationEngine engine =
           RecommendationEngine(<RecommendationRule>[
-            _StaticRule(_insight('a', InsightSeverity.info)),
+            _StaticRule(_spec('a', InsightSeverity.info)),
             const _StaticRule(null),
-            _StaticRule(_insight('b', InsightSeverity.warn)),
+            _StaticRule(_spec('b', InsightSeverity.warn)),
           ]);
-      final List<Insight> out = engine.evaluate(_emptySnapshot());
+      final List<InsightSpec> out = engine.evaluate(_emptySnapshot());
       expect(out.map((i) => i.id).toList(), <String>['b', 'a']);
     });
 
@@ -51,12 +51,12 @@ void main() {
       () {
         final RecommendationEngine engine =
             RecommendationEngine(<RecommendationRule>[
-              _StaticRule(_insight('info', InsightSeverity.info)),
-              _StaticRule(_insight('crit', InsightSeverity.critical)),
-              _StaticRule(_insight('warn', InsightSeverity.warn)),
-              _StaticRule(_insight('enc', InsightSeverity.encourage)),
+              _StaticRule(_spec('info', InsightSeverity.info)),
+              _StaticRule(_spec('crit', InsightSeverity.critical)),
+              _StaticRule(_spec('warn', InsightSeverity.warn)),
+              _StaticRule(_spec('enc', InsightSeverity.encourage)),
             ]);
-        final List<Insight> out = engine.evaluate(_emptySnapshot());
+        final List<InsightSpec> out = engine.evaluate(_emptySnapshot());
         expect(out.map((i) => i.id).toList(), <String>[
           'crit',
           'warn',
@@ -68,11 +68,11 @@ void main() {
 
     test('returns an unmodifiable list (defensive)', () {
       final RecommendationEngine engine = RecommendationEngine(
-        <RecommendationRule>[_StaticRule(_insight('a', InsightSeverity.info))],
+        <RecommendationRule>[_StaticRule(_spec('a', InsightSeverity.info))],
       );
-      final List<Insight> out = engine.evaluate(_emptySnapshot());
+      final List<InsightSpec> out = engine.evaluate(_emptySnapshot());
       expect(
-        () => out.add(_insight('x', InsightSeverity.warn)),
+        () => out.add(_spec('x', InsightSeverity.warn)),
         throwsUnsupportedError,
       );
     });
@@ -82,16 +82,16 @@ void main() {
     test('caps the returned list', () {
       final RecommendationEngine engine =
           RecommendationEngine(<RecommendationRule>[
-            _StaticRule(_insight('a', InsightSeverity.warn)),
-            _StaticRule(_insight('b', InsightSeverity.encourage)),
-            _StaticRule(_insight('c', InsightSeverity.info)),
+            _StaticRule(_spec('a', InsightSeverity.warn)),
+            _StaticRule(_spec('b', InsightSeverity.encourage)),
+            _StaticRule(_spec('c', InsightSeverity.info)),
           ]);
       expect(engine.evaluateTop(_emptySnapshot(), max: 2), hasLength(2));
     });
 
     test('returns the full list when below the cap', () {
       final RecommendationEngine engine = RecommendationEngine(
-        <RecommendationRule>[_StaticRule(_insight('a', InsightSeverity.warn))],
+        <RecommendationRule>[_StaticRule(_spec('a', InsightSeverity.warn))],
       );
       expect(engine.evaluateTop(_emptySnapshot(), max: 5), hasLength(1));
     });

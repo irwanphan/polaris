@@ -373,6 +373,142 @@ class AppLId extends AppL {
   String get insightsSectionTitle => 'Saran untuk Anda';
 
   @override
+  String get insightDismiss => 'Sembunyikan';
+
+  @override
+  String get insightDismissSemanticLabel => 'Sembunyikan saran ini';
+
+  @override
+  String insightDismissedFor(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Disembunyikan $days hari',
+      one: 'Disembunyikan 1 hari',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get insightUndo => 'Urungkan';
+
+  @override
+  String get insightWaterTargetTitle => 'Minum sedikit lebih banyak air';
+
+  @override
+  String insightWaterTargetBody(int windowDays, String avg, String target) {
+    return 'Dalam $windowDays hari terakhir rata-rata Anda $avg gelas/hari. Target umum $target+. Tambah satu gelas saat istirahat berikutnya.';
+  }
+
+  @override
+  String get insightWaterTargetCta => 'Catat air';
+
+  @override
+  String get insightSleepRegularityTitle => 'Kurang tidur minggu ini';
+
+  @override
+  String insightSleepRegularityBody(
+    int shortCount,
+    int totalCount,
+    String minHours,
+  ) {
+    return '$shortCount dari $totalCount malam terakhir tidur di bawah $minHours jam. Coba bersiap tidur lebih awal malam ini.';
+  }
+
+  @override
+  String get insightSleepRegularityCta => 'Catat tidur';
+
+  @override
+  String get insightExerciseStreakTitle => 'Bergerak sedikit minggu ini';
+
+  @override
+  String insightExerciseStreakBody(int windowDays) {
+    return 'Tidak ada olahraga tercatat dalam $windowDays hari terakhir. Jalan 10 menit pun sudah cukup — catat dan mulai rangkaian.';
+  }
+
+  @override
+  String get insightExerciseStreakCta => 'Catat olahraga';
+
+  @override
+  String get insightMoodTrendTitle => 'Mood menurun';
+
+  @override
+  String insightMoodTrendBody(int run) {
+    return '$run catatan mood terakhir berturut lebih rendah dari hari sebelumnya. Coba jalan sebentar, hubungi teman, atau cukup catat perasaan hari ini.';
+  }
+
+  @override
+  String get insightMoodTrendCta => 'Catat mood';
+
+  @override
+  String insightLifePhaseTitle(int pct) {
+    return 'Anda telah menjalani $pct% dari estimasi hidup';
+  }
+
+  @override
+  String insightLifePhaseBody(String remainingYears, int remainingDays) {
+    final intl.NumberFormat remainingDaysNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String remainingDaysString = remainingDaysNumberFormat.format(
+      remainingDays,
+    );
+
+    return 'Sekitar $remainingYears tahun (~$remainingDaysString hari) tersisa pada estimasi tabel publik. Sematkan satu acara yang paling berarti.';
+  }
+
+  @override
+  String get insightLifePhaseCta => 'Sematkan acara';
+
+  @override
+  String get insightNoDataTitle => 'Catat entri pertama Anda';
+
+  @override
+  String get insightNoDataBody =>
+      'Polaris jadi lebih tajam saat mengenal ritme Anda. Ketuk \"Catat cepat\" di tab Gaya Hidup untuk mencatat air, tidur, olahraga, atau mood.';
+
+  @override
+  String get insightNoDataCta => 'Buka Gaya Hidup';
+
+  @override
+  String get insightPositiveExerciseStreakTitle => 'Minggu aktif yang bagus';
+
+  @override
+  String insightPositiveExerciseStreakBody(
+    int activeDays,
+    int windowDays,
+    String totalMinutes,
+  ) {
+    return 'Anda mencatat olahraga di $activeDays dari $windowDays hari terakhir — total $totalMinutes menit. Jaga ritmenya.';
+  }
+
+  @override
+  String get insightPositiveExerciseStreakCta => 'Catat hari ini';
+
+  @override
+  String get insightLowSleepHydrationTitle => 'Cukupi cairan saat minggu berat';
+
+  @override
+  String insightLowSleepHydrationBody(String minHours) {
+    return 'Rata-rata tidur di bawah $minHours jam dan asupan air di bawah kebiasaan Anda. Tambah satu gelas hari ini meringankan dampaknya.';
+  }
+
+  @override
+  String get insightLowSleepHydrationCta => 'Catat air';
+
+  @override
+  String insightLoggingStreakTitle(int streak) {
+    return 'Rangkaian $streak hari';
+  }
+
+  @override
+  String insightLoggingStreakBody(int streak) {
+    return 'Anda mencatat sesuatu setiap hari selama $streak hari. Konsistensi kecil, efek besar. Lanjutkan.';
+  }
+
+  @override
+  String get insightLoggingStreakCta => 'Catat hari ini';
+
+  @override
   String get settingsTitle => 'Pengaturan';
 
   @override

@@ -372,6 +372,142 @@ class AppLEn extends AppL {
   String get insightsSectionTitle => 'Insights for you';
 
   @override
+  String get insightDismiss => 'Dismiss';
+
+  @override
+  String get insightDismissSemanticLabel => 'Hide this insight';
+
+  @override
+  String insightDismissedFor(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Hidden for $days days',
+      one: 'Hidden for 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get insightUndo => 'Undo';
+
+  @override
+  String get insightWaterTargetTitle => 'Drink a bit more water';
+
+  @override
+  String insightWaterTargetBody(int windowDays, String avg, String target) {
+    return 'Last $windowDays days you averaged $avg glasses/day. A common target is $target+. Add a glass at the next break.';
+  }
+
+  @override
+  String get insightWaterTargetCta => 'Log water';
+
+  @override
+  String get insightSleepRegularityTitle => 'Short on sleep this week';
+
+  @override
+  String insightSleepRegularityBody(
+    int shortCount,
+    int totalCount,
+    String minHours,
+  ) {
+    return '$shortCount of the last $totalCount logged nights were under ${minHours}h. Try an earlier wind-down tonight.';
+  }
+
+  @override
+  String get insightSleepRegularityCta => 'Log sleep';
+
+  @override
+  String get insightExerciseStreakTitle => 'Move a bit this week';
+
+  @override
+  String insightExerciseStreakBody(int windowDays) {
+    return 'No exercise logged in the last $windowDays days. Even a 10-minute walk counts — log it and start a streak.';
+  }
+
+  @override
+  String get insightExerciseStreakCta => 'Log exercise';
+
+  @override
+  String get insightMoodTrendTitle => 'Mood trending down';
+
+  @override
+  String insightMoodTrendBody(int run) {
+    return 'The last $run mood logs were each lower than the day before. Something on your mind — short walk, call a friend, or just log how today felt.';
+  }
+
+  @override
+  String get insightMoodTrendCta => 'Log mood';
+
+  @override
+  String insightLifePhaseTitle(int pct) {
+    return 'You\'ve lived $pct% of your estimated life';
+  }
+
+  @override
+  String insightLifePhaseBody(String remainingYears, int remainingDays) {
+    final intl.NumberFormat remainingDaysNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String remainingDaysString = remainingDaysNumberFormat.format(
+      remainingDays,
+    );
+
+    return 'About $remainingYears years (~$remainingDaysString days) left on the public-table estimate. Pin one event that matters most to you.';
+  }
+
+  @override
+  String get insightLifePhaseCta => 'Pin an event';
+
+  @override
+  String get insightNoDataTitle => 'Log your first entry';
+
+  @override
+  String get insightNoDataBody =>
+      'Polaris gets sharper once it learns your rhythm. Tap \"Quick log\" on the Lifestyle tab to record water, sleep, exercise, or mood.';
+
+  @override
+  String get insightNoDataCta => 'Open Lifestyle';
+
+  @override
+  String get insightPositiveExerciseStreakTitle => 'Great week on the move';
+
+  @override
+  String insightPositiveExerciseStreakBody(
+    int activeDays,
+    int windowDays,
+    String totalMinutes,
+  ) {
+    return 'You logged exercise on $activeDays of the last $windowDays days — $totalMinutes minutes total. Keep the rhythm.';
+  }
+
+  @override
+  String get insightPositiveExerciseStreakCta => 'Log today';
+
+  @override
+  String get insightLowSleepHydrationTitle => 'Hydrate to soften a tough week';
+
+  @override
+  String insightLowSleepHydrationBody(String minHours) {
+    return 'Average sleep was under ${minHours}h and water is below your usual pace. An extra glass today eases the cost.';
+  }
+
+  @override
+  String get insightLowSleepHydrationCta => 'Log water';
+
+  @override
+  String insightLoggingStreakTitle(int streak) {
+    return '$streak-day streak';
+  }
+
+  @override
+  String insightLoggingStreakBody(int streak) {
+    return 'You\'ve logged something every day for $streak days. Small consistency, big compound. Keep going.';
+  }
+
+  @override
+  String get insightLoggingStreakCta => 'Log today';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

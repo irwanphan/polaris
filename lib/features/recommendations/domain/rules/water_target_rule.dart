@@ -1,5 +1,5 @@
 import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dart';
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
@@ -14,6 +14,10 @@ import 'package:polaris/features/recommendations/domain/value_objects/insight_se
 /// medical device; we surface the gentlest actionable nudge and
 /// link the CTA to the Lifestyle tab so logging more is one tap
 /// away.
+///
+/// Dismissal cooldown is 3 days — water intake is a short-cadence
+/// habit; we want to re-evaluate after a few days of (hopefully)
+/// improved logging rather than wait a full week.
 class WaterTargetRule implements RecommendationRule {
   const WaterTargetRule({
     this.targetGlasses = 6,
@@ -29,7 +33,7 @@ class WaterTargetRule implements RecommendationRule {
   String get id => 'water_target';
 
   @override
-  Insight? evaluate(LifestyleSnapshot snapshot) {
+  InsightSpec? evaluate(LifestyleSnapshot snapshot) {
     final int active = snapshot.activeDays(LogCategory.water, days: windowDays);
     if (active < minSampleDays) return null;
 
@@ -39,17 +43,18 @@ class WaterTargetRule implements RecommendationRule {
     );
     if (avg == null || avg >= targetGlasses) return null;
 
-    return Insight(
+    return InsightSpec(
       id: id,
+      contentKey: 'water_target',
       severity: InsightSeverity.warn,
       relatedCategory: LogCategory.water,
-      title: 'Drink a bit more water',
-      body:
-          'Last $windowDays days you averaged ${avg.toStringAsFixed(1)} '
-          'glasses/day. A common target is $targetGlasses+. '
-          'Add a glass next break.',
-      ctaLabel: 'Log water',
       ctaRoute: '/lifestyle',
+      dismissCooldown: const Duration(days: 3),
+      args: <String, Object>{
+        'avg': avg,
+        'target': targetGlasses,
+        'windowDays': windowDays,
+      },
     );
   }
 }

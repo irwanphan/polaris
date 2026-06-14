@@ -2,7 +2,7 @@
 
 > **Purpose:** Hand this file to a new AI chat session (or a new collaborator)
 > to continue development without losing context.
-> **Last updated:** 2026-06-14 by Cursor AI session — **Multi-Pin Widget (Widget Pin v3) shipped**: home-screen widget is now a native `RemoteViews` ListView that renders every pinned subject (life + N events) in one scrollable surface. Mutual exclusivity dropped — life and event pins are independent.
+> **Last updated:** 2026-06-14 by Cursor AI session — **Recommendation Engine v2 shipped** (dismiss + per-rule cooldown + 3 new rules + insight l10n refactor): rules now emit l10n-free `InsightSpec`s; a presentation-side `InsightContent` resolver maps them to localized cards; dismissing a card hides it for the rule's cooldown (1–30 days) with a one-tap Snackbar Undo. Three new rules (`PositiveExerciseStreak`, `LowSleepHydration`, `LoggingStreakMilestone`) added — engine now ships 9 rules total. **Multi-Pin Widget (Widget Pin v3)** shipped earlier the same day. All 195 unit + golden tests passing; `flutter analyze` clean.
 
 ---
 
@@ -22,7 +22,7 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
 
 ---
 
-## 2. Current Status (As of 2026-06-14, **M0–M2 + CI + M4 + M5 + M6 + Widget Pin v2 + Multi-Pin Widget (v3) shipped**)
+## 2. Current Status (As of 2026-06-14, **M0–M2 + CI + M4 + M5 + M6 + Widget Pin v2 + Multi-Pin Widget (v3) + Recommendation Engine v2 shipped**)
 
 ### Completed
 - Flutter 3.44.1 stable installed at `~/TurbidDev/flutter/`.
@@ -1043,6 +1043,98 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     (~1 week of focused work, day-by-day breakdown in
     Auth-Strategy.md §5).
 
+- **Recommendation Engine v2 shipped** — completes the
+  "deferred from M6" line item. Three large changes
+  landed in one sitting, all behind passing tests:
+  - **Dismiss + per-rule cooldown**. Every insight card
+    now carries a small `Icons.close` in the top-right.
+    Tap → the rule is hidden for the cooldown duration
+    that *rule* picked (3 days for short-cadence nudges
+    like water/sleep/mood, 7 for exercise/no-data, 14 for
+    streak milestones, 30 for life-phase). A Snackbar
+    confirms — "Disembunyikan N hari · Urungkan" — with
+    one-tap Undo that calls `repo.undo(id)`. State lives
+    in a SharedPreferences blob
+    (`polaris.insight_dismissals.v1` → `{id:
+    cooldownUntilEpochMs}`), so dismissals survive app
+    restart and "Clear all data" wipes them with the
+    rest of SP. Expired entries are pruned on the next
+    write — the blob stays bounded without a cron job.
+  - **L10n refactor (InsightSpec + InsightContent
+    resolver)**. Rules used to emit a hardcoded-English
+    `Insight`; they now emit an l10n-free `InsightSpec`
+    (`{id, contentKey, severity, relatedCategory,
+    ctaRoute, args, dismissCooldown}`). A new
+    `presentation/insight_content.dart` resolver maps
+    each spec into a localized `Insight` at render time,
+    using ARB lookups + locale-aware `NumberFormat`s.
+    Every rule string in `app_en.arb` + `app_id.arb`
+    now has a key (title / body / cta + dismiss / undo
+    chrome). Tests assert on `spec.id` + `spec.args`,
+    not fragile copy comparisons — wording tweaks no
+    longer break the suite. Unknown content keys
+    degrade to a visible "missing copy" card so QA
+    notices a missed translation instead of crashing.
+  - **Three new rules** (deck is now 9 strong):
+    - **`PositiveExerciseStreakRule`** — fires when
+      `activeDays(exercise) ≥ 5` over 7. Encouragement
+      counter-weight to the warn-only `ExerciseStreakRule`.
+    - **`LowSleepHydrationRule`** — *cross-category*
+      compound: if avg sleep < 6h AND avg water < 5
+      glasses over the last 3 days, fire warn with
+      water as the actionable side. First rule that
+      reads two categories at once; the snapshot
+      abstraction already supported it cleanly.
+    - **`LoggingStreakMilestoneRule`** — celebrates
+      consecutive any-category logging days at tiers
+      {7, 14, 30, 90, 365}. Picks the largest tier the
+      streak reaches; each tier uses `id:
+      logging_streak:<n>` so dismissing the 7-day card
+      does not silence the 14-day milestone. Added
+      `LifestyleSnapshot.currentLoggingStreak()` to
+      back the rule (capped at `windowDays`).
+  - **Life-phase id sub-key**. `LifePhaseRule` now
+    emits `id: 'life_phase:<pct>'` (e.g. `life_phase:50`,
+    `:90`) so dismissing the 25% milestone does not
+    suppress the 50% one when it eventually crosses.
+    `contentKey` stays canonical `'life_phase'` so the
+    resolver only needs one ARB template.
+  - **`InsightsSection`** rewired to watch
+    `visibleInsightSpecsProvider` (engine output
+    ∖ active dismissals, reactive on both sides);
+    `_SpecCard` owns the per-card dismiss + Snackbar
+    plumbing so the section stays a list renderer.
+  - **Manual smoke on Pixel API 34**:
+    1. Empty profile → home shows two insight cards
+       (`no_data` + `life_phase:50`) with X icons
+       rendered in Indonesian copy plus correct ID
+       number grouping (`14.676`, `29,9 tahun`).
+    2. Tap X on `no_data` → card disappears
+       immediately, Snackbar shows
+       `Disembunyikan 1 hari · Urungkan`.
+    3. Force-stop + relaunch app → dismissed card
+       stays hidden (SharedPreferences persistence
+       confirmed end-to-end).
+  - **Test count: 185 unit (was 166) + 10 golden = 195
+    total**. New: `insight_dismissal_repository_test.dart`,
+    `insight_content_test.dart`, plus expanded
+    `rules_test.dart` (new rules + spec assertions) and
+    `snapshot_builder_test.dart` (streak helper). All
+    existing tests still green; the InsightCard golden
+    is unchanged because the dismiss button is gated by
+    a nullable `onDismiss` callback.
+  - **Sharp edges captured**:
+    - ARB int placeholders need `"format":
+      "decimalPattern"` to get locale-aware grouping —
+      bare `int` types interpolate plainly. Caught
+      while writing `insight_content_test.dart`.
+    - `async*` streams that yield + then forward a
+      broadcast controller can miss the controller's
+      first emission if the subscriber hasn't fully
+      attached. Tests use `await
+      Future<void>.delayed(Duration.zero)` after
+      subscribing to settle the broadcast handshake.
+
 ### In Progress
 - None — Multi-Pin Widget (v3) closed. M6 deferred items
   (Play Store track, insight l10n) still owner/scope-gated.
@@ -1129,15 +1221,15 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
   `r0adkll/upload-google-play`. Pre-req: Play Console
   app shell created + a service-account JSON committed
   as a GitHub Actions secret.
-- **Recommendation Engine v2** (after M6): dismiss-a-card
-  + cooldown (so the same `LifePhaseRule` insight doesn't
-  re-show every open), per-rule analytics events, plus
-  3–5 more rules drawn from real user data once we have
-  testers (e.g. weekend vs weekday sleep delta, mood vs
-  exercise correlation, water-on-low-sleep nudge).
-  Optional: ship one rule as a *positive* streak
-  (`encourage` after 7 consecutive exercise days) so the
-  feed isn't only warnings.
+- **Recommendation Engine v3** (after testers land):
+  per-rule analytics events (impression / dismiss /
+  CTA-tap) once a telemetry sink is wired in M7, plus
+  3–5 more rules drawn from real user data (e.g.
+  weekend-vs-weekday sleep delta, mood-vs-exercise
+  correlation). v2 already shipped dismiss + cooldown,
+  ID/EN l10n, and 3 of the originally-planned rules
+  (`PositiveExerciseStreak`, `LowSleepHydration`,
+  `LoggingStreakMilestone`) — see Change Log entry.
 - **Lifestyle polish (deferred from M4 scope)**: per-category
   charts (e.g. last-7-days water bars, sleep trendline) —
   fold into M6 or a dedicated minor milestone. HealthKit /
@@ -1372,3 +1464,4 @@ When you (the next AI assistant) act on this project:
 | 2026-06-14 | Cursor AI session | **Auth & Cloud Sync ADR captured** + schema v6 sync insurance shipped. Decision: Supabase free tier when Phase 2 (M9) begins. Rationale + Phase-2 day-by-day implementation plan + rejected alternatives (Neon-alone, Firebase, Appwrite) + runner-up (PocketBase) documented in [`docs/Auth-Strategy.md`](./Auth-Strategy.md). Schema v6 adds nullable `events_table.deletedAtEpochMs` + `lifestyle_logs_table.{updatedAtEpochMs, deletedAtEpochMs}` — pure column reservation, no app code changes. 166 tests green, `flutter analyze` clean. |
 | 2026-06-14 | Cursor AI session | **Widget redesign: light "ticket frame" surface.** Surface drawable rewritten as a `layer-list` — thick black outer ring + cyan-50 `#ECFEFF` fill + thin black hairline (1.5dp) inset 10dp. Text colors flipped from white-on-indigo to slate-900/slate-500 on cyan-50. Per-row card background made transparent (outer frame is the only "card" affordance now); row separation via padding + accent strip. Verified on emulator: life pin (amber accent) + event pin (per-event accent) coexist in the new framed surface. Color spec source: `oklch(98.4% 0.019 200.873)` from the user — converted to `#ECFEFF` since Android XML doesn't speak OKLCH natively. |
 | 2026-06-14 | Cursor AI session | Shipped **Multi-Pin Widget (v3)**: dropped mutual exclusivity — life and event pins are now independent. `EventRepository.setPinned(id, bool)` is the new per-event entrypoint (legacy `pinExclusive` kept for back-compat). Widget rewritten as a native `RemoteViews` **collection widget**: `PolarisHomeWidgetUpdater` serializes all pinned subjects (life first w/ amber accent, then events sorted by target date w/ per-event color accent) as a JSON array under `polaris_widget_items_json`; `PolarisWidgetRemoteViewsService` + `PolarisWidgetItemsFactory` parse it and feed a `ListView` inside the widget; `PolarisWidgetProvider` wires `setRemoteAdapter` + `notifyAppWidgetViewDataChanged` (critical for re-reads) + `setPendingIntentTemplate` for per-row taps; service registered in `AndroidManifest.xml` with `BIND_REMOTEVIEWS`. Default widget size bumped from 2×2 to 4×3 with `resizeMode="horizontal\|vertical"`. Sharp edge fix: `<View>` is not on the RemoteViews allow-list — accent strip now uses `<FrameLayout>` (commented in `polaris_widget_item.xml`). `LifePinSheet` copy de-warned. Tests updated to assert the JSON-array shape and the no-exclusivity invariant. 166 tests passing, `flutter analyze` clean. Verified on emulator: life + event coexist in the widget list, locale-aware (`Sisa Hariku / 10906 hari lagi / Satu napas pada satu waktu` + `test / 6 hari / Sab, Jun 20 · Bulanan`). Deferred: SVG/icon polish (user is sourcing assets). |
+| 2026-06-14 | Cursor AI session | Shipped **Recommendation Engine v2** (closes the M6-deferred line item): (1) **Dismiss + per-rule cooldown** — new `InsightDismissalRepository` (SP-backed `{id: cooldownUntilMs}` blob with auto-prune on write + broadcast `watch()`); X-close button on every `InsightCard`; Snackbar `Disembunyikan N hari · Urungkan` with one-tap Undo; cooldowns range 1d (`no_data`) → 30d (`life_phase`). Persists across app restarts (smoke-tested on emulator). (2) **L10n refactor** — rules now emit `InsightSpec` (l10n-free: `id`, `contentKey`, `severity`, `relatedCategory`, `ctaRoute`, typed `args`, `dismissCooldown`); presentation-side `InsightContent` resolver maps spec + `AppL` + `Locale` → renderable `Insight` with locale-aware `NumberFormat`s; every rule string moved to `app_en.arb` + `app_id.arb` with new keys (`insightWaterTargetTitle/Body/Cta`, …, `insightDismiss`, `insightDismissedFor`, `insightUndo`). Engine output signature widened to `List<InsightSpec>`; new `visibleInsightSpecsProvider` composes engine output with the dismissals stream. (3) **3 new rules** (deck size 6 → 9): `PositiveExerciseStreakRule` (encourage at 5/7 active days), `LowSleepHydrationRule` (cross-category compound: short sleep + low water → water-CTA warn), `LoggingStreakMilestoneRule` (`logging_streak:{7,14,30,90,365}` tiers from new `LifestyleSnapshot.currentLoggingStreak()`). (4) **Life-phase id sub-key** — emits `life_phase:25/:50/:75/:90` so dismissing one milestone doesn't silence the next; shared `contentKey: 'life_phase'` keeps the ARB template singular. Sharp edges: ARB `int` placeholders need `"format": "decimalPattern"` for locale-aware grouping; `async*` + broadcast streams need a microtask await for subscribers to attach before the first emit. **195 total tests** (185 unit + 10 golden, was 176), `flutter analyze` clean. New test files: `insight_dismissal_repository_test.dart`, `insight_content_test.dart`, `currentLoggingStreak` group in `snapshot_builder_test.dart`. Existing InsightCard golden unchanged (dismiss button gated by nullable `onDismiss`). Verified on Pixel API 34 emulator: cards render in ID locale with correct number grouping; dismissing `no_data` shows the cooldown Snackbar and the card stays hidden after force-stop + relaunch. |

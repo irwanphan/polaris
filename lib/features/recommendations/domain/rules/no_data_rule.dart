@@ -1,4 +1,4 @@
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
@@ -8,6 +8,10 @@ import 'package:polaris/features/recommendations/domain/value_objects/insight_se
 /// Fires when the user has *no* lifestyle logs in the last
 /// [windowDays] days across any category. Pairs with the
 /// [ExerciseStreakRule] guard so we never stack the two together.
+///
+/// Dismissal cooldown is 1 day — if the user dismisses this they
+/// probably just want quiet for the session, but the nudge should
+/// still be available tomorrow until they actually log something.
 class NoDataRule implements RecommendationRule {
   const NoDataRule({this.windowDays = 14});
 
@@ -17,19 +21,15 @@ class NoDataRule implements RecommendationRule {
   String get id => 'no_data';
 
   @override
-  Insight? evaluate(LifestyleSnapshot snapshot) {
+  InsightSpec? evaluate(LifestyleSnapshot snapshot) {
     if (snapshot.hasAnyLogIn(days: windowDays)) return null;
 
-    return Insight(
+    return InsightSpec(
       id: id,
+      contentKey: 'no_data',
       severity: InsightSeverity.encourage,
-      title: 'Log your first entry',
-      body:
-          'Polaris gets sharper once it learns your rhythm. Tap '
-          '"Quick log" on the Lifestyle tab to record water, sleep, '
-          'exercise, or mood.',
-      ctaLabel: 'Open Lifestyle',
       ctaRoute: '/lifestyle',
+      dismissCooldown: const Duration(days: 1),
     );
   }
 }

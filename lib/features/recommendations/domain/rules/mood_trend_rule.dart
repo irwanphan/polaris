@@ -1,5 +1,5 @@
 import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dart';
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
@@ -23,7 +23,7 @@ class MoodTrendRule implements RecommendationRule {
   String get id => 'mood_trend';
 
   @override
-  Insight? evaluate(LifestyleSnapshot snapshot) {
+  InsightSpec? evaluate(LifestyleSnapshot snapshot) {
     final List<DailyAggregate> moods = snapshot.recentDays(
       LogCategory.mood,
       days: windowDays,
@@ -35,17 +35,14 @@ class MoodTrendRule implements RecommendationRule {
       if (tail[i].value >= tail[i - 1].value) return null;
     }
 
-    return Insight(
+    return InsightSpec(
       id: id,
+      contentKey: 'mood_trend',
       severity: InsightSeverity.warn,
       relatedCategory: LogCategory.mood,
-      title: 'Mood trending down',
-      body:
-          'Last $requiredRun mood logs were each lower than the day '
-          'before. Something on your mind — short walk, call a '
-          'friend, or just log how today felt.',
-      ctaLabel: 'Log mood',
       ctaRoute: '/lifestyle',
+      dismissCooldown: const Duration(days: 3),
+      args: <String, Object>{'run': requiredRun},
     );
   }
 }

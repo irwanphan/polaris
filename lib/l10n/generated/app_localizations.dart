@@ -691,6 +691,200 @@ abstract class AppL {
   /// **'Insights for you'**
   String get insightsSectionTitle;
 
+  /// No description provided for @insightDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get insightDismiss;
+
+  /// No description provided for @insightDismissSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this insight'**
+  String get insightDismissSemanticLabel;
+
+  /// No description provided for @insightDismissedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Hidden for 1 day} other{Hidden for {days} days}}'**
+  String insightDismissedFor(int days);
+
+  /// No description provided for @insightUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get insightUndo;
+
+  /// No description provided for @insightWaterTargetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drink a bit more water'**
+  String get insightWaterTargetTitle;
+
+  /// No description provided for @insightWaterTargetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {windowDays} days you averaged {avg} glasses/day. A common target is {target}+. Add a glass at the next break.'**
+  String insightWaterTargetBody(int windowDays, String avg, String target);
+
+  /// No description provided for @insightWaterTargetCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log water'**
+  String get insightWaterTargetCta;
+
+  /// No description provided for @insightSleepRegularityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Short on sleep this week'**
+  String get insightSleepRegularityTitle;
+
+  /// No description provided for @insightSleepRegularityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{shortCount} of the last {totalCount} logged nights were under {minHours}h. Try an earlier wind-down tonight.'**
+  String insightSleepRegularityBody(
+    int shortCount,
+    int totalCount,
+    String minHours,
+  );
+
+  /// No description provided for @insightSleepRegularityCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log sleep'**
+  String get insightSleepRegularityCta;
+
+  /// No description provided for @insightExerciseStreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move a bit this week'**
+  String get insightExerciseStreakTitle;
+
+  /// No description provided for @insightExerciseStreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No exercise logged in the last {windowDays} days. Even a 10-minute walk counts — log it and start a streak.'**
+  String insightExerciseStreakBody(int windowDays);
+
+  /// No description provided for @insightExerciseStreakCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log exercise'**
+  String get insightExerciseStreakCta;
+
+  /// No description provided for @insightMoodTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood trending down'**
+  String get insightMoodTrendTitle;
+
+  /// No description provided for @insightMoodTrendBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The last {run} mood logs were each lower than the day before. Something on your mind — short walk, call a friend, or just log how today felt.'**
+  String insightMoodTrendBody(int run);
+
+  /// No description provided for @insightMoodTrendCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log mood'**
+  String get insightMoodTrendCta;
+
+  /// No description provided for @insightLifePhaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve lived {pct}% of your estimated life'**
+  String insightLifePhaseTitle(int pct);
+
+  /// No description provided for @insightLifePhaseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'About {remainingYears} years (~{remainingDays} days) left on the public-table estimate. Pin one event that matters most to you.'**
+  String insightLifePhaseBody(String remainingYears, int remainingDays);
+
+  /// No description provided for @insightLifePhaseCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin an event'**
+  String get insightLifePhaseCta;
+
+  /// No description provided for @insightNoDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your first entry'**
+  String get insightNoDataTitle;
+
+  /// No description provided for @insightNoDataBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Polaris gets sharper once it learns your rhythm. Tap \"Quick log\" on the Lifestyle tab to record water, sleep, exercise, or mood.'**
+  String get insightNoDataBody;
+
+  /// No description provided for @insightNoDataCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Lifestyle'**
+  String get insightNoDataCta;
+
+  /// No description provided for @insightPositiveExerciseStreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Great week on the move'**
+  String get insightPositiveExerciseStreakTitle;
+
+  /// No description provided for @insightPositiveExerciseStreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You logged exercise on {activeDays} of the last {windowDays} days — {totalMinutes} minutes total. Keep the rhythm.'**
+  String insightPositiveExerciseStreakBody(
+    int activeDays,
+    int windowDays,
+    String totalMinutes,
+  );
+
+  /// No description provided for @insightPositiveExerciseStreakCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log today'**
+  String get insightPositiveExerciseStreakCta;
+
+  /// No description provided for @insightLowSleepHydrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hydrate to soften a tough week'**
+  String get insightLowSleepHydrationTitle;
+
+  /// No description provided for @insightLowSleepHydrationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Average sleep was under {minHours}h and water is below your usual pace. An extra glass today eases the cost.'**
+  String insightLowSleepHydrationBody(String minHours);
+
+  /// No description provided for @insightLowSleepHydrationCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log water'**
+  String get insightLowSleepHydrationCta;
+
+  /// No description provided for @insightLoggingStreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{streak}-day streak'**
+  String insightLoggingStreakTitle(int streak);
+
+  /// No description provided for @insightLoggingStreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve logged something every day for {streak} days. Small consistency, big compound. Keep going.'**
+  String insightLoggingStreakBody(int streak);
+
+  /// No description provided for @insightLoggingStreakCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log today'**
+  String get insightLoggingStreakCta;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

@@ -1,5 +1,5 @@
 import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dart';
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
@@ -24,10 +24,7 @@ class ExerciseStreakRule implements RecommendationRule {
   String get id => 'exercise_streak';
 
   @override
-  Insight? evaluate(LifestyleSnapshot snapshot) {
-    // Hand off to NoDataRule when the user has effectively stopped
-    // using the app — avoids stacking insights on top of the
-    // onboarding nudge.
+  InsightSpec? evaluate(LifestyleSnapshot snapshot) {
     if (!snapshot.hasAnyLogIn(days: requireRecentActivityWindow)) return null;
 
     final double minutes = snapshot.sumOverWindow(
@@ -36,16 +33,15 @@ class ExerciseStreakRule implements RecommendationRule {
     );
     if (minutes > 0) return null;
 
-    return Insight(
+    return InsightSpec(
       id: id,
+      contentKey: 'exercise_streak',
       severity: InsightSeverity.encourage,
       relatedCategory: LogCategory.exercise,
-      title: 'Move a bit this week',
-      body:
-          'No exercise logged in the last $windowDays days. '
-          'Even a 10-minute walk counts — log it and start a streak.',
-      ctaLabel: 'Log exercise',
       ctaRoute: '/lifestyle',
+      // 7 days mirrors the rule's own evaluation window — dismiss
+      // once, re-evaluate at the start of the next week.
+      args: <String, Object>{'windowDays': windowDays},
     );
   }
 }

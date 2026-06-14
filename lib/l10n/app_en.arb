@@ -177,6 +177,95 @@
 
   "insightsSectionTitle": "Insights for you",
 
+  "insightDismiss": "Dismiss",
+  "insightDismissSemanticLabel": "Hide this insight",
+  "insightDismissedFor": "{days, plural, =1{Hidden for 1 day} other{Hidden for {days} days}}",
+  "@insightDismissedFor": {
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "insightUndo": "Undo",
+
+  "insightWaterTargetTitle": "Drink a bit more water",
+  "insightWaterTargetBody": "Last {windowDays} days you averaged {avg} glasses/day. A common target is {target}+. Add a glass at the next break.",
+  "@insightWaterTargetBody": {
+    "placeholders": {
+      "windowDays": {"type": "int"},
+      "avg": {"type": "String"},
+      "target": {"type": "String"}
+    }
+  },
+  "insightWaterTargetCta": "Log water",
+
+  "insightSleepRegularityTitle": "Short on sleep this week",
+  "insightSleepRegularityBody": "{shortCount} of the last {totalCount} logged nights were under {minHours}h. Try an earlier wind-down tonight.",
+  "@insightSleepRegularityBody": {
+    "placeholders": {
+      "shortCount": {"type": "int"},
+      "totalCount": {"type": "int"},
+      "minHours": {"type": "String"}
+    }
+  },
+  "insightSleepRegularityCta": "Log sleep",
+
+  "insightExerciseStreakTitle": "Move a bit this week",
+  "insightExerciseStreakBody": "No exercise logged in the last {windowDays} days. Even a 10-minute walk counts — log it and start a streak.",
+  "@insightExerciseStreakBody": {
+    "placeholders": {"windowDays": {"type": "int"}}
+  },
+  "insightExerciseStreakCta": "Log exercise",
+
+  "insightMoodTrendTitle": "Mood trending down",
+  "insightMoodTrendBody": "The last {run} mood logs were each lower than the day before. Something on your mind — short walk, call a friend, or just log how today felt.",
+  "@insightMoodTrendBody": {
+    "placeholders": {"run": {"type": "int"}}
+  },
+  "insightMoodTrendCta": "Log mood",
+
+  "insightLifePhaseTitle": "You've lived {pct}% of your estimated life",
+  "@insightLifePhaseTitle": {
+    "placeholders": {"pct": {"type": "int"}}
+  },
+  "insightLifePhaseBody": "About {remainingYears} years (~{remainingDays} days) left on the public-table estimate. Pin one event that matters most to you.",
+  "@insightLifePhaseBody": {
+    "placeholders": {
+      "remainingYears": {"type": "String"},
+      "remainingDays": {"type": "int", "format": "decimalPattern"}
+    }
+  },
+  "insightLifePhaseCta": "Pin an event",
+
+  "insightNoDataTitle": "Log your first entry",
+  "insightNoDataBody": "Polaris gets sharper once it learns your rhythm. Tap \"Quick log\" on the Lifestyle tab to record water, sleep, exercise, or mood.",
+  "insightNoDataCta": "Open Lifestyle",
+
+  "insightPositiveExerciseStreakTitle": "Great week on the move",
+  "insightPositiveExerciseStreakBody": "You logged exercise on {activeDays} of the last {windowDays} days — {totalMinutes} minutes total. Keep the rhythm.",
+  "@insightPositiveExerciseStreakBody": {
+    "placeholders": {
+      "activeDays": {"type": "int"},
+      "windowDays": {"type": "int"},
+      "totalMinutes": {"type": "String"}
+    }
+  },
+  "insightPositiveExerciseStreakCta": "Log today",
+
+  "insightLowSleepHydrationTitle": "Hydrate to soften a tough week",
+  "insightLowSleepHydrationBody": "Average sleep was under {minHours}h and water is below your usual pace. An extra glass today eases the cost.",
+  "@insightLowSleepHydrationBody": {
+    "placeholders": {"minHours": {"type": "String"}}
+  },
+  "insightLowSleepHydrationCta": "Log water",
+
+  "insightLoggingStreakTitle": "{streak}-day streak",
+  "@insightLoggingStreakTitle": {
+    "placeholders": {"streak": {"type": "int"}}
+  },
+  "insightLoggingStreakBody": "You've logged something every day for {streak} days. Small consistency, big compound. Keep going.",
+  "@insightLoggingStreakBody": {
+    "placeholders": {"streak": {"type": "int"}}
+  },
+  "insightLoggingStreakCta": "Log today",
+
   "settingsTitle": "Settings",
   "settingsLanguage": "Language",
   "settingsLanguageSystem": "Follow system",

@@ -1,5 +1,5 @@
 import 'package:polaris/features/life_countdown/domain/entities/life_estimate.dart';
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
@@ -7,10 +7,11 @@ import 'package:polaris/features/recommendations/domain/value_objects/insight_se
 /// "You've lived ~25 / 50 / 75 / 90% of your expected life".
 ///
 /// Picks the highest threshold the user has crossed and emits a
-/// gentle, reflective nudge. We don't re-fire every day — the M5
-/// surface is stateless and shows whatever the rule returns each
-/// time the snapshot is recomputed; rate-limiting belongs in a
-/// future "dismiss this card" / cooldown layer (M6).
+/// gentle, reflective nudge. Each threshold gets its own [InsightSpec.id]
+/// (`life_phase:25`, `life_phase:50`, …) so dismissing the 25%
+/// milestone does NOT silence the 50% one when it eventually
+/// arrives. The shared `contentKey: 'life_phase'` keeps l10n
+/// templating in one bucket.
 ///
 /// Skipped entirely when there is no [LifeEstimate] (router would
 /// have redirected to onboarding anyway) or when `percentLived` is
@@ -25,7 +26,7 @@ class LifePhaseRule implements RecommendationRule {
   String get id => 'life_phase';
 
   @override
-  Insight? evaluate(LifestyleSnapshot snapshot) {
+  InsightSpec? evaluate(LifestyleSnapshot snapshot) {
     final LifeEstimate? est = snapshot.lifeEstimate;
     if (est == null) return null;
 
@@ -36,18 +37,20 @@ class LifePhaseRule implements RecommendationRule {
     }
     if (matched == null) return null;
 
-    return Insight(
-      id: id,
+    final int milestone = matched.toInt();
+    return InsightSpec(
+      id: '$id:$milestone',
+      contentKey: 'life_phase',
       severity: InsightSeverity.info,
-      title:
-          'You\'ve lived ${matched.toStringAsFixed(0)}% '
-          'of your estimated life',
-      body:
-          'About ${est.remainingYears.toStringAsFixed(1)} years (~'
-          '${est.remainingDays} days) on the public-table '
-          'estimate. Pin one event that matters most to you.',
-      ctaLabel: 'Pin an event',
       ctaRoute: '/events',
+      // 30 days — milestones change very slowly, so a once-a-month
+      // re-surface keeps the moment without nagging.
+      dismissCooldown: const Duration(days: 30),
+      args: <String, Object>{
+        'pct': milestone,
+        'remainingYears': est.remainingYears,
+        'remainingDays': est.remainingDays,
+      },
     );
   }
 }

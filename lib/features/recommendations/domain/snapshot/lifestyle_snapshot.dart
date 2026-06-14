@@ -118,4 +118,33 @@ class LifestyleSnapshot {
     }
     return false;
   }
+
+  /// Number of consecutive days ending at [referenceDate] (today)
+  /// on which the user logged *something* in any category.
+  ///
+  /// Returns `0` when today has no log at all (streak breaks if
+  /// the user hasn't logged today yet — a common product choice
+  /// for habit-style streaks). Capped at [windowDays] because the
+  /// snapshot only holds that much data; callers wanting a longer
+  /// streak need a wider window.
+  int currentLoggingStreak() {
+    // Build a Set<DateTime> of every day-with-any-log within the
+    // window so the per-day lookup is O(1) and order-independent.
+    final Set<DateTime> daysWithLogs = <DateTime>{};
+    for (final Map<DateTime, DailyAggregate> perDay in dailyByCategory.values) {
+      daysWithLogs.addAll(perDay.keys);
+    }
+    if (daysWithLogs.isEmpty) return 0;
+
+    int streak = 0;
+    for (int offset = 0; offset < windowDays; offset++) {
+      final DateTime day = referenceDate.subtract(Duration(days: offset));
+      if (daysWithLogs.contains(day)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
 }

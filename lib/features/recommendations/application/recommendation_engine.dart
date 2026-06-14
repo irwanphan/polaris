@@ -1,4 +1,4 @@
-import 'package:polaris/features/recommendations/domain/entities/insight.dart';
+import 'package:polaris/features/recommendations/domain/entities/insight_spec.dart';
 import 'package:polaris/features/recommendations/domain/rules/recommendation_rule.dart';
 import 'package:polaris/features/recommendations/domain/snapshot/lifestyle_snapshot.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
@@ -12,33 +12,38 @@ import 'package:polaris/features/recommendations/domain/value_objects/insight_se
 ///   3. Stable-sort by severity descending so the most urgent card
 ///      lands at the top of the UI.
 ///
-/// Adding a rule means appending to the list passed at construction
-/// — no change here. Adding a new severity tier also requires no
-/// change here because we sort on the enum `index`.
+/// Output is a list of [InsightSpec] — the engine is l10n-free by
+/// design. The presentation layer's `InsightContent` resolver maps
+/// each spec into a renderable, localized `Insight`. Filtering
+/// dismissed specs is the consumer's job (see `insightsProvider`).
 class RecommendationEngine {
   const RecommendationEngine(this.rules);
 
   final List<RecommendationRule> rules;
 
-  List<Insight> evaluate(LifestyleSnapshot snapshot) {
-    final List<Insight> raw = <Insight>[];
+  List<InsightSpec> evaluate(LifestyleSnapshot snapshot) {
+    final List<InsightSpec> raw = <InsightSpec>[];
     for (final RecommendationRule rule in rules) {
-      final Insight? out = rule.evaluate(snapshot);
+      final InsightSpec? out = rule.evaluate(snapshot);
       if (out != null) raw.add(out);
     }
     raw.sort(
-      (Insight a, Insight b) => b.severity.index.compareTo(a.severity.index),
+      (InsightSpec a, InsightSpec b) =>
+          b.severity.index.compareTo(a.severity.index),
     );
-    return List<Insight>.unmodifiable(raw);
+    return List<InsightSpec>.unmodifiable(raw);
   }
 
   /// Convenience for callers that want to enforce a maximum number
   /// of cards on screen (the home insight slot only has room for a
   /// few).
-  List<Insight> evaluateTop(LifestyleSnapshot snapshot, {required int max}) {
-    final List<Insight> all = evaluate(snapshot);
+  List<InsightSpec> evaluateTop(
+    LifestyleSnapshot snapshot, {
+    required int max,
+  }) {
+    final List<InsightSpec> all = evaluate(snapshot);
     if (all.length <= max) return all;
-    return List<Insight>.unmodifiable(all.take(max));
+    return List<InsightSpec>.unmodifiable(all.take(max));
   }
 }
 

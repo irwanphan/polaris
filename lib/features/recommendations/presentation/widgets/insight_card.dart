@@ -4,18 +4,30 @@ import 'package:polaris/features/lifestyle/domain/value_objects/log_category.dar
 import 'package:polaris/features/lifestyle/presentation/widgets/category_icons.dart';
 import 'package:polaris/features/recommendations/domain/entities/insight.dart';
 import 'package:polaris/features/recommendations/domain/value_objects/insight_severity.dart';
+import 'package:polaris/l10n/generated/app_localizations.dart';
 
 /// One [Insight] rendered as a card.
 ///
 /// Stateless and presentation-only — the parent supplies an
-/// [onActionTap] when the [Insight.ctaLabel] should be actionable.
+/// [onActionTap] when the [Insight.ctaLabel] should be actionable
+/// and an [onDismiss] when the card should show its hide button.
 /// Severity drives the accent colour via a tiny mapper so the rule
 /// authors never reach for a `Color`.
 class InsightCard extends StatelessWidget {
-  const InsightCard({required this.insight, this.onActionTap, super.key});
+  const InsightCard({
+    required this.insight,
+    this.onActionTap,
+    this.onDismiss,
+    super.key,
+  });
 
   final Insight insight;
   final VoidCallback? onActionTap;
+
+  /// When non-null, a small dismiss button appears in the top-right
+  /// corner and invokes this callback on tap. The dismissal
+  /// repository + snackbar plumbing live in the parent ([InsightsSection]).
+  final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +35,7 @@ class InsightCard extends StatelessWidget {
     final ColorScheme cs = theme.colorScheme;
     final _Tone tone = _toneFor(cs, insight.severity);
     final IconData icon = _iconFor(insight);
+    final AppL l = AppL.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -56,6 +69,26 @@ class InsightCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onDismiss != null)
+                Semantics(
+                  button: true,
+                  label: l.insightDismissSemanticLabel,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      // Minimum 32x32 tap target — the icon is small
+                      // but the Material guidelines still ask for a
+                      // reachable hit-box.
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    color: tone.body,
+                    tooltip: l.insightDismiss,
+                    onPressed: onDismiss,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: Spacing.x3),

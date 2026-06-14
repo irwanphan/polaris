@@ -177,4 +177,80 @@ void main() {
       expect(snap.hasAnyLogIn(days: 2), isFalse);
     });
   });
+
+  group('currentLoggingStreak', () {
+    test('is zero when today has no log', () {
+      final LifestyleSnapshot snap = builder.build(
+        logs: <LifestyleLog>[
+          _log(
+            id: 'y',
+            category: LogCategory.mood,
+            value: 4,
+            loggedAt: DateTime(2026, 6, 12),
+          ),
+        ],
+        now: now,
+      );
+      expect(snap.currentLoggingStreak(), 0);
+    });
+
+    test('counts consecutive days ending at today (across categories)', () {
+      final List<LifestyleLog> logs = <LifestyleLog>[
+        _log(
+          id: 'd1',
+          category: LogCategory.mood,
+          value: 4,
+          loggedAt: DateTime(2026, 6, 13),
+        ),
+        _log(
+          id: 'd2',
+          category: LogCategory.water,
+          value: 5,
+          loggedAt: DateTime(2026, 6, 12),
+        ),
+        _log(
+          id: 'd3',
+          category: LogCategory.sleep,
+          value: 7,
+          loggedAt: DateTime(2026, 6, 11),
+        ),
+      ];
+      final LifestyleSnapshot snap = builder.build(logs: logs, now: now);
+      expect(snap.currentLoggingStreak(), 3);
+    });
+
+    test('breaks at the first day without a log', () {
+      final List<LifestyleLog> logs = <LifestyleLog>[
+        _log(
+          id: 'd1',
+          category: LogCategory.mood,
+          value: 4,
+          loggedAt: DateTime(2026, 6, 13),
+        ),
+        // Gap on the 12th.
+        _log(
+          id: 'd3',
+          category: LogCategory.sleep,
+          value: 7,
+          loggedAt: DateTime(2026, 6, 11),
+        ),
+      ];
+      final LifestyleSnapshot snap = builder.build(logs: logs, now: now);
+      expect(snap.currentLoggingStreak(), 1);
+    });
+
+    test('caps at windowDays even if the user logged earlier than that', () {
+      final List<LifestyleLog> logs = <LifestyleLog>[
+        for (int i = 0; i < 14; i++)
+          _log(
+            id: 'd$i',
+            category: LogCategory.mood,
+            value: 4,
+            loggedAt: DateTime(2026, 6, 13).subtract(Duration(days: i)),
+          ),
+      ];
+      final LifestyleSnapshot snap = builder.build(logs: logs, now: now);
+      expect(snap.currentLoggingStreak(), 14);
+    });
+  });
 }

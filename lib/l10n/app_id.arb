@@ -108,6 +108,47 @@
 
   "insightsSectionTitle": "Saran untuk Anda",
 
+  "insightDismiss": "Sembunyikan",
+  "insightDismissSemanticLabel": "Sembunyikan saran ini",
+  "insightDismissedFor": "{days, plural, =1{Disembunyikan 1 hari} other{Disembunyikan {days} hari}}",
+  "insightUndo": "Urungkan",
+
+  "insightWaterTargetTitle": "Minum sedikit lebih banyak air",
+  "insightWaterTargetBody": "Dalam {windowDays} hari terakhir rata-rata Anda {avg} gelas/hari. Target umum {target}+. Tambah satu gelas saat istirahat berikutnya.",
+  "insightWaterTargetCta": "Catat air",
+
+  "insightSleepRegularityTitle": "Kurang tidur minggu ini",
+  "insightSleepRegularityBody": "{shortCount} dari {totalCount} malam terakhir tidur di bawah {minHours} jam. Coba bersiap tidur lebih awal malam ini.",
+  "insightSleepRegularityCta": "Catat tidur",
+
+  "insightExerciseStreakTitle": "Bergerak sedikit minggu ini",
+  "insightExerciseStreakBody": "Tidak ada olahraga tercatat dalam {windowDays} hari terakhir. Jalan 10 menit pun sudah cukup — catat dan mulai rangkaian.",
+  "insightExerciseStreakCta": "Catat olahraga",
+
+  "insightMoodTrendTitle": "Mood menurun",
+  "insightMoodTrendBody": "{run} catatan mood terakhir berturut lebih rendah dari hari sebelumnya. Coba jalan sebentar, hubungi teman, atau cukup catat perasaan hari ini.",
+  "insightMoodTrendCta": "Catat mood",
+
+  "insightLifePhaseTitle": "Anda telah menjalani {pct}% dari estimasi hidup",
+  "insightLifePhaseBody": "Sekitar {remainingYears} tahun (~{remainingDays} hari) tersisa pada estimasi tabel publik. Sematkan satu acara yang paling berarti.",
+  "insightLifePhaseCta": "Sematkan acara",
+
+  "insightNoDataTitle": "Catat entri pertama Anda",
+  "insightNoDataBody": "Polaris jadi lebih tajam saat mengenal ritme Anda. Ketuk \"Catat cepat\" di tab Gaya Hidup untuk mencatat air, tidur, olahraga, atau mood.",
+  "insightNoDataCta": "Buka Gaya Hidup",
+
+  "insightPositiveExerciseStreakTitle": "Minggu aktif yang bagus",
+  "insightPositiveExerciseStreakBody": "Anda mencatat olahraga di {activeDays} dari {windowDays} hari terakhir — total {totalMinutes} menit. Jaga ritmenya.",
+  "insightPositiveExerciseStreakCta": "Catat hari ini",
+
+  "insightLowSleepHydrationTitle": "Cukupi cairan saat minggu berat",
+  "insightLowSleepHydrationBody": "Rata-rata tidur di bawah {minHours} jam dan asupan air di bawah kebiasaan Anda. Tambah satu gelas hari ini meringankan dampaknya.",
+  "insightLowSleepHydrationCta": "Catat air",
+
+  "insightLoggingStreakTitle": "Rangkaian {streak} hari",
+  "insightLoggingStreakBody": "Anda mencatat sesuatu setiap hari selama {streak} hari. Konsistensi kecil, efek besar. Lanjutkan.",
+  "insightLoggingStreakCta": "Catat hari ini",
+
   "settingsTitle": "Pengaturan",
   "settingsLanguage": "Bahasa",
   "settingsLanguageSystem": "Ikuti sistem",
