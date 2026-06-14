@@ -19,12 +19,22 @@
 
   Geometry:
    * Outer black layer: 16dp corner radius, fills the whole row.
-   * Inner amber layer: inset 2dp on top/left/right and 5dp on
-     bottom. The inner radius is reduced by the inset so the curve
-     stays roughly concentric with the outer one.
+   * Inner amber layer: inset 3dp on top/left/right and 6dp on
+     bottom. The inner radius is reduced by the inset so the
+     curve stays roughly concentric with the outer one.
    * Bottom-corner radius on the amber layer is reduced by the
-     larger bottom inset (16 - 5 = 11dp) so the inner shape's
+     larger bottom inset (16 - 6 = 10dp) so the inner shape's
      bottom corners do not visually flatten against the outer.
+
+  Why these insets and not 2dp / 5dp (the previous values)?
+   The launcher's RemoteViews rasterizer applies anti-aliasing
+   to nested rounded drawables, which can swallow up to ~1dp at
+   each edge of a thin inset band. With a 2dp top inset that AA
+   smear made the top frame visually disappear while the 5dp
+   bottom band stayed crisp. Bumping the floor to 3dp gives the
+   AA enough room to bleed without erasing the band; the 6dp
+   bottom keeps the visual hierarchy (bottom ~2× the rest) that
+   reads as a neobrutalist drop-shadow.
 
   Pairs with `polaris_widget_item_icon_box.xml` and the dark-on-
   amber text colors set in `polaris_widget_item.xml`.
@@ -39,17 +49,17 @@
     </item>
 
     <item
-        android:left="2dp"
-        android:top="2dp"
-        android:right="2dp"
-        android:bottom="5dp">
+        android:left="3dp"
+        android:top="3dp"
+        android:right="3dp"
+        android:bottom="6dp">
         <shape android:shape="rectangle">
             <solid android:color="#FBBF24" />
             <corners
-                android:topLeftRadius="14dp"
-                android:topRightRadius="14dp"
-                android:bottomLeftRadius="11dp"
-                android:bottomRightRadius="11dp" />
+                android:topLeftRadius="13dp"
+                android:topRightRadius="13dp"
+                android:bottomLeftRadius="10dp"
+                android:bottomRightRadius="10dp" />
         </shape>
     </item>
 </layer-list>

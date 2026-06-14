@@ -88,24 +88,31 @@
        * `fadingEdgeLength=0` + `requiresFadingEdge=none` — the
          default vertical ListView fades the top edge of the
          first visible row to hint "more content above". On our
-         neobrutalist pill the top frame is only 2dp tall, so
-         the fade swallows the entire black border and makes it
-         look "cut off". Disabling the fade keeps the border
+         neobrutalist pill the top frame is only ~3dp tall, so
+         the fade can swallow the entire black border and makes
+         it look "cut off". Disabling the fade keeps the border
          crisp top to bottom.
        * `overScrollMode=never` — kills the iOS-style elastic
          glow when the user drags past the first/last row,
          which would otherwise bleed amber+black through the
          outer cyan card and look broken.
-       * `divider=null` / `dividerHeight=0dp` — row gap comes
-         from `marginBottom` on the row, not from a divider.
+       * `divider=@android:color/transparent` + `dividerHeight=10dp`
+         is how we get 10dp of gap between row pills. We CANNOT
+         use `layout_marginBottom` on the row's root — ListView's
+         `AbsListView.LayoutParams` does not extend
+         `MarginLayoutParams`, so margins get applied during
+         measurement but ignored during positioning, leaving the
+         row's drawable shifted relative to its bounds (visible
+         as a clipped top edge on the pill). The divider is the
+         idiomatic, drawable-correct way to space rows.
     -->
     <ListView
         android:id="@+id/polaris_widget_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="@null"
-        android:dividerHeight="0dp"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="10dp"
         android:fadingEdgeLength="0dp"
         android:requiresFadingEdge="none"
         android:overScrollMode="never"

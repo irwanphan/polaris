@@ -33,11 +33,19 @@
   android/app/src/main/kotlin/com/phandarian/polaris/PolarisWidgetItemsFactory.kt —
   keep in sync when renaming.
 -->
+<!--
+  No `layout_margin*` on this root LinearLayout — ListView wraps every
+  adapter child in `AbsListView.LayoutParams`, which deliberately does
+  NOT extend `MarginLayoutParams`. Margins set in XML get half-honored
+  (used during measurement, dropped during positioning) and the visible
+  drawable shifts off its measured bounds, clipping the top edge of the
+  pill. Inter-row gap lives on the parent ListView's `dividerHeight`
+  instead — see `polaris_widget_layout.xml`.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/polaris_widget_item_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:padding="12dp"
