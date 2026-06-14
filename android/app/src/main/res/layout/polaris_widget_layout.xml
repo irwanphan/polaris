@@ -14,13 +14,19 @@
 
   Palette (light surface variant):
   - Surface:   `polaris_widget_background.xml` — cyan-50 fill with
-               a double black "ticket" border. Drives the dark-on-
-               light text choice.
+               a single thick black "ticket" border. Drives the
+               dark-on-light text choice.
   - Title:     slate-900 (#0F172A), 14sp, bold.
   - Brand pill amber #FBBF24 with slate-900 text — kept warm so it
                still reads as a brand stamp, not a label.
-  - Padding is bumped to 18dp so the double border has room to
-               breathe before the first content row.
+  - Padding is asymmetric: 18dp on left / right / top so the
+               outer black frame has room to breathe before the
+               first content row, but **0dp at the bottom** so
+               the last item pill can ride flush against the
+               bottom of the cyan card. Each row already carries
+               a 5dp bottom shadow inside its own pill, which
+               supplies the visual "exit margin" the cyan card
+               would otherwise need.
 
   Typography:
   - Every TextView declares `android:fontFamily="@font/montserrat"`
@@ -36,7 +42,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp"
+    android:paddingLeft="18dp"
+    android:paddingRight="18dp"
+    android:paddingTop="18dp"
+    android:paddingBottom="0dp"
     android:background="@drawable/polaris_widget_background">
 
     <LinearLayout
@@ -74,6 +83,22 @@
             android:text="POLARIS" />
     </LinearLayout>
 
+    <!--
+      ListView caveats wired via XML (RemoteViews-safe attributes):
+       * `fadingEdgeLength=0` + `requiresFadingEdge=none` — the
+         default vertical ListView fades the top edge of the
+         first visible row to hint "more content above". On our
+         neobrutalist pill the top frame is only 2dp tall, so
+         the fade swallows the entire black border and makes it
+         look "cut off". Disabling the fade keeps the border
+         crisp top to bottom.
+       * `overScrollMode=never` — kills the iOS-style elastic
+         glow when the user drags past the first/last row,
+         which would otherwise bleed amber+black through the
+         outer cyan card and look broken.
+       * `divider=null` / `dividerHeight=0dp` — row gap comes
+         from `marginBottom` on the row, not from a divider.
+    -->
     <ListView
         android:id="@+id/polaris_widget_list"
         android:layout_width="match_parent"
@@ -81,6 +106,9 @@
         android:layout_weight="1"
         android:divider="@null"
         android:dividerHeight="0dp"
+        android:fadingEdgeLength="0dp"
+        android:requiresFadingEdge="none"
+        android:overScrollMode="never"
         android:listSelector="@android:color/transparent" />
 
     <LinearLayout
