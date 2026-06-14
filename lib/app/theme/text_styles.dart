@@ -7,8 +7,11 @@ import 'package:flutter/painting.dart';
 /// (`displayLg`, `headingMd`, `bodyMd`, ...) instead of raw sizes so that
 /// screens stay visually coherent.
 ///
-/// The font family is intentionally left unset — the platform default is
-/// used until a brand font (e.g. Inter) is bundled as an asset.
+/// The font family is intentionally left unset on each [TextStyle]. The
+/// brand font ("Montserrat") is applied once at the [ThemeData] level in
+/// `app_theme.dart` and inherits down through the [TextTheme]. Keep it
+/// that way — overriding `fontFamily` per-style would silently bypass any
+/// future theme change (e.g. swapping to Inter or pairing display+body).
 abstract final class TextStyles {
   // --- Display: hero / countdown numbers ----------------------------------
   static const TextStyle displayXl = TextStyle(

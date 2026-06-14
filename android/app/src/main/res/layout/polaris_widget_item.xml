@@ -8,6 +8,10 @@
    * hero     — slate-900 (#0F172A), the at-a-glance number
    * subtitle — slate-500 (#64748B), 11sp body line
 
+  Typography: every TextView uses `@font/montserrat` to match the
+  Flutter app's brand font. See the long-form note in
+  polaris_widget_layout.xml for the API-level caveat.
+
   Background is intentionally transparent (see
   polaris_widget_item_background.xml) — the outer double frame in
   polaris_widget_background.xml already provides the "card"
@@ -54,6 +58,7 @@
             android:id="@+id/polaris_widget_item_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"
             android:textColor="#64748B"
             android:textSize="12sp"
             android:textStyle="bold"
@@ -67,6 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:fontFamily="@font/montserrat"
             android:textColor="#0F172A"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -80,6 +86,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:fontFamily="@font/montserrat"
             android:textColor="#64748B"
             android:textSize="11sp"
             android:maxLines="2"

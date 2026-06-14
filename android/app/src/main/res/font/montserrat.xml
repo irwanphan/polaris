@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Montserrat font family used by the Polaris home-screen widget.
+
+  This is the Android-side mirror of the Flutter `pubspec.yaml`
+  registration: same `.ttf` files, just placed under `res/font/` so
+  the launcher's RemoteViews can resolve them.
+
+  Weight mapping lets us write `android:fontFamily="@font/montserrat"`
+  on a TextView and have `android:textStyle="bold"` automatically pick
+  the 700-weight Bold file instead of synthetically faux-bolding the
+  Regular cut. Same for `textStyle="italic"` if we ever add italic
+  weights to the widget.
+
+  Resource fonts in RemoteViews are an API 26+ feature. On Android 5–7
+  the launcher silently falls back to the default system typeface
+  (Roboto). This is a known, acceptable graceful degradation — the
+  Flutter app itself renders fonts via Skia and is unaffected.
+-->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <font
+        android:font="@font/montserrat_regular"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/montserrat_regular"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/montserrat_medium"
+        android:fontStyle="normal"
+        android:fontWeight="500"
+        app:font="@font/montserrat_medium"
+        app:fontStyle="normal"
+        app:fontWeight="500" />
+
+    <font
+        android:font="@font/montserrat_semibold"
+        android:fontStyle="normal"
+        android:fontWeight="600"
+        app:font="@font/montserrat_semibold"
+        app:fontStyle="normal"
+        app:fontWeight="600" />
+
+    <font
+        android:font="@font/montserrat_bold"
+        android:fontStyle="normal"
+        android:fontWeight="700"
+        app:font="@font/montserrat_bold"
+        app:fontStyle="normal"
+        app:fontWeight="700" />
+
+</font-family>

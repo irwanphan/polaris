@@ -21,6 +21,12 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
+      // Brand font. Registered in `pubspec.yaml` under family "Montserrat"
+      // with weights 300/400/500/600/700 (+ italic@400). Setting it here on
+      // ThemeData propagates to every TextStyle in `textTheme` because the
+      // TextStyles in `lib/app/theme/text_styles.dart` intentionally leave
+      // `fontFamily` unset.
+      fontFamily: 'Montserrat',
       scaffoldBackgroundColor: colorScheme.surface,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(

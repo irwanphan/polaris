@@ -22,6 +22,12 @@
   - Padding is bumped to 18dp so the double border has room to
                breathe before the first content row.
 
+  Typography:
+  - Every TextView declares `android:fontFamily="@font/montserrat"`
+    to mirror the Flutter app's brand font. Resource fonts in
+    RemoteViews require API 26+; Android 5–7 launchers silently
+    fall back to the system default, which is fine.
+
   IDs are referenced by name in PolarisWidgetProvider.kt — keep in
   sync when renaming.
 -->
@@ -46,6 +52,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:fontFamily="@font/montserrat"
             android:textColor="#0F172A"
             android:textSize="14sp"
             android:textStyle="bold"
@@ -59,6 +66,7 @@
             android:layout_height="wrap_content"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
+            android:fontFamily="@font/montserrat"
             android:textColor="#0F172A"
             android:textSize="9sp"
             android:textStyle="bold"
@@ -87,6 +95,7 @@
             android:id="@+id/polaris_widget_empty_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat"
             android:textColor="#0F172A"
             android:textSize="14sp"
             android:textStyle="bold"
@@ -97,6 +106,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:fontFamily="@font/montserrat"
             android:textColor="#64748B"
             android:textSize="12sp"
             android:gravity="center"
