@@ -2,6 +2,7 @@ package com.phandarian.polaris
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -106,11 +107,22 @@ class PolarisWidgetItemsFactory(
         // square on API < 31. The hex stays on the wire so we can wire
         // a future tinted element (emoji, dot) without a contract bump.
 
-        // Empty fill-in intent so the ListView's PendingIntent
-        // template (set in PolarisWidgetProvider) fires when the
-        // row is tapped. The current router has no event detail
-        // route, so all rows simply launch the app.
-        views.setOnClickFillInIntent(R.id.polaris_widget_item_root, Intent())
+        // Per-row fill-in intent that carries the deep-link URI for
+        // this row. The template (set in PolarisWidgetProvider)
+        // launches MainActivity; the framework overlays this URI as
+        // the launch intent's `data`, where the home_widget Flutter
+        // plugin picks it up and the in-app `DeepLinkRouter` routes
+        // it to the event detail page.
+        //
+        // Life row currently has no detail destination yet — it
+        // emits a `polaris://life` URI which the resolver ignores,
+        // so the launcher falls through to the app's default route.
+        val deepLink = when (row.kind) {
+            "event" -> Uri.parse("polaris://events/${Uri.encode(row.id)}")
+            else -> Uri.parse("polaris://${row.kind}")
+        }
+        val fillIn = Intent().apply { data = deepLink }
+        views.setOnClickFillInIntent(R.id.polaris_widget_item_root, fillIn)
         return views
     }
 

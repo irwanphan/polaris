@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
+import android.os.Build
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -81,24 +82,40 @@ class PolarisWidgetProvider : HomeWidgetProvider() {
             views.setRemoteAdapter(R.id.polaris_widget_list, adapterIntent)
             views.setEmptyView(R.id.polaris_widget_list, R.id.polaris_widget_empty)
 
-            // Header tap launches the app.
+            // Header tap launches the app with no deep-link URI —
+            // lands on the default route (the redirect resolves it).
             val launchIntent = HomeWidgetLaunchIntent.getActivity(
                 context,
                 MainActivity::class.java,
             )
             views.setOnClickPendingIntent(R.id.polaris_widget_header, launchIntent)
 
-            // Row taps reuse the same destination via a template +
-            // fill-in intent (see PolarisWidgetItemsFactory#getViewAt).
+            // Row taps reuse the same destination via a PendingIntent
+            // template + per-row fill-in intent (see
+            // PolarisWidgetItemsFactory#getViewAt). The template must:
+            //   * use HOME_WIDGET_LAUNCH_ACTION — otherwise the
+            //     home_widget Flutter plugin will ignore the URI and
+            //     the deep-link router never fires;
+            //   * leave `data` null so the fill-in's URI wins under
+            //     the framework's template+fill-in merge rules
+            //     (specified fields in the template override unspec-
+            //     ified ones in the fill-in; `data` here is the
+            //     opposite — must be unspecified in the template);
+            //   * be FLAG_MUTABLE so the fill-in is allowed to
+            //     supply the URI on Android 12+ (S+).
             val templateIntent = Intent(context, MainActivity::class.java).apply {
-                action = Intent.ACTION_VIEW
+                action = HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            var templateFlags = PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                templateFlags = templateFlags or PendingIntent.FLAG_MUTABLE
             }
             val templatePending = PendingIntent.getActivity(
                 context,
                 widgetId,
                 templateIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                templateFlags,
             )
             views.setPendingIntentTemplate(R.id.polaris_widget_list, templatePending)
 
