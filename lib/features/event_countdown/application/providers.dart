@@ -36,3 +36,28 @@ final StreamProvider<List<Event>> eventsStreamProvider =
     StreamProvider<List<Event>>(
       (ref) => ref.watch(eventRepositoryProvider).watchAll(),
     );
+
+/// Reactive single-event lookup by id, derived from the full event
+/// stream. Watching the list (not a per-id repository call) means
+/// edits / deletes / pin toggles propagate to the detail page without
+/// an extra subscription path.
+///
+/// Returns:
+///   - loading while the underlying stream is loading,
+///   - data(`null`) when the id is not (or no longer) present
+///     — typical after the user deletes the event from the detail
+///       page; the page can pop on that signal,
+///   - data(event) once found.
+final eventByIdProvider =
+    Provider.autoDispose.family<AsyncValue<Event?>, String>((
+      Ref ref,
+      String id,
+    ) {
+      final AsyncValue<List<Event>> all = ref.watch(eventsStreamProvider);
+      return all.whenData((List<Event> list) {
+        for (final Event e in list) {
+          if (e.id == id) return e;
+        }
+        return null;
+      });
+    });

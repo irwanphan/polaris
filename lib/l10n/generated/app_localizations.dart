@@ -523,6 +523,108 @@ abstract class AppL {
   /// **'Weekly'**
   String get recurrenceWeekly;
 
+  /// No description provided for @eventDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get eventDetailTitle;
+
+  /// No description provided for @eventDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get eventDetailEdit;
+
+  /// No description provided for @eventDetailDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get eventDetailDelete;
+
+  /// No description provided for @eventDetailNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event not found'**
+  String get eventDetailNotFoundTitle;
+
+  /// No description provided for @eventDetailNotFoundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This event was deleted or could not be loaded.'**
+  String get eventDetailNotFoundBody;
+
+  /// No description provided for @eventDetailBackToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to events'**
+  String get eventDetailBackToList;
+
+  /// No description provided for @eventDetailNextOccurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Next occurrence'**
+  String get eventDetailNextOccurrence;
+
+  /// No description provided for @eventDetailSectionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get eventDetailSectionNote;
+
+  /// No description provided for @eventDetailSectionWidgetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget message'**
+  String get eventDetailSectionWidgetMessage;
+
+  /// No description provided for @eventDetailSectionNoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'No note added.'**
+  String get eventDetailSectionNoNote;
+
+  /// No description provided for @eventDetailSectionNoWidgetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the automatic subtitle on the widget.'**
+  String get eventDetailSectionNoWidgetMessage;
+
+  /// No description provided for @eventDetailMetaCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {date}'**
+  String eventDetailMetaCreated(String date);
+
+  /// No description provided for @eventDetailMetaUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {date}'**
+  String eventDetailMetaUpdated(String date);
+
+  /// No description provided for @eventDetailUnitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'DAYS'**
+  String get eventDetailUnitDays;
+
+  /// No description provided for @eventDetailPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Already passed'**
+  String get eventDetailPast;
+
+  /// No description provided for @eventDetailLifetimeBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off'**
+  String get eventDetailLifetimeBadge;
+
+  /// No description provided for @eventDetailRepeatsBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats {recurrence}'**
+  String eventDetailRepeatsBadge(String recurrence);
+
   /// No description provided for @lifestyleQuickLog.
   ///
   /// In en, this message translates to:

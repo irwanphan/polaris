@@ -265,6 +265,65 @@ class AppLEn extends AppL {
   String get recurrenceWeekly => 'Weekly';
 
   @override
+  String get eventDetailTitle => 'Event';
+
+  @override
+  String get eventDetailEdit => 'Edit';
+
+  @override
+  String get eventDetailDelete => 'Delete';
+
+  @override
+  String get eventDetailNotFoundTitle => 'Event not found';
+
+  @override
+  String get eventDetailNotFoundBody =>
+      'This event was deleted or could not be loaded.';
+
+  @override
+  String get eventDetailBackToList => 'Back to events';
+
+  @override
+  String get eventDetailNextOccurrence => 'Next occurrence';
+
+  @override
+  String get eventDetailSectionNote => 'Note';
+
+  @override
+  String get eventDetailSectionWidgetMessage => 'Widget message';
+
+  @override
+  String get eventDetailSectionNoNote => 'No note added.';
+
+  @override
+  String get eventDetailSectionNoWidgetMessage =>
+      'Uses the automatic subtitle on the widget.';
+
+  @override
+  String eventDetailMetaCreated(String date) {
+    return 'Created $date';
+  }
+
+  @override
+  String eventDetailMetaUpdated(String date) {
+    return 'Updated $date';
+  }
+
+  @override
+  String get eventDetailUnitDays => 'DAYS';
+
+  @override
+  String get eventDetailPast => 'Already passed';
+
+  @override
+  String get eventDetailLifetimeBadge => 'One-off';
+
+  @override
+  String eventDetailRepeatsBadge(String recurrence) {
+    return 'Repeats $recurrence';
+  }
+
+  @override
   String get lifestyleQuickLog => 'Quick log';
 
   @override

@@ -265,6 +265,65 @@ class AppLId extends AppL {
   String get recurrenceWeekly => 'Mingguan';
 
   @override
+  String get eventDetailTitle => 'Acara';
+
+  @override
+  String get eventDetailEdit => 'Ubah';
+
+  @override
+  String get eventDetailDelete => 'Hapus';
+
+  @override
+  String get eventDetailNotFoundTitle => 'Acara tidak ditemukan';
+
+  @override
+  String get eventDetailNotFoundBody =>
+      'Acara ini telah dihapus atau tidak bisa dimuat.';
+
+  @override
+  String get eventDetailBackToList => 'Kembali ke daftar';
+
+  @override
+  String get eventDetailNextOccurrence => 'Kejadian berikutnya';
+
+  @override
+  String get eventDetailSectionNote => 'Catatan';
+
+  @override
+  String get eventDetailSectionWidgetMessage => 'Pesan widget';
+
+  @override
+  String get eventDetailSectionNoNote => 'Belum ada catatan.';
+
+  @override
+  String get eventDetailSectionNoWidgetMessage =>
+      'Memakai subtitle otomatis pada widget.';
+
+  @override
+  String eventDetailMetaCreated(String date) {
+    return 'Dibuat $date';
+  }
+
+  @override
+  String eventDetailMetaUpdated(String date) {
+    return 'Diubah $date';
+  }
+
+  @override
+  String get eventDetailUnitDays => 'HARI';
+
+  @override
+  String get eventDetailPast => 'Telah lewat';
+
+  @override
+  String get eventDetailLifetimeBadge => 'Sekali';
+
+  @override
+  String eventDetailRepeatsBadge(String recurrence) {
+    return 'Berulang $recurrence';
+  }
+
+  @override
   String get lifestyleQuickLog => 'Catat cepat';
 
   @override

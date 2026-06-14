@@ -116,6 +116,33 @@
   "recurrenceMonthly": "Monthly",
   "recurrenceWeekly": "Weekly",
 
+  "eventDetailTitle": "Event",
+  "eventDetailEdit": "Edit",
+  "eventDetailDelete": "Delete",
+  "eventDetailNotFoundTitle": "Event not found",
+  "eventDetailNotFoundBody": "This event was deleted or could not be loaded.",
+  "eventDetailBackToList": "Back to events",
+  "eventDetailNextOccurrence": "Next occurrence",
+  "eventDetailSectionNote": "Note",
+  "eventDetailSectionWidgetMessage": "Widget message",
+  "eventDetailSectionNoNote": "No note added.",
+  "eventDetailSectionNoWidgetMessage": "Uses the automatic subtitle on the widget.",
+  "eventDetailMetaCreated": "Created {date}",
+  "@eventDetailMetaCreated": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "eventDetailMetaUpdated": "Updated {date}",
+  "@eventDetailMetaUpdated": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "eventDetailUnitDays": "DAYS",
+  "eventDetailPast": "Already passed",
+  "eventDetailLifetimeBadge": "One-off",
+  "eventDetailRepeatsBadge": "Repeats {recurrence}",
+  "@eventDetailRepeatsBadge": {
+    "placeholders": {"recurrence": {"type": "String"}}
+  },
+
   "lifestyleQuickLog": "Quick log",
   "lifestyleHistoryHeader": "Last 7 days",
   "lifestyleHistoryHelper": "Swipe a row to delete",

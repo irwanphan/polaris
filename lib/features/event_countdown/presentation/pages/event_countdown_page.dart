@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:polaris/app/router.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
 import 'package:polaris/features/event_countdown/application/events_controller.dart';
 import 'package:polaris/features/event_countdown/application/providers.dart';
@@ -55,7 +57,11 @@ class _EventsList extends ConsumerWidget {
         return EventCard(
           event: event,
           now: now,
-          onTap: () => EventEditorSheet.show(context, original: event),
+          // Tapping a row now opens the detail page (Event Detail
+          // route added alongside the widget / notification deep
+          // links). Edit lives behind the detail page's overflow
+          // menu — the row tap is read-mostly.
+          onTap: () => context.push(AppRoutes.eventDetail(event.id)),
           onPinToggle: () => _handlePinToggle(context, ref, event),
           onDelete: () => _confirmDelete(context, ref, event),
         );
