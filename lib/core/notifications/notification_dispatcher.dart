@@ -34,4 +34,17 @@ abstract interface class NotificationDispatcher {
   /// Cancels every notification scheduled by the app — useful when
   /// the user revokes notification permission or resets state.
   Future<void> cancelAll();
+
+  /// Broadcast stream of payload strings from foreground / background
+  /// notification taps. The stream is hot — late listeners miss
+  /// taps that arrived before subscription. For the cold-start case
+  /// (app launched by a notification before any listener attaches),
+  /// pair this with [consumeColdStartPayload].
+  Stream<String?> get tapPayloads;
+
+  /// One-shot read of the payload that launched the app, if any.
+  /// Returns `null` when the app was started normally (i.e. *not*
+  /// from a notification tap). Idempotent — subsequent invocations
+  /// always return `null` so deep-link handling doesn't fire twice.
+  Future<String?> consumeColdStartPayload();
 }

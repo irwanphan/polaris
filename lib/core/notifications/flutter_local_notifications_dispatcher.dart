@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -32,6 +33,18 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
 
   bool _initialized = false;
 
+  /// Bridges the plugin's foreground/background tap callback into a
+  /// broadcast stream. Broadcast so multiple subscribers (deep-link
+  /// router, analytics, etc.) can listen without competing for
+  /// single-subscription semantics.
+  final StreamController<String?> _tapController =
+      StreamController<String?>.broadcast();
+
+  /// True once [consumeColdStartPayload] has returned the launch
+  /// payload — flips so subsequent calls hand back `null` and the
+  /// deep-link handler doesn't navigate twice.
+  bool _coldStartConsumed = false;
+
   @override
   Future<void> initialize() async {
     if (_initialized) return;
@@ -62,6 +75,15 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
 
     await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: darwin),
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Fan-out to any deep-link listeners (see
+        // `PolarisDeepLinkHandler`). The cold-start case is handled
+        // separately via [consumeColdStartPayload] — by the time
+        // this callback fires the app process is already alive.
+        if (!_tapController.isClosed) {
+          _tapController.add(response.payload);
+        }
+      },
     );
 
     if (Platform.isAndroid) {
@@ -154,4 +176,18 @@ class FlutterLocalNotificationsDispatcher implements NotificationDispatcher {
 
   @override
   Future<void> cancelAll() => _plugin.cancelAll();
+
+  @override
+  Stream<String?> get tapPayloads => _tapController.stream;
+
+  @override
+  Future<String?> consumeColdStartPayload() async {
+    if (_coldStartConsumed) return null;
+    _coldStartConsumed = true;
+    if (!_initialized) await initialize();
+    final NotificationAppLaunchDetails? details =
+        await _plugin.getNotificationAppLaunchDetails();
+    if (details == null || !details.didNotificationLaunchApp) return null;
+    return details.notificationResponse?.payload;
+  }
 }

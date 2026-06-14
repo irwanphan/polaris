@@ -75,6 +75,12 @@ class _FakeDispatcher implements NotificationDispatcher {
       ..addAll(scheduled.map((s) => s.id));
     scheduled.clear();
   }
+
+  @override
+  Stream<String?> get tapPayloads => const Stream<String?>.empty();
+
+  @override
+  Future<String?> consumeColdStartPayload() async => null;
 }
 
 Event _event({

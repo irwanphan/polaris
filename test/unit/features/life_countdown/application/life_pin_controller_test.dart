@@ -33,6 +33,10 @@ class _NoopDispatcher implements NotificationDispatcher {
   Future<void> cancel(int id) async {}
   @override
   Future<void> cancelAll() async {}
+  @override
+  Stream<String?> get tapPayloads => const Stream<String?>.empty();
+  @override
+  Future<String?> consumeColdStartPayload() async => null;
 }
 
 /// Records every pin-related call so we can assert that

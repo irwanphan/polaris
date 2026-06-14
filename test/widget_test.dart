@@ -141,6 +141,12 @@ class _NoopNotificationDispatcher implements NotificationDispatcher {
 
   @override
   Future<void> cancelAll() async {}
+
+  @override
+  Stream<String?> get tapPayloads => const Stream<String?>.empty();
+
+  @override
+  Future<String?> consumeColdStartPayload() async => null;
 }
 
 /// In-memory lifestyle log repository — same rationale as
