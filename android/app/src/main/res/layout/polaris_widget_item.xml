@@ -3,23 +3,33 @@
   Single row in the Polaris widget ListView. Populated by
   PolarisWidgetItemsFactory#getViewAt.
 
-  Palette (light surface variant):
-   * title    — slate-500 (#64748B), small caps-ish header
-   * hero     — slate-900 (#0F172A), the at-a-glance number
-   * subtitle — slate-500 (#64748B), 11sp body line
+  Visual structure (matches the design reference):
+                 ┌───────────────────────────────────┐
+                 │  ┌────┐                           │
+                 │  │ 🕒 │   TITLE                   │
+                 │  │    │   HERO NUMBER             │
+                 │  └────┘   subtitle line           │
+                 └───────────────────────────────────┘
+   * Pill        — amber-400 fill, thick slate-900 stroke
+                   (`polaris_widget_item_background.xml`).
+   * Icon-box    — amber-500 rounded square, 40×40dp, with a
+                   white clock glyph centered inside.
+   * Text stack  — title (12sp), hero (20sp bold), subtitle
+                   (11sp). All rendered slate-900 so they read
+                   as confident-bold on the amber surface.
 
-  Typography: every TextView uses `@font/montserrat` to match the
-  Flutter app's brand font. See the long-form note in
+  Typography: every TextView uses `@font/montserrat` to match
+  the Flutter app's brand font. See the long-form note in
   polaris_widget_layout.xml for the API-level caveat.
 
-  Background is intentionally transparent (see
-  polaris_widget_item_background.xml) — the outer double frame in
-  polaris_widget_background.xml already provides the "card"
-  affordance, so per-row backgrounds would compete with it. Row
-  separation comes from vertical padding + the colored accent
-  strip on the left.
+  Per-row accent color (`accentHex` from the JSON contract) is
+  intentionally NOT rendered — see the comment block in
+  `polaris_widget_item_icon_box.xml` for the RemoteViews-tinting
+  trade-off. The field is preserved on disk so a future design
+  (e.g. a colored emoji, a trailing dot) can pick it up without
+  changing the Dart→Kotlin wire format.
 
-  All IDs are referenced from
+  All view IDs are referenced from
   android/app/src/main/kotlin/com/phandarian/polaris/PolarisWidgetItemsFactory.kt —
   keep in sync when renaming.
 -->
@@ -30,23 +40,28 @@
     android:layout_marginBottom="10dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="10dp"
+    android:padding="12dp"
     android:background="@drawable/polaris_widget_item_background">
 
     <!--
-      FrameLayout (not View) because raw `android.view.View` is not
-      on the RemoteViews allowed-class list — inflating it crashes
-      the launcher with "Class not allowed to be inflated". The
-      backgroundColor is overridden per-row from
-      PolarisWidgetItemsFactory via
-      `RemoteViews#setInt(..., "setBackgroundColor", color)`.
+      FrameLayout (not View) because raw `android.view.View` is
+      not on the RemoteViews allowed-class list — inflating it
+      crashes the launcher with "Class not allowed to be inflated".
     -->
     <FrameLayout
-        android:id="@+id/polaris_widget_item_accent"
-        android:layout_width="4dp"
-        android:layout_height="44dp"
+        android:id="@+id/polaris_widget_item_icon_box"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginEnd="12dp"
-        android:background="@drawable/polaris_widget_accent_strip" />
+        android:background="@drawable/polaris_widget_item_icon_box">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_polaris_clock" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -59,7 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/montserrat"
-            android:textColor="#64748B"
+            android:textColor="#0F172A"
             android:textSize="12sp"
             android:textStyle="bold"
             android:letterSpacing="0.04"
@@ -87,7 +102,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:fontFamily="@font/montserrat"
-            android:textColor="#64748B"
+            android:textColor="#1E293B"
             android:textSize="11sp"
             android:maxLines="2"
             android:ellipsize="end"

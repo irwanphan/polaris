@@ -1,19 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Per-row background for items inside the Polaris widget ListView.
+  Per-row "ticket" pill for items inside the Polaris widget
+  ListView. Amber-400 fill (#FBBF24, same hue as the brand pill)
+  with a thick slate-900 outline to give the row a confident,
+  hand-stamped feel — the same visual language as the outer
+  widget surface, just one nesting level in.
 
-  On the new cyan-50 surface with a double black frame, an
-  additional per-row card would compete with the outer border for
-  attention, so the row is transparent and visual separation comes
-  from padding + the colored accent strip on the left.
+  Geometry:
+   * Corner radius 16dp on the outer edge. The stroke is 3dp wide
+     and centered on the path, so the visible inside radius works
+     out to ~14.5dp — close enough to feel concentric with the
+     icon-box (10dp) inside.
+   * Stroke uses `<stroke>` rather than a layered `<solid>` shape
+     because RemoteViews handles antialiased strokes cleanly down
+     to API 21, and it keeps this file declarative with no inset
+     math to maintain.
 
-  Kept as a drawable (rather than removing the attribute) so the
-  shape stays available if we later want to reintroduce a subtle
-  card (e.g. a slate-100 tint or a hairline outline) without
-  re-plumbing the layout.
+  Pairs with `polaris_widget_item_icon_box.xml` (the inner amber-
+  500 square the clock glyph sits in) and the dark-on-amber text
+  colors set in `polaris_widget_item.xml`.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@android:color/transparent" />
-    <corners android:radius="12dp" />
+    <solid android:color="#FBBF24" />
+    <corners android:radius="16dp" />
+    <stroke
+        android:width="3dp"
+        android:color="#0F172A" />
 </shape>

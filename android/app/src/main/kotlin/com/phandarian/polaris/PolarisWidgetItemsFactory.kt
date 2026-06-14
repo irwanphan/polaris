@@ -2,7 +2,6 @@ package com.phandarian.polaris
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -25,7 +24,7 @@ import org.json.JSONException
  *     re-read the JSON and rebuild the row cache.
  *  4. The framework requests one row at a time via [getViewAt],
  *     which inflates `polaris_widget_item.xml` and stamps the
- *     per-row title / hero / subtitle / accent color.
+ *     per-row title / hero / subtitle.
  *
  * Wire contract:
  *  Each JSON object looks like:
@@ -33,6 +32,13 @@ import org.json.JSONException
  *      "hero": "10906 hari lagi",
  *      "subtitle": "Satu napas pada satu waktu",
  *      "accent": "#6366F1" }
+ *
+ *  `accent` is parsed and kept on [WidgetRow] so the wire format
+ *  stays stable for Dart, but it is *not* currently rendered: the
+ *  row pill and icon-box are static amber tones (see
+ *  `polaris_widget_item_background.xml` and
+ *  `polaris_widget_item_icon_box.xml`). Reintroduce by tinting an
+ *  emoji ImageView or a trailing dot when the design calls for it.
  *
  * Errors at parse time are logged and result in an empty list — the
  * empty view configured in [PolarisWidgetProvider] then takes over.
@@ -94,11 +100,11 @@ class PolarisWidgetItemsFactory(
         views.setTextViewText(R.id.polaris_widget_item_title, row.title)
         views.setTextViewText(R.id.polaris_widget_item_hero, row.hero)
         views.setTextViewText(R.id.polaris_widget_item_subtitle, row.subtitle)
-        views.setInt(
-            R.id.polaris_widget_item_accent,
-            "setBackgroundColor",
-            parseHexColor(row.accentHex),
-        )
+        // `row.accentHex` is intentionally not applied — see the class
+        // KDoc above. The icon-box is a rounded shape drawable, and
+        // `setBackgroundColor` would replace the drawable with a flat
+        // square on API < 31. The hex stays on the wire so we can wire
+        // a future tinted element (emoji, dot) without a contract bump.
 
         // Empty fill-in intent so the ListView's PendingIntent
         // template (set in PolarisWidgetProvider) fires when the
@@ -118,15 +124,6 @@ class PolarisWidgetItemsFactory(
     }
 
     override fun hasStableIds(): Boolean = true
-
-    private fun parseHexColor(hex: String): Int {
-        return try {
-            Color.parseColor(hex)
-        } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Invalid accent color '$hex' — using default.", e)
-            Color.parseColor(DEFAULT_ACCENT_HEX)
-        }
-    }
 
     private data class WidgetRow(
         val id: String,

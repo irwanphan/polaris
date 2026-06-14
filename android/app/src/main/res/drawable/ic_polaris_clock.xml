@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Material "access_time" clock glyph, recolored white. Used as the
+  static badge inside `polaris_widget_item_icon_box.xml`. The 24x24
+  viewport is the Material default — keep ImageView size at 22dp
+  in the layout to leave a 1dp halo inside the 40dp icon-box.
+
+  Why bake the white fill into the path instead of using
+  `android:tint`? RemoteViews on API 21–25 ignore vector tints set
+  on the drawable itself; only `setColorFilter` from code reliably
+  applies, and we don't tint per row. Hard-coding the fill means
+  the widget renders correctly all the way back to minSdk 21.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11.99,2C6.47,2 2,6.48 2,12s4.47,10 9.99,10C17.52,22 22,17.52 22,12S17.52,2 11.99,2zM12,20c-4.42,0 -8,-3.58 -8,-8s3.58,-8 8,-8 8,3.58 8,8 -3.58,8 -8,8zM12.5,7H11v6l5.25,3.15 0.75,-1.23 -4.5,-2.67z" />
+</vector>
