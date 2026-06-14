@@ -25,6 +25,15 @@ class LifestyleLogsTable extends Table {
   IntColumn get loggedAtEpochMs => integer()();
   IntColumn get createdAtEpochMs => integer()();
 
+  /// Sync insurance — see [EventsTable.deletedAtEpochMs]. `updatedAt`
+  /// is populated by the repository on every write so a future
+  /// cloud-sync engine can do last-write-wins reconciliation;
+  /// `deletedAt` is reserved for soft deletes that Phase 2 will
+  /// introduce. Both are nullable so the column reservation costs
+  /// nothing for existing rows.
+  IntColumn get updatedAtEpochMs => integer().nullable()();
+  IntColumn get deletedAtEpochMs => integer().nullable()();
+
   @override
   Set<Column> get primaryKey => <Column>{id};
 }

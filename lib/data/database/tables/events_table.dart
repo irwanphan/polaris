@@ -37,6 +37,13 @@ class EventsTable extends Table {
   IntColumn get createdAtEpochMs => integer()();
   IntColumn get updatedAtEpochMs => integer()();
 
+  /// Soft-delete marker. `null` = live row, non-null = tombstone left
+  /// behind so a future cloud-sync engine (Phase 2 per BRD §6 / M9)
+  /// can propagate deletes without losing the row id. Local code
+  /// still issues hard `DELETE`s today; the sync layer will be the
+  /// first caller that sets this and the first to filter on it.
+  IntColumn get deletedAtEpochMs => integer().nullable()();
+
   @override
   Set<Column> get primaryKey => <Column>{id};
 }

@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -62,6 +62,24 @@ class AppDatabase extends _$AppDatabase {
         // widget (overrides the auto `<date> · <recurrence>` subtitle).
         // Nullable column, no default, no backfill needed.
         await m.addColumn(eventsTable, eventsTable.widgetMessage);
+      }
+      if (from < 6) {
+        // v5 → v6: cloud-sync insurance columns. Adds nullable
+        // `deletedAtEpochMs` to events_table and BOTH
+        // `updatedAtEpochMs` + `deletedAtEpochMs` to
+        // lifestyle_logs_table. No functional change today — the
+        // columns sit empty until the Phase 2 sync engine (M9 per
+        // BRD §6 / docs/Auth-Strategy.md) lands and starts writing
+        // them. Cheap insurance to avoid a backfill migration later.
+        await m.addColumn(eventsTable, eventsTable.deletedAtEpochMs);
+        await m.addColumn(
+          lifestyleLogsTable,
+          lifestyleLogsTable.updatedAtEpochMs,
+        );
+        await m.addColumn(
+          lifestyleLogsTable,
+          lifestyleLogsTable.deletedAtEpochMs,
+        );
       }
     },
   );

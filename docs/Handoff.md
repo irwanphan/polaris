@@ -1013,12 +1013,43 @@ Read [`BRD Polaris.md`](./BRD%20Polaris.md) first. TL;DR:
     widget layout, plus a possible `ImageView` row prefix
     in `polaris_widget_item.xml` for per-kind icons.
 
+- **Auth & Cloud Sync strategy locked in** (decision only,
+  no implementation):
+  - Captured in [`docs/Auth-Strategy.md`](./Auth-Strategy.md).
+    Decision: **Supabase free tier when Phase 2 (M9) begins**.
+    BRD §6/§7.2 keeps auth + sync as Phase 2 — offline-first
+    stays the MVP posture.
+  - Rejected alternatives documented in the ADR: Neon
+    alone (needs custom API on top — wrong shape for solo
+    mobile dev), Firebase (Firestore is doc DB, doesn't
+    fit Drift's relational schema, no exit ramp), Appwrite
+    (less mature Flutter SDK). **PocketBase self-hosted is
+    the strong runner-up** — revisit if Polaris graduates
+    to a serious commercial product where UU PDP data
+    residency + Indonesia latency become first-order wins.
+  - **Schema v6 shipped today as sync insurance**
+    (no behavior change): added nullable
+    `events_table.deletedAtEpochMs`, and BOTH
+    `lifestyle_logs_table.updatedAtEpochMs` +
+    `deletedAtEpochMs`. Columns sit empty until the Phase 2
+    sync engine starts writing them. Cheap reservation
+    avoids a data-backfill migration later. Migration
+    `from < 6` clause added to `app_database.dart`. All
+    166 tests still green, `flutter analyze` clean.
+  - **No code changes besides the schema bump** —
+    `Remote*Repository` siblings, `AuthService`,
+    `SyncCoordinator`, and the optional "Sign in to sync"
+    onboarding CTA are all deferred to the M9 sitting
+    (~1 week of focused work, day-by-day breakdown in
+    Auth-Strategy.md §5).
+
 ### In Progress
 - None — Multi-Pin Widget (v3) closed. M6 deferred items
   (Play Store track, insight l10n) still owner/scope-gated.
   Pending: SVG asset hunt (user-driven) + widget visual
   polish on top of those assets. Manual smoke tests below
-  remain user-driven.
+  remain user-driven. Auth/sync work is deferred to Phase 2
+  per `docs/Auth-Strategy.md`.
 
 ### Pending Manual Verification (user-driven)
 - **Lifestyle end-to-end on device**:
@@ -1338,4 +1369,6 @@ When you (the next AI assistant) act on this project:
 | 2026-06-13 | Cursor AI session | Shipped **M2 — Android home-screen widget**: `home_widget ^0.9.3` + `PolarisWidgetProvider` (Kotlin, RemoteViews) + indigo card layout with amber brand pill, abstract `HomeWidgetUpdater` in `core/widgets/` + concrete `PolarisHomeWidgetUpdater` (reads pinned event via new `EventRepository.getPinned()`, formats in Dart, pushes via `home_widget` plugin), wired into `EventsController` (create/update/delete/togglePin) and bootstrap initial refresh. 89/89 tests passing, `flutter analyze` clean. **M2 closed.** |
 | 2026-06-13 | Cursor AI session | Shipped **CI (GitHub Actions)**: `.github/workflows/ci.yml` runs on push to `main` and every PR; pinned to Flutter 3.44.1 stable; pipeline = pub get → build_runner → format check → analyze → test --coverage; coverage uploaded as artifact. One-time `dart format .` cleanup applied (50 files re-formatted, 89/89 tests still pass). Handoff §4 Step 4 done. |
 | 2026-06-14 | Cursor AI session | Shipped **Widget Pin v2**: Drift v5 adds `events_table.widget_message` (per-event widget override); new `LifePinPreferences` + `LifePinRepository` + `LifePinController` (life can be pinned with a custom mantra); mutual exclusivity between life pin and event pin (only one subject in the widget at a time). `PolarisHomeWidgetUpdater` rewritten with priority resolution + locale-aware date / recurrence formatting (loads `AppL` for the user's `polaris.locale.v1` pref, falls back to `PlatformDispatcher.locale`); `initializeDateFormatting('en'/'id')` added to `bootstrap()` so the headless refresh path doesn't hit `LocaleDataException`. New `LifePinSheet` modal + AppBar pin icon on the Life tab. 154 unit + 10 golden tests, `flutter analyze` clean. |
+| 2026-06-14 | Cursor AI session | **Auth & Cloud Sync ADR captured** + schema v6 sync insurance shipped. Decision: Supabase free tier when Phase 2 (M9) begins. Rationale + Phase-2 day-by-day implementation plan + rejected alternatives (Neon-alone, Firebase, Appwrite) + runner-up (PocketBase) documented in [`docs/Auth-Strategy.md`](./Auth-Strategy.md). Schema v6 adds nullable `events_table.deletedAtEpochMs` + `lifestyle_logs_table.{updatedAtEpochMs, deletedAtEpochMs}` — pure column reservation, no app code changes. 166 tests green, `flutter analyze` clean. |
+| 2026-06-14 | Cursor AI session | **Widget redesign: light "ticket frame" surface.** Surface drawable rewritten as a `layer-list` — thick black outer ring + cyan-50 `#ECFEFF` fill + thin black hairline (1.5dp) inset 10dp. Text colors flipped from white-on-indigo to slate-900/slate-500 on cyan-50. Per-row card background made transparent (outer frame is the only "card" affordance now); row separation via padding + accent strip. Verified on emulator: life pin (amber accent) + event pin (per-event accent) coexist in the new framed surface. Color spec source: `oklch(98.4% 0.019 200.873)` from the user — converted to `#ECFEFF` since Android XML doesn't speak OKLCH natively. |
 | 2026-06-14 | Cursor AI session | Shipped **Multi-Pin Widget (v3)**: dropped mutual exclusivity — life and event pins are now independent. `EventRepository.setPinned(id, bool)` is the new per-event entrypoint (legacy `pinExclusive` kept for back-compat). Widget rewritten as a native `RemoteViews` **collection widget**: `PolarisHomeWidgetUpdater` serializes all pinned subjects (life first w/ amber accent, then events sorted by target date w/ per-event color accent) as a JSON array under `polaris_widget_items_json`; `PolarisWidgetRemoteViewsService` + `PolarisWidgetItemsFactory` parse it and feed a `ListView` inside the widget; `PolarisWidgetProvider` wires `setRemoteAdapter` + `notifyAppWidgetViewDataChanged` (critical for re-reads) + `setPendingIntentTemplate` for per-row taps; service registered in `AndroidManifest.xml` with `BIND_REMOTEVIEWS`. Default widget size bumped from 2×2 to 4×3 with `resizeMode="horizontal\|vertical"`. Sharp edge fix: `<View>` is not on the RemoteViews allow-list — accent strip now uses `<FrameLayout>` (commented in `polaris_widget_item.xml`). `LifePinSheet` copy de-warned. Tests updated to assert the JSON-array shape and the no-exclusivity invariant. 166 tests passing, `flutter analyze` clean. Verified on emulator: life + event coexist in the widget list, locale-aware (`Sisa Hariku / 10906 hari lagi / Satu napas pada satu waktu` + `test / 6 hari / Sab, Jun 20 · Bulanan`). Deferred: SVG/icon polish (user is sourcing assets). |
