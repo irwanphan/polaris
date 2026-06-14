@@ -12,10 +12,15 @@
     * Empty    — shown by RemoteViews when the list is empty (no
                  pins yet). Wired via setEmptyView in the provider.
 
-  Design tokens (must mirror lib/app/theme/color_tokens.dart):
-  - Surface:   Indigo 700 (#4338CA) with 20dp rounded corners.
-  - Title:     White, 14sp, bold.
-  - Brand pill Amber 400 (#FBBF24) "POLARIS" badge.
+  Palette (light surface variant):
+  - Surface:   `polaris_widget_background.xml` — cyan-50 fill with
+               a double black "ticket" border. Drives the dark-on-
+               light text choice.
+  - Title:     slate-900 (#0F172A), 14sp, bold.
+  - Brand pill amber #FBBF24 with slate-900 text — kept warm so it
+               still reads as a brand stamp, not a label.
+  - Padding is bumped to 18dp so the double border has room to
+               breathe before the first content row.
 
   IDs are referenced by name in PolarisWidgetProvider.kt — keep in
   sync when renaming.
@@ -25,7 +30,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="14dp"
+    android:padding="18dp"
     android:background="@drawable/polaris_widget_background">
 
     <LinearLayout
@@ -41,7 +46,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FFFFFF"
+            android:textColor="#0F172A"
             android:textSize="14sp"
             android:textStyle="bold"
             android:maxLines="1"
@@ -82,7 +87,7 @@
             android:id="@+id/polaris_widget_empty_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="#0F172A"
             android:textSize="14sp"
             android:textStyle="bold"
             android:text="Nothing pinned yet" />
@@ -92,7 +97,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="#C7D2FE"
+            android:textColor="#64748B"
             android:textSize="12sp"
             android:gravity="center"
             android:text="Pin from inside Polaris" />

@@ -3,11 +3,17 @@
   Single row in the Polaris widget ListView. Populated by
   PolarisWidgetItemsFactory#getViewAt.
 
-  Layout: vertical card with rounded background, a colored accent
-  strip on the left, and three text rows:
-    * title    — subject name (e.g. "Sisa Hariku" or event title)
-    * hero     — at-a-glance days count (e.g. "10906 hari lagi")
-    * subtitle — custom message or auto "{date} · {recurrence}"
+  Palette (light surface variant):
+   * title    — slate-500 (#64748B), small caps-ish header
+   * hero     — slate-900 (#0F172A), the at-a-glance number
+   * subtitle — slate-500 (#64748B), 11sp body line
+
+  Background is intentionally transparent (see
+  polaris_widget_item_background.xml) — the outer double frame in
+  polaris_widget_background.xml already provides the "card"
+  affordance, so per-row backgrounds would compete with it. Row
+  separation comes from vertical padding + the colored accent
+  strip on the left.
 
   All IDs are referenced from
   android/app/src/main/kotlin/com/phandarian/polaris/PolarisWidgetItemsFactory.kt —
@@ -17,10 +23,10 @@
     android:id="@+id/polaris_widget_item_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="10dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="12dp"
+    android:padding="10dp"
     android:background="@drawable/polaris_widget_item_background">
 
     <!--
@@ -48,7 +54,7 @@
             android:id="@+id/polaris_widget_item_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#E0E7FF"
+            android:textColor="#64748B"
             android:textSize="12sp"
             android:textStyle="bold"
             android:letterSpacing="0.04"
@@ -61,7 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#FFFFFF"
+            android:textColor="#0F172A"
             android:textSize="20sp"
             android:textStyle="bold"
             android:includeFontPadding="false"
@@ -74,7 +80,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#C7D2FE"
+            android:textColor="#64748B"
             android:textSize="11sp"
             android:maxLines="2"
             android:ellipsize="end"

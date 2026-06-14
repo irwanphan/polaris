@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Per-row card background for items inside the Polaris widget
-  ListView. Sits on top of the indigo widget surface and adds a
-  subtle white tint so individual items pop without looking like a
-  separate panel.
+  Per-row background for items inside the Polaris widget ListView.
+
+  On the new cyan-50 surface with a double black frame, an
+  additional per-row card would compete with the outer border for
+  attention, so the row is transparent and visual separation comes
+  from padding + the colored accent strip on the left.
+
+  Kept as a drawable (rather than removing the attribute) so the
+  shape stays available if we later want to reintroduce a subtle
+  card (e.g. a slate-100 tint or a hairline outline) without
+  re-plumbing the layout.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#1AFFFFFF" />
-    <corners android:radius="14dp" />
+    <solid android:color="@android:color/transparent" />
+    <corners android:radius="12dp" />
 </shape>
