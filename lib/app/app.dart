@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/router.dart';
 import 'package:polaris/app/theme/app_theme.dart';
+import 'package:polaris/core/deep_links/deep_link_handler.dart';
 import 'package:polaris/core/l10n/locale_controller.dart';
 import 'package:polaris/l10n/generated/app_localizations.dart';
 
@@ -26,6 +27,15 @@ class PolarisApp extends ConsumerWidget {
       supportedLocales: AppL.supportedLocales,
       localizationsDelegates: AppL.localizationsDelegates,
       routerConfig: router,
+      // Wrap every routed page in the deep-link handler so the home
+      // widget + notification tap listeners are always live, no
+      // matter which surface the user opens first. Builder runs
+      // *inside* the Router scope, so `GoRouter.of(context)` works.
+      builder: (BuildContext context, Widget? child) {
+        return PolarisDeepLinkHandler(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
