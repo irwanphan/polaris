@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Polaris adaptive launcher icon (Android 8.0 / API 26+).
+
+    Without this XML, modern launchers treat `mipmap/ic_launcher.png`
+    as a "legacy" icon and shrink it inside an auto-generated circular
+    frame — Chrome, by contrast, ships an adaptive icon and so fills
+    the entire launcher cell. Declaring an <adaptive-icon> here opts
+    the icon out of that legacy treatment.
+
+    Foreground: PNG sourced from `assets/icons/polaris-icon-circle-1024.png`
+    — a circular cyan disc with the compass design baked in and
+    transparent corners. We chose a raster PNG over a vector drawable
+    because the artwork is fixed and easier to iterate on outside the
+    codebase (Figma/Photoshop), and an opaque circle composites cleanly
+    onto whatever launcher mask shape the user has.
+
+    Background: matching cyan gradient (see ic_launcher_background.xml).
+    Only ever visible through the foreground's transparent corners —
+    e.g. when the launcher mask is a squircle or rounded-square, those
+    corners need a fill that reads as a continuation of the cyan disc.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

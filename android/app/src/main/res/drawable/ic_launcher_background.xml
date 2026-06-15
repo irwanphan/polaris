@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Polaris launcher icon — adaptive icon BACKGROUND layer.
+
+    Foreground (`mipmap/ic_launcher_foreground.png`) is a circular cyan
+    bitmap with TRANSPARENT corners — outside the circle the launcher
+    sees right through to this background layer. Under launcher masks
+    that aren't strictly circular (squircle, rounded-square, teardrop),
+    those corners would otherwise show whatever fallback color the
+    system picks. We paint a matching cyan gradient here so any visible
+    BG pixel reads as a continuation of the foreground circle.
+
+    The endpoint colors were sampled directly from the source PNG:
+      - TL  #E7FAFF (lightest, top-left of the cyan circle)
+      - BR  #97EBFF (deepest, bottom-right of the cyan circle)
+    Same 315° angle (TL → BR), so the gradient line aligns with the
+    foreground's own light direction.
+
+    Side benefits:
+      - Themed-icon mode (Android 13+) and parallax animations expose
+        the BG layer briefly during touch / scroll; a matching cyan
+        means no flash of white or system color.
+      - <adaptive-icon> requires a <background>, so we couldn't omit it.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="315"
+        android:startColor="#E7FAFF"
+        android:endColor="#97EBFF" />
+</shape>

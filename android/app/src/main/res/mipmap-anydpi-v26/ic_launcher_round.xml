@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Polaris adaptive launcher icon — ROUND alias.
+
+    Some launchers / OEM skins request `@mipmap/ic_launcher_round`
+    instead of `@mipmap/ic_launcher` when they prefer a circular mask
+    (e.g. Samsung One UI prior to v3 forced round, some custom launchers
+    still do today). Pointing the round resource at the same adaptive
+    layers means we ship one piece of artwork, not two — both round and
+    non-round paths render identically and edge-to-edge.
+
+    The actual circular cropping is done by the launcher's mask, not by
+    us — we never bake a circle into the bitmap.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
