@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:polaris/app/theme/color_palette.dart';
 import 'package:polaris/app/theme/color_tokens.dart';
 import 'package:polaris/app/theme/text_styles.dart';
 
@@ -9,12 +10,17 @@ import 'package:polaris/app/theme/text_styles.dart';
 /// via `Theme.of(context).colorScheme` (and never reference [ColorTokens]
 /// directly) so that dark-mode and future themes Just Work.
 abstract final class AppTheme {
-  static ThemeData light() => _buildTheme(brightness: Brightness.light);
+  static ThemeData light({ColorPalette palette = ColorPalette.midnight}) =>
+      _buildTheme(brightness: Brightness.light, palette: palette);
 
-  static ThemeData dark() => _buildTheme(brightness: Brightness.dark);
+  static ThemeData dark({ColorPalette palette = ColorPalette.midnight}) =>
+      _buildTheme(brightness: Brightness.dark, palette: palette);
 
-  static ThemeData _buildTheme({required Brightness brightness}) {
-    final ColorScheme colorScheme = _buildColorScheme(brightness);
+  static ThemeData _buildTheme({
+    required Brightness brightness,
+    required ColorPalette palette,
+  }) {
+    final ColorScheme colorScheme = _buildColorScheme(brightness, palette);
     final TextTheme textTheme = _buildTextTheme(colorScheme);
 
     return ThemeData(
@@ -103,50 +109,249 @@ abstract final class AppTheme {
     );
   }
 
-  static ColorScheme _buildColorScheme(Brightness brightness) {
+  static ColorScheme _buildColorScheme(
+    Brightness brightness,
+    ColorPalette palette,
+  ) {
     final bool isDark = brightness == Brightness.dark;
-    return ColorScheme(
-      brightness: brightness,
-      primary: isDark ? ColorTokens.midnight300 : ColorTokens.midnight700,
-      onPrimary: isDark ? ColorTokens.midnight950 : ColorTokens.white,
-      primaryContainer: isDark
-          ? ColorTokens.midnight800
-          : ColorTokens.midnight100,
-      onPrimaryContainer: isDark
-          ? ColorTokens.midnight100
-          : ColorTokens.midnight900,
-      secondary: isDark ? ColorTokens.starlight300 : ColorTokens.starlight600,
-      onSecondary: isDark ? ColorTokens.starlight900 : ColorTokens.white,
-      secondaryContainer: isDark
-          ? ColorTokens.starlight800
-          : ColorTokens.starlight100,
-      onSecondaryContainer: isDark
-          ? ColorTokens.starlight100
-          : ColorTokens.starlight900,
-      tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
-      onTertiary: ColorTokens.white,
-      error: ColorTokens.danger500,
-      onError: ColorTokens.white,
-      surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
-      onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
-      surfaceContainerLowest: isDark ? ColorTokens.black : ColorTokens.white,
-      surfaceContainerLow: isDark ? ColorTokens.slate900 : ColorTokens.slate100,
-      surfaceContainer: isDark ? ColorTokens.slate800 : ColorTokens.slate100,
-      surfaceContainerHigh: isDark ? ColorTokens.slate800 : ColorTokens.white,
-      surfaceContainerHighest: isDark
-          ? ColorTokens.slate700
-          : ColorTokens.slate200,
-      onSurfaceVariant: isDark ? ColorTokens.slate300 : ColorTokens.slate600,
-      outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
-      outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
-      shadow: ColorTokens.black,
-      scrim: ColorTokens.black,
-      inverseSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
-      onInverseSurface: isDark ? ColorTokens.slate900 : ColorTokens.slate100,
-      inversePrimary: isDark
-          ? ColorTokens.midnight700
-          : ColorTokens.midnight300,
-    );
+
+    return switch (palette) {
+      ColorPalette.midnight => ColorScheme(
+          brightness: brightness,
+          primary: isDark
+              ? PaletteTokens.midnight300
+              : PaletteTokens.midnight700,
+          onPrimary: isDark ? PaletteTokens.midnight950 : ColorTokens.white,
+          primaryContainer: isDark
+              ? PaletteTokens.midnight800
+              : PaletteTokens.midnight100,
+          onPrimaryContainer: isDark
+              ? PaletteTokens.midnight100
+              : PaletteTokens.midnight900,
+          secondary: isDark
+              ? PaletteTokens.starlightMidnight300
+              : PaletteTokens.starlightMidnight600,
+          onSecondary: isDark
+              ? PaletteTokens.starlightMidnight900
+              : ColorTokens.white,
+          secondaryContainer: isDark
+              ? PaletteTokens.starlightMidnight800
+              : PaletteTokens.starlightMidnight100,
+          onSecondaryContainer: isDark
+              ? PaletteTokens.starlightMidnight100
+              : PaletteTokens.starlightMidnight900,
+          tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
+          onTertiary: ColorTokens.white,
+          error: ColorTokens.danger500,
+          onError: ColorTokens.white,
+          surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
+          onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          surfaceContainerLowest:
+              isDark ? ColorTokens.black : ColorTokens.white,
+          surfaceContainerLow:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          surfaceContainer:
+              isDark ? ColorTokens.slate800 : ColorTokens.slate100,
+          surfaceContainerHigh:
+              isDark ? ColorTokens.slate800 : ColorTokens.white,
+          surfaceContainerHighest:
+              isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          onSurfaceVariant:
+              isDark ? ColorTokens.slate300 : ColorTokens.slate600,
+          outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
+          outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          shadow: ColorTokens.black,
+          scrim: ColorTokens.black,
+          inverseSurface:
+              isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          onInverseSurface:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          inversePrimary: isDark
+              ? PaletteTokens.midnight700
+              : PaletteTokens.midnight300,
+        ),
+      ColorPalette.blush => ColorScheme(
+          brightness: brightness,
+          primary: isDark ? PaletteTokens.blush300 : PaletteTokens.blush600,
+          onPrimary: isDark ? PaletteTokens.blush950 : ColorTokens.white,
+          primaryContainer:
+              isDark ? PaletteTokens.blush800 : PaletteTokens.blush100,
+          onPrimaryContainer:
+              isDark ? PaletteTokens.blush100 : PaletteTokens.blush900,
+          secondary:
+              isDark ? PaletteTokens.accentBlush300 : PaletteTokens.accentBlush600,
+          onSecondary:
+              isDark ? PaletteTokens.accentBlush900 : ColorTokens.white,
+          secondaryContainer:
+              isDark ? PaletteTokens.accentBlush800 : PaletteTokens.accentBlush100,
+          onSecondaryContainer:
+              isDark ? PaletteTokens.accentBlush100 : PaletteTokens.accentBlush900,
+          tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
+          onTertiary: ColorTokens.white,
+          error: ColorTokens.danger500,
+          onError: ColorTokens.white,
+          surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
+          onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          surfaceContainerLowest:
+              isDark ? ColorTokens.black : ColorTokens.white,
+          surfaceContainerLow:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          surfaceContainer:
+              isDark ? ColorTokens.slate800 : ColorTokens.slate100,
+          surfaceContainerHigh:
+              isDark ? ColorTokens.slate800 : ColorTokens.white,
+          surfaceContainerHighest:
+              isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          onSurfaceVariant:
+              isDark ? ColorTokens.slate300 : ColorTokens.slate600,
+          outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
+          outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          shadow: ColorTokens.black,
+          scrim: ColorTokens.black,
+          inverseSurface:
+              isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          onInverseSurface:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          inversePrimary:
+              isDark ? PaletteTokens.blush600 : PaletteTokens.blush300,
+        ),
+      ColorPalette.lavender => ColorScheme(
+          brightness: brightness,
+          primary:
+              isDark ? PaletteTokens.lavender300 : PaletteTokens.lavender600,
+          onPrimary: isDark ? PaletteTokens.lavender950 : ColorTokens.white,
+          primaryContainer:
+              isDark ? PaletteTokens.lavender800 : PaletteTokens.lavender100,
+          onPrimaryContainer:
+              isDark ? PaletteTokens.lavender100 : PaletteTokens.lavender900,
+          secondary: isDark
+              ? PaletteTokens.accentLavender300
+              : PaletteTokens.accentLavender600,
+          onSecondary:
+              isDark ? PaletteTokens.accentLavender900 : ColorTokens.white,
+          secondaryContainer: isDark
+              ? PaletteTokens.accentLavender800
+              : PaletteTokens.accentLavender100,
+          onSecondaryContainer: isDark
+              ? PaletteTokens.accentLavender100
+              : PaletteTokens.accentLavender900,
+          tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
+          onTertiary: ColorTokens.white,
+          error: ColorTokens.danger500,
+          onError: ColorTokens.white,
+          surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
+          onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          surfaceContainerLowest:
+              isDark ? ColorTokens.black : ColorTokens.white,
+          surfaceContainerLow:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          surfaceContainer:
+              isDark ? ColorTokens.slate800 : ColorTokens.slate100,
+          surfaceContainerHigh:
+              isDark ? ColorTokens.slate800 : ColorTokens.white,
+          surfaceContainerHighest:
+              isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          onSurfaceVariant:
+              isDark ? ColorTokens.slate300 : ColorTokens.slate600,
+          outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
+          outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          shadow: ColorTokens.black,
+          scrim: ColorTokens.black,
+          inverseSurface:
+              isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          onInverseSurface:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          inversePrimary:
+              isDark ? PaletteTokens.lavender600 : PaletteTokens.lavender300,
+        ),
+      ColorPalette.mint => ColorScheme(
+          brightness: brightness,
+          primary: isDark ? PaletteTokens.mint300 : PaletteTokens.mint600,
+          onPrimary: isDark ? PaletteTokens.mint950 : ColorTokens.white,
+          primaryContainer:
+              isDark ? PaletteTokens.mint800 : PaletteTokens.mint100,
+          onPrimaryContainer:
+              isDark ? PaletteTokens.mint100 : PaletteTokens.mint900,
+          secondary:
+              isDark ? PaletteTokens.accentMint300 : PaletteTokens.accentMint600,
+          onSecondary: isDark ? PaletteTokens.accentMint900 : ColorTokens.white,
+          secondaryContainer:
+              isDark ? PaletteTokens.accentMint800 : PaletteTokens.accentMint100,
+          onSecondaryContainer:
+              isDark ? PaletteTokens.accentMint100 : PaletteTokens.accentMint900,
+          tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
+          onTertiary: ColorTokens.white,
+          error: ColorTokens.danger500,
+          onError: ColorTokens.white,
+          surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
+          onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          surfaceContainerLowest:
+              isDark ? ColorTokens.black : ColorTokens.white,
+          surfaceContainerLow:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          surfaceContainer:
+              isDark ? ColorTokens.slate800 : ColorTokens.slate100,
+          surfaceContainerHigh:
+              isDark ? ColorTokens.slate800 : ColorTokens.white,
+          surfaceContainerHighest:
+              isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          onSurfaceVariant:
+              isDark ? ColorTokens.slate300 : ColorTokens.slate600,
+          outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
+          outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          shadow: ColorTokens.black,
+          scrim: ColorTokens.black,
+          inverseSurface:
+              isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          onInverseSurface:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          inversePrimary: isDark ? PaletteTokens.mint600 : PaletteTokens.mint300,
+        ),
+      ColorPalette.peach => ColorScheme(
+          brightness: brightness,
+          primary: isDark ? PaletteTokens.peach300 : PaletteTokens.peach600,
+          onPrimary: isDark ? PaletteTokens.peach950 : ColorTokens.white,
+          primaryContainer:
+              isDark ? PaletteTokens.peach800 : PaletteTokens.peach100,
+          onPrimaryContainer:
+              isDark ? PaletteTokens.peach100 : PaletteTokens.peach900,
+          secondary:
+              isDark ? PaletteTokens.accentPeach300 : PaletteTokens.accentPeach600,
+          onSecondary: isDark ? PaletteTokens.accentPeach900 : ColorTokens.white,
+          secondaryContainer:
+              isDark ? PaletteTokens.accentPeach800 : PaletteTokens.accentPeach100,
+          onSecondaryContainer:
+              isDark ? PaletteTokens.accentPeach100 : PaletteTokens.accentPeach900,
+          tertiary: isDark ? ColorTokens.info500 : ColorTokens.info500,
+          onTertiary: ColorTokens.white,
+          error: ColorTokens.danger500,
+          onError: ColorTokens.white,
+          surface: isDark ? ColorTokens.slate950 : ColorTokens.slate50,
+          onSurface: isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          surfaceContainerLowest:
+              isDark ? ColorTokens.black : ColorTokens.white,
+          surfaceContainerLow:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          surfaceContainer:
+              isDark ? ColorTokens.slate800 : ColorTokens.slate100,
+          surfaceContainerHigh:
+              isDark ? ColorTokens.slate800 : ColorTokens.white,
+          surfaceContainerHighest:
+              isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          onSurfaceVariant:
+              isDark ? ColorTokens.slate300 : ColorTokens.slate600,
+          outline: isDark ? ColorTokens.slate600 : ColorTokens.slate300,
+          outlineVariant: isDark ? ColorTokens.slate700 : ColorTokens.slate200,
+          shadow: ColorTokens.black,
+          scrim: ColorTokens.black,
+          inverseSurface:
+              isDark ? ColorTokens.slate100 : ColorTokens.slate900,
+          onInverseSurface:
+              isDark ? ColorTokens.slate900 : ColorTokens.slate100,
+          inversePrimary:
+              isDark ? PaletteTokens.peach600 : PaletteTokens.peach300,
+        ),
+    };
   }
 
   static TextTheme _buildTextTheme(ColorScheme colorScheme) {

@@ -42,6 +42,7 @@
       "formatted": {"type": "String"}
     }
   },
+  "lifePercentLived": "lived",
   "lifeEstimatedEndDate": "Estimated end date",
   "lifeExpectancyUsed": "Expectancy used",
   "lifeExpectancyYears": "{years} years",

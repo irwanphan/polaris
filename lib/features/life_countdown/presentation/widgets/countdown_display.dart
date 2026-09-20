@@ -7,10 +7,11 @@ import 'package:polaris/features/life_countdown/application/display_mode.dart';
 import 'package:polaris/features/life_countdown/domain/entities/life_estimate.dart';
 import 'package:polaris/l10n/generated/app_localizations.dart';
 
-/// Hero number for the life-countdown screen.
+/// Hero countdown display with soft pastel gradients and radial glow.
 ///
-/// Stateless — given a [LifeEstimate] and a [DisplayMode] it always
-/// renders the same output. Animations and tickers live in the parent.
+/// Inspired by the Lovable prototype: prominent number, soft elevation,
+/// rounded card with gradient background and glow effect for a "gemas"
+/// (charming/cute) aesthetic that feels motivational rather than clinical.
 class CountdownDisplay extends StatelessWidget {
   const CountdownDisplay({
     required this.estimate,
@@ -26,46 +27,118 @@ class CountdownDisplay extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final _DisplayValue value = _resolve(context, estimate, mode);
     final AppL l = AppL.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
 
     return Semantics(
       label: l.lifeCountdownSemanticLabel(value.primary, value.unit),
       excludeSemantics: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          // FittedBox guarantees the hero number stays on one line at
-          // any text-scale factor (a11y) and at any horizontal width.
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value.primary,
-              style: TextStyles.displayXl.copyWith(
-                color: theme.colorScheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.x4),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Radii.xl2),
+            gradient: RadialGradient(
+              colors: isDark
+                  ? <Color>[
+                      theme.colorScheme.primary.withValues(alpha: 0.15),
+                      theme.colorScheme.surface,
+                    ]
+                  : <Color>[
+                      theme.colorScheme.primary.withValues(alpha: 0.08),
+                      theme.colorScheme.surface,
+                    ],
+              center: Alignment.topCenter,
+              radius: 1.5,
+            ),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                blurRadius: 32,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
+            ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.x6,
+              vertical: Spacing.x8,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(Radii.xl2),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: <Color>[
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    child: Text(
+                      value.primary,
+                      style: TextStyles.displayXl.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Spacing.x3),
+                Text(
+                  value.unit,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    letterSpacing: 2.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (value.secondary != null) ...<Widget>[
+                  const SizedBox(height: Spacing.x6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.x4,
+                      vertical: Spacing.x2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer
+                          .withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(Radii.full),
+                    ),
+                    child: Text(
+                      value.secondary!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+                if (mode == DisplayMode.days) ...<Widget>[
+                  const SizedBox(height: Spacing.x4),
+                  _LifeProgressChips(estimate: estimate),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: Spacing.x2),
-          Text(
-            value.unit,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              letterSpacing: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (value.secondary != null) ...<Widget>[
-            const SizedBox(height: Spacing.x4),
-            Text(
-              value.secondary!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -120,4 +193,80 @@ class _DisplayValue {
   final String primary;
   final String unit;
   final String? secondary;
+}
+
+/// Life progress chips showing days lived and percentage.
+///
+/// Displayed as small rounded badges below the main countdown number
+/// in days mode only, providing additional context without overwhelming
+/// the hero display.
+class _LifeProgressChips extends StatelessWidget {
+  const _LifeProgressChips({required this.estimate});
+
+  final LifeEstimate estimate;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final String localeTag = Localizations.localeOf(context).toString();
+    final NumberFormat thousands = NumberFormat.decimalPattern(localeTag);
+    final NumberFormat twoDecimal = NumberFormat('#,##0.00', localeTag);
+    final AppL l = AppL.of(context);
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: Spacing.x2,
+      runSpacing: Spacing.x2,
+      children: <Widget>[
+        _ProgressChip(
+          label: l.lifeAlreadyLived(
+            estimate.livedDays,
+            thousands.format(estimate.livedDays),
+          ),
+          color: theme.colorScheme.tertiary,
+        ),
+        _ProgressChip(
+          label: '${twoDecimal.format(estimate.percentLived)}% ${l.lifePercentLived}',
+          color: theme.colorScheme.secondary,
+        ),
+      ],
+    );
+  }
+}
+
+class _ProgressChip extends StatelessWidget {
+  const _ProgressChip({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.x3,
+        vertical: Spacing.x1,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }
