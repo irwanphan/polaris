@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.widget.RemoteViews
@@ -46,12 +47,12 @@ class PolarisWidgetProvider : HomeWidgetProvider() {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.polaris_widget_layout)
 
+            // Read palette colors
+            val primaryColor = parseColor(widgetData.getString(KEY_PRIMARY_COLOR, "#4338CA"))
+            val secondaryColor = parseColor(widgetData.getString(KEY_SECONDARY_COLOR, "#D97706"))
+
             views.setTextViewText(
                 R.id.polaris_widget_title,
-                // Defensive default: only used if Dart has not pushed
-                // the localized greeting yet (e.g. fresh install, before
-                // first refresh). The Dart side overwrites this on every
-                // `refresh()` via `l.widgetGreeting(_resolveUserName())`.
                 widgetData.getString(KEY_HEADER_TITLE, "Hello") ?: "Hello",
             )
             views.setTextViewText(
@@ -66,6 +67,10 @@ class PolarisWidgetProvider : HomeWidgetProvider() {
                     "Pin from inside Polaris",
                 ) ?: "Pin from inside Polaris",
             )
+
+            // Apply palette colors to header and brand pill
+            views.setTextColor(R.id.polaris_widget_title, primaryColor)
+            views.setInt(R.id.polaris_widget_brand, "setBackgroundColor", secondaryColor)
 
             // Bind the ListView to the RemoteViewsService. The
             // appWidgetId is encoded into the intent's data URI so
@@ -129,9 +134,20 @@ class PolarisWidgetProvider : HomeWidgetProvider() {
         }
     }
 
+    private fun parseColor(hexString: String?): Int {
+        return try {
+            Color.parseColor(hexString ?: "#4338CA")
+        } catch (e: IllegalArgumentException) {
+            Color.parseColor("#4338CA")
+        }
+    }
+
     companion object {
         const val KEY_HEADER_TITLE = "polaris_widget_header_title"
         const val KEY_EMPTY_TITLE = "polaris_widget_empty_title"
         const val KEY_EMPTY_SUBTITLE = "polaris_widget_empty_subtitle"
+        const val KEY_PALETTE_KEY = "polaris_widget_palette_key"
+        const val KEY_PRIMARY_COLOR = "polaris_widget_primary_color"
+        const val KEY_SECONDARY_COLOR = "polaris_widget_secondary_color"
     }
 }

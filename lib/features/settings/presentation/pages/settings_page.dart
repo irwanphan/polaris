@@ -21,7 +21,7 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL l = AppL.of(context);
     final Locale? selectedLocale = ref.watch(localeControllerProvider);
-    final ThemeController themeCtrl = ref.watch(themeControllerProvider);
+    final ThemePreferences themePrefs = ref.watch(themeControllerProvider);
     final ThemeData theme = Theme.of(context);
 
     return PolarisScaffold(
@@ -43,9 +43,9 @@ class SettingsPage extends ConsumerWidget {
           ),
           SectionCard(
             child: ThemePickerTile(
-              selected: themeCtrl.palette,
+              selected: themePrefs.palette,
               onChanged: (palette) async {
-                await ref.read(themeControllerProvider).setPalette(palette);
+                await ref.read(themeControllerProvider.notifier).setPalette(palette);
               },
             ),
           ),

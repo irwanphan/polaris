@@ -51,25 +51,20 @@
     android:padding="12dp"
     android:background="@drawable/polaris_widget_item_background">
 
-    <!--
-      FrameLayout (not View) because raw `android.view.View` is
-      not on the RemoteViews allowed-class list — inflating it
-      crashes the launcher with "Class not allowed to be inflated".
-    -->
-    <FrameLayout
-        android:id="@+id/polaris_widget_item_icon_box"
+    <ImageView
+        android:id="@+id/polaris_widget_item_icon"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginEnd="12dp"
-        android:background="@drawable/polaris_widget_item_icon_box">
-
-        <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_gravity="center"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_polaris_clock" />
-    </FrameLayout>
+        android:padding="8dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_polaris_calendar" />
+    
+    <FrameLayout
+        android:id="@+id/polaris_widget_item_icon_box"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -82,9 +77,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/montserrat"
-            android:textColor="#0F172A"
-            android:textSize="12sp"
-            android:textStyle="bold"
+            android:textColor="#64748B"
+            android:textSize="11sp"
+            android:textStyle="normal"
             android:letterSpacing="0.04"
             android:maxLines="1"
             android:ellipsize="end"
@@ -97,7 +92,7 @@
             android:layout_marginTop="2dp"
             android:fontFamily="@font/montserrat"
             android:textColor="#0F172A"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:includeFontPadding="false"
             android:maxLines="1"

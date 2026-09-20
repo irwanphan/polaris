@@ -74,54 +74,58 @@ class _PaletteCard extends StatelessWidget {
     final Color primaryColor = _getPrimaryColor(palette);
     final Color secondaryColor = _getSecondaryColor(palette);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 80,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(Radii.lg),
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outlineVariant,
-            width: isSelected ? 2 : 1,
+    return Material(
+      color: theme.colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Container(
+          width: 80,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Radii.lg),
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    shape: BoxShape.circle,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: Spacing.x1),
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: secondaryColor,
-                    shape: BoxShape.circle,
+                  const SizedBox(width: Spacing.x1),
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: secondaryColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.x2),
-            Text(
-              palette.label(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: Spacing.x2),
+              Text(
+                palette.label(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

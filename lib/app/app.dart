@@ -18,19 +18,14 @@ class PolarisApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final Locale? userLocale = ref.watch(localeControllerProvider);
-    final AsyncValue<ThemeController> themeAsync = ref.watch(themeStreamProvider);
-    
-    final ThemeController themeCtrl = themeAsync.maybeWhen(
-      data: (ThemeController ctrl) => ctrl,
-      orElse: () => ref.read(themeControllerProvider),
-    );
+    final ThemePreferences themePrefs = ref.watch(themeControllerProvider);
     
     return MaterialApp.router(
       onGenerateTitle: (BuildContext context) => AppL.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(palette: themeCtrl.palette),
-      darkTheme: AppTheme.dark(palette: themeCtrl.palette),
-      themeMode: themeCtrl.themeMode,
+      theme: AppTheme.light(palette: themePrefs.palette),
+      darkTheme: AppTheme.dark(palette: themePrefs.palette),
+      themeMode: themePrefs.themeMode,
       locale: userLocale,
       supportedLocales: AppL.supportedLocales,
       localizationsDelegates: AppL.localizationsDelegates,

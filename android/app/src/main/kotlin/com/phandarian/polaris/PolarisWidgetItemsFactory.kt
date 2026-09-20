@@ -2,6 +2,7 @@ package com.phandarian.polaris
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import android.widget.RemoteViews
@@ -101,11 +102,18 @@ class PolarisWidgetItemsFactory(
         views.setTextViewText(R.id.polaris_widget_item_title, row.title)
         views.setTextViewText(R.id.polaris_widget_item_hero, row.hero)
         views.setTextViewText(R.id.polaris_widget_item_subtitle, row.subtitle)
-        // `row.accentHex` is intentionally not applied — see the class
-        // KDoc above. The icon-box is a rounded shape drawable, and
-        // `setBackgroundColor` would replace the drawable with a flat
-        // square on API < 31. The hex stays on the wire so we can wire
-        // a future tinted element (emoji, dot) without a contract bump.
+        
+        // Apply accent color to icon box background
+        val accentColor = parseColor(row.accentHex)
+        views.setInt(R.id.polaris_widget_item_icon_box, "setBackgroundColor", accentColor)
+        
+        // Use distinct icons: hourglass for life, calendar for events
+        val iconRes = if (row.kind == "life") {
+            R.drawable.ic_polaris_hourglass
+        } else {
+            R.drawable.ic_polaris_calendar
+        }
+        views.setImageViewResource(R.id.polaris_widget_item_icon, iconRes)
 
         // Per-row fill-in intent that carries the deep-link URI for
         // this row. The template (set in PolarisWidgetProvider)
@@ -136,6 +144,14 @@ class PolarisWidgetItemsFactory(
     }
 
     override fun hasStableIds(): Boolean = true
+
+    private fun parseColor(hexString: String): Int {
+        return try {
+            Color.parseColor(hexString)
+        } catch (e: IllegalArgumentException) {
+            Color.parseColor(DEFAULT_ACCENT_HEX)
+        }
+    }
 
     private data class WidgetRow(
         val id: String,

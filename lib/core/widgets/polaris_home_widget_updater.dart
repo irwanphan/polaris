@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:polaris/app/theme/color_palette.dart';
 import 'package:polaris/core/logging/app_logger.dart';
 import 'package:polaris/core/widgets/home_widget_updater.dart';
 import 'package:polaris/features/event_countdown/domain/entities/event.dart';
@@ -104,6 +105,15 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
   static const String kEmptyTitleKey = 'polaris_widget_empty_title';
   static const String kEmptySubtitleKey = 'polaris_widget_empty_subtitle';
 
+  /// Active palette key for widget styling. Mirrored in `PolarisWidgetProvider.kt`.
+  static const String kPaletteKeyKey = 'polaris_widget_palette_key';
+
+  /// Primary color hex for the active palette. Mirrored in `PolarisWidgetProvider.kt`.
+  static const String kPrimaryColorKey = 'polaris_widget_primary_color';
+
+  /// Secondary color hex for the active palette. Mirrored in `PolarisWidgetProvider.kt`.
+  static const String kSecondaryColorKey = 'polaris_widget_secondary_color';
+
   /// Matches the class name registered in `AndroidManifest.xml`.
   static const String _kAndroidProvider = 'PolarisWidgetProvider';
 
@@ -121,6 +131,7 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
       final List<_WidgetItem> items = await _buildItems(l, localeTag);
 
       await _writeHeader(l);
+      await _writePaletteColors();
       await _writeItems(items);
       await _triggerUpdate(androidName: _kAndroidProvider);
     } catch (e, st) {
@@ -234,6 +245,28 @@ class PolarisHomeWidgetUpdater implements HomeWidgetUpdater {
     await _saveData(kHeaderTitleKey, l.widgetGreeting(_resolveUserName()));
     await _saveData(kEmptyTitleKey, l.widgetEmptyTitle);
     await _saveData(kEmptySubtitleKey, l.widgetEmptySubtitle);
+  }
+
+  /// Writes the active palette colors to SharedPreferences so the widget
+  /// can style itself to match the in-app theme.
+  Future<void> _writePaletteColors() async {
+    final String? paletteKey = sharedPreferences.getString('polaris.theme.palette.v1');
+    final ColorPalette palette = ColorPalette.fromKey(paletteKey ?? '') ?? ColorPalette.midnight;
+    
+    await _saveData(kPaletteKeyKey, palette.key);
+    await _saveData(kPrimaryColorKey, _getPaletteColor(palette, isPrimary: true));
+    await _saveData(kSecondaryColorKey, _getPaletteColor(palette, isPrimary: false));
+  }
+
+  /// Returns the hex color for the palette's primary or secondary color.
+  String _getPaletteColor(ColorPalette palette, {required bool isPrimary}) {
+    return switch (palette) {
+      ColorPalette.midnight => isPrimary ? '#4338CA' : '#D97706',
+      ColorPalette.blush => isPrimary ? '#FF4D7D' : '#FB3A8F',
+      ColorPalette.lavender => isPrimary ? '#8857C4' : '#9833F5',
+      ColorPalette.mint => isPrimary ? '#0D9488' : '#10B981',
+      ColorPalette.peach => isPrimary ? '#F97316' : '#FF7A33',
+    };
   }
 
   /// Resolves the display name shown in the widget header greeting.
