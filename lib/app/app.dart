@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:polaris/app/router.dart';
 import 'package:polaris/app/theme/app_theme.dart';
+import 'package:polaris/app/theme/theme_controller.dart';
 import 'package:polaris/core/deep_links/deep_link_handler.dart';
 import 'package:polaris/core/l10n/locale_controller.dart';
 import 'package:polaris/l10n/generated/app_localizations.dart';
@@ -17,12 +18,19 @@ class PolarisApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final Locale? userLocale = ref.watch(localeControllerProvider);
+    final AsyncValue<ThemeController> themeAsync = ref.watch(themeStreamProvider);
+    
+    final ThemeController themeCtrl = themeAsync.maybeWhen(
+      data: (ThemeController ctrl) => ctrl,
+      orElse: () => ref.read(themeControllerProvider),
+    );
+    
     return MaterialApp.router(
       onGenerateTitle: (BuildContext context) => AppL.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      theme: AppTheme.light(palette: themeCtrl.palette),
+      darkTheme: AppTheme.dark(palette: themeCtrl.palette),
+      themeMode: themeCtrl.themeMode,
       locale: userLocale,
       supportedLocales: AppL.supportedLocales,
       localizationsDelegates: AppL.localizationsDelegates,

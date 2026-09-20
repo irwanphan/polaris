@@ -34,6 +34,7 @@
   "lifeDisplayYears": "Tahun",
   "lifeDisplayPercent": "%",
   "lifeAlreadyLived": "{count, plural, =1{1 hari telah dijalani} other{{formatted} hari telah dijalani}}",
+  "lifePercentLived": "telah dijalani",
   "lifeEstimatedEndDate": "Perkiraan tanggal akhir",
   "lifeExpectancyUsed": "Harapan hidup yang dipakai",
   "lifeExpectancyYears": "{years} tahun",
