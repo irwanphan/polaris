@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:polaris/features/life_countdown/application/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:polaris/app/theme/color_palette.dart';
-
-part 'theme_controller.g.dart';
 
 /// Manages user's theme preferences: color palette + brightness mode.
 ///
@@ -68,28 +67,28 @@ class ThemeController {
   }
 }
 
-@Riverpod(keepAlive: true)
-ThemeController themeController(ThemeControllerRef ref) {
-  final SharedPreferences prefs = ref.watch(sharedPreferencesProvider);
-  final controller = ThemeController(prefs);
-  ref.onDispose(controller.dispose);
-  return controller;
-}
+/// Singleton [ThemeController] backed by the bootstrap-supplied
+/// [SharedPreferences]. Disposed when the provider scope is torn down.
+final Provider<ThemeController> themeControllerProvider =
+    Provider<ThemeController>(
+  (ref) {
+    final controller = ThemeController(ref.watch(sharedPreferencesProvider));
+    ref.onDispose(controller.dispose);
+    return controller;
+  },
+);
 
 /// Stream provider that rebuilds whenever theme changes.
-@Riverpod(keepAlive: true)
-Stream<ThemeController> themeStream(ThemeStreamRef ref) async* {
-  final controller = ref.watch(themeControllerProvider);
-  yield controller;
-  await for (final _ in controller.changes) {
+///
+/// MaterialApp watches this to rebuild with new themes when the user
+/// changes their palette or brightness preference.
+final StreamProvider<ThemeController> themeStreamProvider =
+    StreamProvider<ThemeController>(
+  (ref) async* {
+    final controller = ref.watch(themeControllerProvider);
     yield controller;
-  }
-}
-
-/// Expose SharedPreferences as a provider (overridden in bootstrap).
-@Riverpod(keepAlive: true)
-SharedPreferences sharedPreferences(SharedPreferencesRef ref) {
-  throw UnimplementedError(
-    'sharedPreferencesProvider must be overridden in bootstrap',
-  );
-}
+    await for (final _ in controller.changes) {
+      yield controller;
+    }
+  },
+);
